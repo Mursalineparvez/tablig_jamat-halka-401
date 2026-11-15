@@ -1,0 +1,6 @@
+{
+  "name": "যাত্রাবাড়ী মারকাজ মসজিদ — ৪০১ নং হালকা",
+  "description": "যাত্রাবাড়ী মারকাজ মসজিদ ৪০১ নং হালকার ১৪টি মসজিদ ও ২৫৬ জন সাথীর ডিজিটাল ডিরেক্টরি, অনুসন্ধান ও রিপোর্ট ব্যবস্থা।",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
