@@ -7,7 +7,11 @@ import {
   RotateCcw,
   Upload,
 } from 'lucide-react';
-import { MosqueRecord } from '../types/directory';
+import {
+  KargoojariEntry,
+  MosqueRecord,
+  TakazaEntry,
+} from '../types/directory';
 import {
   CATEGORY_META,
   exportMosquesToCSV,
@@ -16,9 +20,17 @@ import {
   toBn,
 } from '../utils/bengali';
 
+interface FullBackupPayload {
+  mosques: MosqueRecord[];
+  takazas?: TakazaEntry[];
+  kargoojaris?: KargoojariEntry[];
+}
+
 interface PrintExportViewProps {
   mosques: MosqueRecord[];
-  onImportData: (mosques: MosqueRecord[]) => void;
+  takazas: TakazaEntry[];
+  kargoojaris: KargoojariEntry[];
+  onImportData: (payload: FullBackupPayload) => void;
   onResetToBaseline: () => void;
 }
 
@@ -26,6 +38,8 @@ type PrintScope = 'summary' | 'single' | 'all';
 
 export const PrintExportView: React.FC<PrintExportViewProps> = ({
   mosques,
+  takazas,
+  kargoojaris,
   onImportData,
   onResetToBaseline,
 }) => {
@@ -38,7 +52,12 @@ export const PrintExportView: React.FC<PrintExportViewProps> = ({
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const handleExportJSON = () => {
-    const json = JSON.stringify(mosques, null, 2);
+    const payload: FullBackupPayload = {
+      mosques,
+      takazas,
+      kargoojaris,
+    };
+    const json = JSON.stringify(payload, null, 2);
     const blob = new Blob([json], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -58,11 +77,20 @@ export const PrintExportView: React.FC<PrintExportViewProps> = ({
     reader.onload = () => {
       try {
         const parsed = JSON.parse(String(reader.result));
-        if (!Array.isArray(parsed) || parsed.length === 0 || !parsed[0].name) {
-          setImportError('সঠিক হালকা JSON ব্যাকআপ ফাইল নির্বাচন করুন।');
+        if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].name) {
+          onImportData({ mosques: parsed as MosqueRecord[] });
           return;
         }
-        onImportData(parsed as MosqueRecord[]);
+        if (
+          parsed &&
+          typeof parsed === 'object' &&
+          Array.isArray(parsed.mosques) &&
+          parsed.mosques.length > 0
+        ) {
+          onImportData(parsed as FullBackupPayload);
+          return;
+        }
+        setImportError('সঠিক হালকা JSON ব্যাকআপ ফাইল নির্বাচন করুন।');
       } catch {
         setImportError('ফাইলটি পড়া সম্ভব হয়নি। দয়া করে সঠিক JSON দিন।');
       }
@@ -87,11 +115,14 @@ export const PrintExportView: React.FC<PrintExportViewProps> = ({
     <div className="space-y-8">
       {/* Screen-only Controls */}
       <div className="no-print space-y-6">
-        <section className="border-b border-stone-200 pb-6">
-          <h1 className="font-display text-2xl font-bold text-stone-900 sm:text-3xl">
+        <section className="rounded-2xl border border-[#DCE8F7] bg-gradient-to-r from-[#EBF4FF] via-[#F3F8FF] to-white p-6 shadow-[0_2px_10px_rgba(15,23,42,0.03)] sm:p-8">
+          <p className="text-xs font-semibold tracking-wide text-[#0066E6]">
+            যাত্রাবাড়ী মারকাজ · ৪০১ নং হালকা
+          </p>
+          <h1 className="font-display mt-1 text-2xl font-bold text-slate-900 sm:text-3xl">
             প্রিন্ট, পিডিএফ ও ডেটা এক্সপোর্ট
           </h1>
-          <p className="mt-1.5 text-sm text-stone-600">
+          <p className="mt-1.5 text-sm text-slate-600">
             আসল ফরমের আদলে পরিচ্ছন্ন প্রিন্ট কপি তৈরি করুন, Excel-এর জন্য CSV
             ডাউনলোড করুন অথবা ব্যাকআপ সংরক্ষণ করুন।
           </p>
@@ -99,14 +130,16 @@ export const PrintExportView: React.FC<PrintExportViewProps> = ({
 
         {/* Export Action Grid */}
         <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <div className="flex flex-col justify-between rounded-xl border border-stone-200 bg-white p-5">
+          <div className="flex flex-col justify-between rounded-2xl border border-[#E2ECF7] bg-white p-5 shadow-[0_2px_10px_rgba(15,23,42,0.03)]">
             <div>
-              <FileSpreadsheet className="h-5 w-5 text-emerald-900" />
-              <h2 className="mt-3 text-base font-bold text-stone-900">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#EBF4FF] text-[#0066E6]">
+                <FileSpreadsheet className="h-5 w-5" />
+              </div>
+              <h2 className="mt-3.5 text-base font-bold text-slate-900">
                 Excel / CSV এক্সপোর্ট
               </h2>
-              <p className="mt-1 text-xs leading-relaxed text-stone-600">
-                সকল ১৪টি মসজিদের ওলামা, সাথী, মোবাইল নম্বর, খতিব, ইমাম ও
+              <p className="mt-1 text-xs leading-relaxed text-slate-600">
+                সকল মসজিদের ওলামা, সাথী, মোবাইল নম্বর, খতিব, ইমাম ও
                 মোয়াজ্জিনের তালিকা Excel উপযোগী UTF-8 CSV ফরম্যাটে ডাউনলোড
                 করুন।
               </p>
@@ -114,20 +147,22 @@ export const PrintExportView: React.FC<PrintExportViewProps> = ({
             <button
               type="button"
               onClick={() => exportMosquesToCSV(mosques)}
-              className="mt-4 inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-emerald-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-800"
+              className="mt-4 inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#0066E6] px-4 py-2.5 text-sm font-medium text-white shadow-[0_2px_8px_rgba(0,102,230,0.22)] transition-colors hover:bg-[#0052BD]"
             >
               <Download className="h-4 w-4" />
               <span>CSV ডাউনলোড করুন</span>
             </button>
           </div>
 
-          <div className="flex flex-col justify-between rounded-xl border border-stone-200 bg-white p-5">
+          <div className="flex flex-col justify-between rounded-2xl border border-[#E2ECF7] bg-white p-5 shadow-[0_2px_10px_rgba(15,23,42,0.03)]">
             <div>
-              <FileText className="h-5 w-5 text-stone-700" />
-              <h2 className="mt-3 text-base font-bold text-stone-900">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#EBF4FF] text-[#0066E6]">
+                <FileText className="h-5 w-5" />
+              </div>
+              <h2 className="mt-3.5 text-base font-bold text-slate-900">
                 মূল পিডিএফ ও ব্যাকআপ
               </h2>
-              <p className="mt-1 text-xs leading-relaxed text-stone-600">
+              <p className="mt-1 text-xs leading-relaxed text-slate-600">
                 আপনার মূল ৪৪ পৃষ্ঠার পিডিএফ ফাইলটি ডাউনলোড করুন অথবা
                 আপডেটকৃত তথ্যের JSON ব্যাকআপ সংরক্ষণ ও রিস্টোর করুন।
               </p>
@@ -136,7 +171,7 @@ export const PrintExportView: React.FC<PrintExportViewProps> = ({
               <a
                 href="/assets/aistudio/______________1__1641fcb7.pdf"
                 download="jatrabari-markaz-halqa-401.pdf"
-                className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-stone-300 bg-white px-3 py-2 text-xs font-medium text-stone-800 transition-colors hover:bg-stone-50"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-[#DCE8F7] bg-[#F8FBFF] px-3 py-2 text-xs font-medium text-slate-700 transition-colors hover:bg-[#EBF4FF] hover:text-[#0066E6]"
               >
                 <Download className="h-3.5 w-3.5" />
                 <span>মূল ৪৪ পৃষ্ঠার পিডিএফ</span>
@@ -145,17 +180,17 @@ export const PrintExportView: React.FC<PrintExportViewProps> = ({
                 <button
                   type="button"
                   onClick={handleExportJSON}
-                  className="inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-stone-300 bg-white px-2.5 py-2 text-xs font-medium text-stone-800 hover:bg-stone-50"
+                  className="inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-xl border border-[#DCE8F7] bg-white px-2.5 py-2 text-xs font-medium text-slate-700 transition-colors hover:bg-[#F1F6FC]"
                 >
-                  <Download className="h-3.5 w-3.5" />
+                  <Download className="h-3.5 w-3.5 text-[#0066E6]" />
                   <span>JSON ব্যাকআপ</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-stone-300 bg-white px-2.5 py-2 text-xs font-medium text-stone-800 hover:bg-stone-50"
+                  className="inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-xl border border-[#DCE8F7] bg-white px-2.5 py-2 text-xs font-medium text-slate-700 transition-colors hover:bg-[#F1F6FC]"
                 >
-                  <Upload className="h-3.5 w-3.5" />
+                  <Upload className="h-3.5 w-3.5 text-[#0066E6]" />
                   <span>রিস্টোর করুন</span>
                 </button>
                 <input
@@ -167,18 +202,20 @@ export const PrintExportView: React.FC<PrintExportViewProps> = ({
                 />
               </div>
               {importError && (
-                <p className="text-xs text-red-700">{importError}</p>
+                <p className="text-xs text-rose-600">{importError}</p>
               )}
             </div>
           </div>
 
-          <div className="flex flex-col justify-between rounded-xl border border-stone-200 bg-white p-5">
+          <div className="flex flex-col justify-between rounded-2xl border border-[#E2ECF7] bg-white p-5 shadow-[0_2px_10px_rgba(15,23,42,0.03)]">
             <div>
-              <Printer className="h-5 w-5 text-stone-700" />
-              <h2 className="mt-3 text-base font-bold text-stone-900">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#EBF4FF] text-[#0066E6]">
+                <Printer className="h-5 w-5" />
+              </div>
+              <h2 className="mt-3.5 text-base font-bold text-slate-900">
                 প্রিন্ট ও রিসেট
               </h2>
-              <p className="mt-1 text-xs leading-relaxed text-stone-600">
+              <p className="mt-1 text-xs leading-relaxed text-slate-600">
                 নিচের প্রিভিউ থেকে প্রিন্টের অংশ নির্বাচন করে সরাসরি প্রিন্ট বা
                 PDF সেভ করুন। চাইলে মূল পিডিএফের তথ্যে ফিরে যেতে পারেন।
               </p>
@@ -187,7 +224,7 @@ export const PrintExportView: React.FC<PrintExportViewProps> = ({
               <button
                 type="button"
                 onClick={() => window.print()}
-                className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-stone-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-stone-800"
+                className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-slate-800"
               >
                 <Printer className="h-4 w-4" />
                 <span>এখনই প্রিন্ট / PDF করুন</span>
@@ -197,7 +234,7 @@ export const PrintExportView: React.FC<PrintExportViewProps> = ({
                 <button
                   type="button"
                   onClick={() => setConfirmReset(true)}
-                  className="inline-flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-stone-200 px-3 py-1.5 text-xs font-medium text-stone-600 hover:bg-stone-50"
+                  className="inline-flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-xl border border-[#DCE8F7] bg-[#F8FBFF] px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:bg-rose-50 hover:border-rose-200 hover:text-rose-700"
                 >
                   <RotateCcw className="h-3.5 w-3.5" />
                   <span>মূল পিডিএফ তথ্যে রিসেট</span>
@@ -210,14 +247,14 @@ export const PrintExportView: React.FC<PrintExportViewProps> = ({
                       onResetToBaseline();
                       setConfirmReset(false);
                     }}
-                    className="flex-1 cursor-pointer rounded-lg bg-red-700 px-2.5 py-1.5 text-xs font-medium text-white hover:bg-red-800"
+                    className="flex-1 cursor-pointer rounded-xl bg-rose-600 px-2.5 py-1.5 text-xs font-medium text-white hover:bg-rose-700"
                   >
                     নিশ্চিত রিসেট
                   </button>
                   <button
                     type="button"
                     onClick={() => setConfirmReset(false)}
-                    className="cursor-pointer rounded-lg border border-stone-300 px-2.5 py-1.5 text-xs text-stone-700 hover:bg-stone-100"
+                    className="cursor-pointer rounded-xl border border-[#DCE8F7] px-2.5 py-1.5 text-xs text-slate-700 hover:bg-[#F1F6FC]"
                   >
                     বাতিল
                   </button>
@@ -228,15 +265,15 @@ export const PrintExportView: React.FC<PrintExportViewProps> = ({
         </section>
 
         {/* Print Preview Scope Selector */}
-        <section className="flex flex-col justify-between gap-3 rounded-xl border border-stone-200 bg-white p-4 sm:flex-row sm:items-center">
+        <section className="flex flex-col justify-between gap-3 rounded-2xl border border-[#E2ECF7] bg-white p-4 shadow-[0_2px_10px_rgba(15,23,42,0.03)] sm:flex-row sm:items-center">
           <div className="flex flex-wrap items-center gap-1.5">
             <button
               type="button"
               onClick={() => setPrintScope('summary')}
-              className={`cursor-pointer rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+              className={`cursor-pointer rounded-xl px-3.5 py-2 text-xs font-medium transition-colors ${
                 printScope === 'summary'
-                  ? 'bg-emerald-900 text-white'
-                  : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
+                  ? 'bg-[#0066E6] text-white shadow-[0_2px_8px_rgba(0,102,230,0.2)]'
+                  : 'bg-[#F1F6FC] text-slate-700 hover:bg-[#E2EEFC]'
               }`}
             >
               এক নজরে সারসংক্ষেপ
@@ -244,10 +281,10 @@ export const PrintExportView: React.FC<PrintExportViewProps> = ({
             <button
               type="button"
               onClick={() => setPrintScope('single')}
-              className={`cursor-pointer rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+              className={`cursor-pointer rounded-xl px-3.5 py-2 text-xs font-medium transition-colors ${
                 printScope === 'single'
-                  ? 'bg-emerald-900 text-white'
-                  : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
+                  ? 'bg-[#0066E6] text-white shadow-[0_2px_8px_rgba(0,102,230,0.2)]'
+                  : 'bg-[#F1F6FC] text-slate-700 hover:bg-[#E2EEFC]'
               }`}
             >
               নির্বাচিত ১টি মসজিদ
@@ -255,13 +292,13 @@ export const PrintExportView: React.FC<PrintExportViewProps> = ({
             <button
               type="button"
               onClick={() => setPrintScope('all')}
-              className={`cursor-pointer rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+              className={`cursor-pointer rounded-xl px-3.5 py-2 text-xs font-medium transition-colors ${
                 printScope === 'all'
-                  ? 'bg-emerald-900 text-white'
-                  : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
+                  ? 'bg-[#0066E6] text-white shadow-[0_2px_8px_rgba(0,102,230,0.2)]'
+                  : 'bg-[#F1F6FC] text-slate-700 hover:bg-[#E2EEFC]'
               }`}
             >
-              সম্পূর্ণ হালকা (১৪ মসজিদ)
+              সম্পূর্ণ হালকা ({toBn(mosques.length)} মসজিদ)
             </button>
           </div>
 
@@ -270,7 +307,7 @@ export const PrintExportView: React.FC<PrintExportViewProps> = ({
               aria-label="প্রিন্টের জন্য মসজিদ নির্বাচন"
               value={selectedMosqueId}
               onChange={(e) => setSelectedMosqueId(Number(e.target.value))}
-              className="rounded-lg border border-stone-300 bg-white px-3 py-1.5 text-sm text-stone-800 focus:border-emerald-800 focus:outline-none"
+              className="rounded-xl border border-[#DCE8F7] bg-[#F8FBFF] px-3 py-2 text-sm text-slate-800 focus:border-[#0066E6] focus:bg-white focus:outline-none"
             >
               {mosques.map((m) => (
                 <option key={m.id} value={m.id}>
@@ -283,7 +320,7 @@ export const PrintExportView: React.FC<PrintExportViewProps> = ({
       </div>
 
       {/* Printable Official Document Sheet */}
-      <div className="space-y-8 rounded-xl border border-stone-300 bg-white p-6 sm:p-10 print:border-0 print:p-0">
+      <div className="space-y-8 rounded-2xl border border-[#DCE8F7] bg-white p-6 shadow-[0_2px_10px_rgba(15,23,42,0.03)] sm:p-10 print:rounded-none print:border-0 print:p-0 print:shadow-none">
         {(printScope === 'summary' || printScope === 'all') && (
           <div className={printScope === 'all' ? 'print-break-after' : ''}>
             <div className="border-b-2 border-stone-900 pb-4">

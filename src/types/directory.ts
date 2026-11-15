@@ -42,4 +42,50 @@ export interface MosqueRecord {
   categories: Record<SathiCategory, SathiEntry[]>;
 }
 
-export type ActiveTab = 'overview' | 'mosques' | 'directory' | 'report';
+export type TakazaStatus = 'ongoing' | 'urgent' | 'completed';
+
+export type TakazaType =
+  | 'three_days'
+  | 'ten_fifteen_days'
+  | 'one_chilla'
+  | 'three_chilla'
+  | 'sal'
+  | 'masturat'
+  | 'other';
+
+export interface TakazaEntry {
+  id: string;
+  title: string;
+  mosqueId: number | 'halqa';
+  type: TakazaType;
+  targetCount: number;
+  completedCount: number;
+  dueDate: string;
+  zimmadarName: string;
+  zimmadarPhone: string;
+  status: TakazaStatus;
+  notes: string;
+  createdAt: string;
+}
+
+export interface KargoojariEntry {
+  id: string;
+  date: string;
+  mosqueId: number | 'halqa';
+  gastDone: boolean;
+  talimDone: boolean;
+  mashwaraDone: boolean;
+  sathiAttended: number;
+  tashkeelCount: number;
+  reporterName: string;
+  summary: string;
+  createdAt: string;
+}
+
+export type ActiveTab =
+  | 'overview'
+  | 'mosques'
+  | 'directory'
+  | 'takaja'
+  | 'kargoojari'
+  | 'report';

@@ -1,5 +1,12 @@
 import React, { useMemo, useState } from 'react';
-import { ArrowDownUp, ArrowUpRight, Search } from 'lucide-react';
+import {
+  ArrowDownUp,
+  ArrowUpRight,
+  Building2,
+  Plus,
+  Search,
+  Users,
+} from 'lucide-react';
 import { MosqueRecord, SathiCategory } from '../types/directory';
 import {
   getMosqueTotalSathi,
@@ -11,6 +18,7 @@ interface OverviewViewProps {
   mosques: MosqueRecord[];
   onOpenMosque: (mosqueId: number) => void;
   onOpenDirectory: (categoryFilter?: SathiCategory) => void;
+  onAddMosque: () => void;
 }
 
 type SortKey = 'id' | 'total' | 'threeChilla';
@@ -19,6 +27,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
   mosques,
   onOpenMosque,
   onOpenDirectory,
+  onAddMosque,
 }) => {
   const [sortKey, setSortKey] = useState<SortKey>('id');
   const [sortAsc, setSortAsc] = useState(true);
@@ -101,70 +110,83 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
   );
 
   return (
-    <div className="space-y-10">
-      {/* Institutional Hero Masthead */}
-      <section className="border-b border-stone-200 pb-8 pt-2">
-        <p className="text-sm font-medium text-emerald-900">
-          যাত্রাবাড়ী মারকাজ মসজিদ · তাবলীগি ও মসজিদ ভিত্তিক সাথী তালিকা
-        </p>
-        <div className="mt-2 flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
-          <div>
-            <h1 className="font-display text-3xl font-bold tracking-tight text-stone-900 sm:text-4xl">
-              ৪০১ নং হালকা — এক নজরে সামগ্রিক চিত্র
-            </h1>
-            <p className="mt-2 max-w-2xl text-[15px] leading-relaxed text-stone-600">
-              হালকার অন্তর্ভুক্ত {toBn(mosques.length)}টি জামে ও মাদ্রাসা
-              মসজিদের খতিব, ইমাম, মোয়াজ্জিন এবং বিভিন্ন মেয়াদের ওলামা ও
-              সাথীগণের পূর্ণাঙ্গ ডিজিটাল হিসাব।
-            </p>
+    <div className="space-y-8">
+      {/* Clean Sky-Blue Tinted Banner Card (inspired by reference header banner) */}
+      <section className="rounded-2xl border border-[#DCE8F7] bg-gradient-to-r from-[#EBF4FF] via-[#F3F8FF] to-white p-6 shadow-[0_2px_10px_rgba(15,23,42,0.03)] sm:p-8">
+        <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-center">
+          <div className="flex items-start gap-4">
+            <div className="hidden h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#0066E6] text-white shadow-[0_4px_12px_rgba(0,102,230,0.24)] sm:flex">
+              <Building2 className="h-6 w-6" aria-hidden="true" />
+            </div>
+            <div>
+              <p className="text-xs font-semibold text-[#0066E6]">
+                যাত্রাবাড়ী মারকাজ মসজিদ · তাবলীগি ও মসজিদ ভিত্তিক সাথী তালিকা
+              </p>
+              <h1 className="font-display mt-1 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+                ৪০১ নং হালকা — এক নজরে সামগ্রিক চিত্র
+              </h1>
+              <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-slate-600">
+                হালকার অন্তর্ভুক্ত {toBn(mosques.length)}টি জামে ও মাদ্রাসা
+                মসজিদের খতিব, ইমাম, মোয়াজ্জিন এবং বিভিন্ন মেয়াদের ওলামা ও
+                সাথীগণের পূর্ণাঙ্গ ডিজিটাল হিসাব।
+              </p>
+            </div>
           </div>
-          <div className="flex flex-wrap items-center gap-3 text-sm text-stone-600">
+
+          <div className="flex flex-wrap items-center gap-3 text-xs font-medium text-slate-600 sm:text-sm">
             <span>মোট মসজিদ: {toBn(mosques.length)}টি</span>
             <span aria-hidden="true">·</span>
-            <span>মোট তালিকাভুক্ত সাথী: {toBn(totals.grandTotal)} জন</span>
+            <span>তালিকাভুক্ত সাথী: {toBn(totals.grandTotal)} জন</span>
             <span aria-hidden="true">·</span>
             <span>মোবাইল সংযুক্ত: {toBn(totals.phoneCount)} জন</span>
           </div>
         </div>
       </section>
 
-      {/* 4-column Key Metrics Strip */}
+      {/* 4-column Key Metrics Strip (Soft Blue Icon Tiles + Crisp White Cards) */}
       <section aria-label="মূল পরিসংখ্যান">
-        <div className="grid grid-cols-2 divide-x divide-y divide-stone-200 overflow-hidden rounded-xl border border-stone-200 bg-white sm:grid-cols-4 sm:divide-y-0">
-          <div className="p-5 sm:p-6">
-            <p className="text-sm font-medium text-stone-500">সর্বমোট সাথী</p>
-            <p className="mt-2 font-mono text-3xl font-semibold tracking-tight text-stone-900 tabular-nums">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+          <div className="rounded-2xl border border-[#E2ECF7] bg-white p-5 shadow-[0_2px_10px_rgba(15,23,42,0.03)]">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-semibold text-slate-500">সর্বমোট সাথী</p>
+              <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#EBF4FF] text-[#0066E6]">
+                <Users className="h-4 w-4" aria-hidden="true" />
+              </span>
+            </div>
+            <p className="mt-3 font-mono text-3xl font-bold tracking-tight text-slate-900 tabular-nums">
               {toBn(totals.grandTotal)}
             </p>
-            <p className="mt-1 text-xs text-stone-500">
+            <p className="mt-1 text-xs text-slate-500">
               {toBn(mosques.length)}টি মসজিদ মিলিয়ে
             </p>
           </div>
 
-          <div className="p-5 sm:p-6">
-            <p className="text-sm font-medium text-stone-500">৩ চিল্লার সাথী</p>
-            <p className="mt-2 font-mono text-3xl font-semibold tracking-tight text-emerald-900 tabular-nums">
+          <div className="rounded-2xl border border-[#E2ECF7] bg-white p-5 shadow-[0_2px_10px_rgba(15,23,42,0.03)]">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-semibold text-slate-500">৩ চিল্লার সাথী</p>
+              <span className="font-mono text-xs font-bold text-[#0066E6]">
+                {toBn(
+                  Math.round(
+                    ((totals.byCategory[SathiCategory.ThreeChillaSathi] ?? 0) /
+                      Math.max(1, totals.grandTotal)) *
+                      100
+                  )
+                )}
+                %
+              </span>
+            </div>
+            <p className="mt-3 font-mono text-3xl font-bold tracking-tight text-[#0066E6] tabular-nums">
               {toBn(totals.byCategory[SathiCategory.ThreeChillaSathi] ?? 0)}
             </p>
-            <p className="mt-1 text-xs text-stone-500">
-              মোট সাথীর{' '}
-              {toBn(
-                Math.round(
-                  ((totals.byCategory[SathiCategory.ThreeChillaSathi] ?? 0) /
-                    Math.max(1, totals.grandTotal)) *
-                    100
-                )
-              )}
-              %
-            </p>
+            <p className="mt-1 text-xs text-slate-500">মোট সাথীর অংশ</p>
           </div>
 
-          <div className="p-5 sm:p-6">
-            <p className="text-sm font-medium text-stone-500">ওলামায়ে কেরাম</p>
-            <p className="mt-2 font-mono text-3xl font-semibold tracking-tight text-stone-900 tabular-nums">
+          <div className="rounded-2xl border border-[#E2ECF7] bg-white p-5 shadow-[0_2px_10px_rgba(15,23,42,0.03)]">
+            <p className="text-xs font-semibold text-slate-500">ওলামায়ে কেরাম</p>
+            <p className="mt-3 font-mono text-3xl font-bold tracking-tight text-slate-900 tabular-nums">
               {toBn(totals.totalUlama)}
             </p>
-            <p className="mt-1 text-xs text-stone-500">
+            <p className="mt-1 text-xs text-slate-500">
               সালওয়ালী {toBn(totals.byCategory[SathiCategory.SalwaliUlama] ?? 0)} · চিল্লা{' '}
               {toBn(
                 (totals.byCategory[SathiCategory.ThreeChillaUlama] ?? 0) +
@@ -173,12 +195,12 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
             </p>
           </div>
 
-          <div className="p-5 sm:p-6">
-            <p className="text-sm font-medium text-stone-500">মাস্তুরাত জামাত</p>
-            <p className="mt-2 font-mono text-3xl font-semibold tracking-tight text-stone-900 tabular-nums">
+          <div className="rounded-2xl border border-[#E2ECF7] bg-white p-5 shadow-[0_2px_10px_rgba(15,23,42,0.03)]">
+            <p className="text-xs font-semibold text-slate-500">মাস্তুরাত জামাত</p>
+            <p className="mt-3 font-mono text-3xl font-bold tracking-tight text-slate-900 tabular-nums">
               {toBn(totals.totalMasturat)}
             </p>
-            <p className="mt-1 text-xs text-stone-500">
+            <p className="mt-1 text-xs text-slate-500">
               চিল্লা {toBn(totals.byCategory[SathiCategory.MasturatChilla] ?? 0)} · ১০/১৫ ও ৩ দিন{' '}
               {toBn(
                 (totals.byCategory[SathiCategory.MasturatTenFifteenDays] ?? 0) +
@@ -193,54 +215,65 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
       <section className="space-y-4">
         <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
           <div>
-            <h2 className="font-display text-2xl font-bold text-stone-900">
+            <h2 className="font-display text-2xl font-bold text-slate-900">
               মসজিদ ভিত্তিক সাথীর সংখ্যা
             </h2>
-            <p className="text-sm text-stone-600">
+            <p className="text-sm text-slate-500">
               যেকোনো মসজিদের নামের ওপর ক্লিক করে বিস্তারিত তালিকা ও মোবাইল নম্বর দেখুন
             </p>
           </div>
 
-          <div className="relative w-full sm:w-72">
-            <Search
-              className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-stone-400"
-              aria-hidden="true"
-            />
-            <input
-              type="text"
-              value={tableFilter}
-              onChange={(e) => setTableFilter(e.target.value)}
-              placeholder="মসজিদের নাম দিয়ে খুঁজুন..."
-              className="w-full rounded-lg border border-stone-300 bg-white py-2 pr-3 pl-9 text-sm text-stone-900 placeholder:text-stone-400 focus:border-emerald-800 focus:outline-none"
-            />
+          <div className="flex flex-wrap items-center gap-2.5">
+            <div className="relative w-full sm:w-64">
+              <Search
+                className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400"
+                aria-hidden="true"
+              />
+              <input
+                type="text"
+                value={tableFilter}
+                onChange={(e) => setTableFilter(e.target.value)}
+                placeholder="মসজিদের নাম দিয়ে খুঁজুন..."
+                className="w-full rounded-xl border border-[#DCE8F7] bg-white py-2 pr-3 pl-9 text-sm text-slate-900 placeholder:text-slate-400 focus:border-[#0066E6] focus:ring-2 focus:ring-[#0066E6]/10 focus:outline-none"
+              />
+            </div>
+
+            <button
+              type="button"
+              onClick={onAddMosque}
+              className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-xl bg-[#EBF4FF] px-3.5 py-2 text-xs font-semibold text-[#0066E6] transition-colors hover:bg-[#DCEBFF]"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              <span>নতুন মসজিদ যুক্ত করুন</span>
+            </button>
           </div>
         </div>
 
-        <div className="overflow-x-auto rounded-xl border border-stone-200 bg-white">
+        <div className="overflow-x-auto rounded-2xl border border-[#E2ECF7] bg-white shadow-[0_2px_10px_rgba(15,23,42,0.03)]">
           <table className="w-full min-w-[920px] border-collapse text-left text-sm">
             <thead>
-              <tr className="border-b border-stone-200 bg-stone-100/80 text-stone-700">
-                <th className="w-12 px-3 py-3 text-center font-semibold">
+              <tr className="border-b border-[#E2ECF7] bg-[#F1F6FC] text-slate-700">
+                <th className="w-12 px-3 py-3.5 text-center font-semibold">
                   <button
                     type="button"
                     onClick={() => handleSort('id')}
-                    className="inline-flex cursor-pointer items-center gap-1 hover:text-stone-950"
+                    className="inline-flex cursor-pointer items-center gap-1 hover:text-[#0066E6]"
                   >
                     <span>নং</span>
                     <ArrowDownUp className="h-3 w-3 opacity-60" />
                   </button>
                 </th>
-                <th className="px-4 py-3 font-semibold">মসজিদের নাম</th>
+                <th className="px-4 py-3.5 font-semibold">মসজিদের নাম</th>
                 {SUMMARY_CATEGORIES.map((cat) => (
                   <th
                     key={cat.key}
-                    className="px-2.5 py-3 text-center text-xs font-semibold whitespace-nowrap"
+                    className="px-2.5 py-3.5 text-center text-xs font-semibold whitespace-nowrap"
                   >
                     {cat.key === SathiCategory.ThreeChillaSathi ? (
                       <button
                         type="button"
                         onClick={() => handleSort('threeChilla')}
-                        className="inline-flex cursor-pointer items-center gap-1 hover:text-stone-950"
+                        className="inline-flex cursor-pointer items-center gap-1 hover:text-[#0066E6]"
                       >
                         <span>{cat.shortLabel}</span>
                         <ArrowDownUp className="h-3 w-3 opacity-60" />
@@ -250,32 +283,32 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                     )}
                   </th>
                 ))}
-                <th className="bg-stone-200/50 px-4 py-3 text-center font-bold text-stone-900">
+                <th className="bg-[#EBF4FF] px-4 py-3.5 text-center font-bold text-[#0052BD]">
                   <button
                     type="button"
                     onClick={() => handleSort('total')}
-                    className="inline-flex cursor-pointer items-center gap-1 hover:text-emerald-900"
+                    className="inline-flex cursor-pointer items-center gap-1 hover:text-[#003D99]"
                   >
                     <span>মোট</span>
-                    <ArrowDownUp className="h-3 w-3 opacity-60" />
+                    <ArrowDownUp className="h-3 w-3 opacity-70" />
                   </button>
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-stone-200/80">
+            <tbody className="divide-y divide-slate-100">
               {sortedMosques.map((mosque) => {
                 const total = getMosqueTotalSathi(mosque);
                 return (
                   <tr
                     key={mosque.id}
                     onClick={() => onOpenMosque(mosque.id)}
-                    className="group cursor-pointer transition-colors duration-150 hover:bg-emerald-950/[0.03]"
+                    className="group cursor-pointer transition-colors duration-150 hover:bg-[#F4F9FF]"
                   >
-                    <td className="px-3 py-3 text-center font-mono text-stone-500 tabular-nums">
+                    <td className="px-3 py-3 text-center font-mono text-slate-400 tabular-nums">
                       {toBn(mosque.id)}
                     </td>
-                    <td className="px-4 py-3 font-medium text-stone-900">
-                      <span className="inline-flex items-center gap-1.5 group-hover:text-emerald-900">
+                    <td className="px-4 py-3 font-medium text-slate-900">
+                      <span className="inline-flex items-center gap-1.5 group-hover:text-[#0066E6]">
                         <span>{mosque.name}</span>
                         <ArrowUpRight className="h-3.5 w-3.5 opacity-0 transition-opacity group-hover:opacity-100" />
                       </span>
@@ -287,15 +320,15 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                           key={cat.key}
                           className={`px-2.5 py-3 text-center font-mono tabular-nums ${
                             count > 0
-                              ? 'font-medium text-stone-800'
-                              : 'text-stone-300'
+                              ? 'font-medium text-slate-800'
+                              : 'text-slate-300'
                           }`}
                         >
                           {count > 0 ? toBn(count) : '·'}
                         </td>
                       );
                     })}
-                    <td className="bg-stone-50 px-4 py-3 text-center font-mono font-bold text-emerald-900 tabular-nums">
+                    <td className="bg-[#F8FBFF] px-4 py-3 text-center font-mono font-bold text-[#0066E6] tabular-nums">
                       {toBn(total)}
                     </td>
                   </tr>
@@ -306,7 +339,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                 <tr>
                   <td
                     colSpan={12}
-                    className="px-4 py-10 text-center text-sm text-stone-500"
+                    className="px-4 py-10 text-center text-sm text-slate-500"
                   >
                     আপনার অনুসন্ধানের সাথে মিলে এমন কোনো মসজিদ পাওয়া যায়নি।
                   </td>
@@ -314,9 +347,11 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
               )}
             </tbody>
             <tfoot>
-              <tr className="border-t-2 border-stone-300 bg-stone-100 font-bold text-stone-900">
+              <tr className="border-t-2 border-[#D2E3F8] bg-[#F1F6FC] font-bold text-slate-900">
                 <td className="px-3 py-3.5 text-center" />
-                <td className="px-4 py-3.5">সর্বমোট ({toBn(mosques.length)}টি মসজিদ)</td>
+                <td className="px-4 py-3.5">
+                  সর্বমোট ({toBn(mosques.length)}টি মসজিদ)
+                </td>
                 {SUMMARY_CATEGORIES.map((cat) => (
                   <td
                     key={cat.key}
@@ -325,7 +360,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                     {toBn(totals.byCategory[cat.key] ?? 0)}
                   </td>
                 ))}
-                <td className="bg-emerald-900 px-4 py-3.5 text-center font-mono text-white tabular-nums">
+                <td className="bg-[#0066E6] px-4 py-3.5 text-center font-mono text-white tabular-nums">
                   {toBn(totals.grandTotal)}
                 </td>
               </tr>
@@ -337,36 +372,39 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
       {/* Category Distribution Breakdown */}
       <section className="space-y-4">
         <div>
-          <h2 className="font-display text-2xl font-bold text-stone-900">
+          <h2 className="font-display text-2xl font-bold text-slate-900">
             বিভাগ ভিত্তিক সাথীর বণ্টন
           </h2>
-          <p className="text-sm text-stone-600">
+          <p className="text-sm text-slate-500">
             যেকোনো বিভাগে ক্লিক করলে সরাসরি উক্ত বিভাগের সাথীদের তালিকা দেখতে পারবেন
           </p>
         </div>
 
-        <div className="grid gap-3 rounded-xl border border-stone-200 bg-white p-5 sm:p-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-3.5 rounded-2xl border border-[#E2ECF7] bg-white p-5 shadow-[0_2px_10px_rgba(15,23,42,0.03)] sm:p-6 md:grid-cols-2 lg:grid-cols-3">
           {SUMMARY_CATEGORIES.map((cat) => {
             const count = totals.byCategory[cat.key] ?? 0;
-            const widthPct = Math.max(3, Math.round((count / maxCategoryCount) * 100));
+            const widthPct = Math.max(
+              3,
+              Math.round((count / maxCategoryCount) * 100)
+            );
             return (
               <button
                 key={cat.key}
                 type="button"
                 onClick={() => onOpenDirectory(cat.key)}
-                className="group cursor-pointer rounded-lg border border-stone-200/80 p-3.5 text-left transition-colors duration-150 hover:border-emerald-800/40 hover:bg-stone-50"
+                className="group cursor-pointer rounded-xl border border-[#E2ECF7] bg-[#F8FBFF]/60 p-4 text-left transition-all duration-150 hover:border-[#0066E6]/40 hover:bg-[#EBF4FF]/50"
               >
                 <div className="flex items-baseline justify-between gap-2">
-                  <span className="text-sm font-medium text-stone-800 group-hover:text-emerald-900">
+                  <span className="text-sm font-semibold text-slate-800 group-hover:text-[#0066E6]">
                     {cat.shortLabel}
                   </span>
-                  <span className="font-mono text-base font-bold text-stone-900 tabular-nums">
+                  <span className="font-mono text-base font-bold text-slate-900 tabular-nums">
                     {toBn(count)} জন
                   </span>
                 </div>
-                <div className="mt-2.5 h-1.5 w-full overflow-hidden rounded-full bg-stone-100">
+                <div className="mt-2.5 h-2 w-full overflow-hidden rounded-full bg-[#E2ECF7]">
                   <div
-                    className="h-full rounded-full bg-emerald-800 transition-all duration-300"
+                    className="h-full rounded-full bg-[#0066E6] transition-all duration-300"
                     style={{ width: `${widthPct}%` }}
                   />
                 </div>

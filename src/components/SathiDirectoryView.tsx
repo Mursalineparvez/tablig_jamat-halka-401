@@ -1,9 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import {
   ArrowUpRight,
-  Check,
-  Copy,
-  Phone,
   Search,
   X,
 } from 'lucide-react';
@@ -14,6 +11,7 @@ import {
   normalizeSearchText,
   toBn,
 } from '../utils/bengali';
+import { PhoneActions } from './PhoneActions';
 
 interface SathiDirectoryViewProps {
   mosques: MosqueRecord[];
@@ -152,22 +150,25 @@ export const SathiDirectoryView: React.FC<SathiDirectoryViewProps> = ({
 
   return (
     <div className="space-y-6">
-      <section className="border-b border-stone-200 pb-6">
-        <h1 className="font-display text-2xl font-bold text-stone-900 sm:text-3xl">
+      <section className="rounded-2xl border border-[#DCE8F7] bg-gradient-to-r from-[#EBF4FF] via-[#F3F8FF] to-white p-6 shadow-[0_2px_10px_rgba(15,23,42,0.03)]">
+        <p className="text-xs font-semibold text-[#0066E6]">
+          সার্চ ও ডিরেক্টরি · ৪০১ নং হালকা
+        </p>
+        <h1 className="font-display mt-1 text-2xl font-bold text-slate-900 sm:text-3xl">
           সমন্বিত সাথী ও ইমাম-খতিব ডিরেক্টরি
         </h1>
-        <p className="mt-1.5 text-sm text-stone-600">
+        <p className="mt-1.5 text-sm text-slate-600">
           পুরো ৪০১ নং হালকার যেকোনো সাথী, ওলামা, খতিব, ইমাম বা মোয়াজ্জিনকে নাম
           অথবা মোবাইল নম্বর দিয়ে তাৎক্ষণিক খুঁজুন।
         </p>
       </section>
 
       {/* Search & Filter Controls */}
-      <section className="rounded-xl border border-stone-200 bg-white p-4 sm:p-5">
+      <section className="rounded-2xl border border-[#E2ECF7] bg-white p-4 shadow-[0_2px_10px_rgba(15,23,42,0.03)] sm:p-5">
         <div className="grid grid-cols-1 gap-3 md:grid-cols-12">
           <div className="relative md:col-span-5">
             <Search
-              className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-stone-400"
+              className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400"
               aria-hidden="true"
             />
             <input
@@ -175,14 +176,14 @@ export const SathiDirectoryView: React.FC<SathiDirectoryViewProps> = ({
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="নাম বা মোবাইল নম্বর লিখুন (যেমন: 01718 বা মুফতী)..."
-              className="w-full rounded-lg border border-stone-300 bg-stone-50 py-2.5 pr-9 pl-9 text-sm text-stone-900 placeholder:text-stone-400 focus:border-emerald-800 focus:bg-white focus:outline-none"
+              className="w-full rounded-xl border border-[#DCE8F7] bg-[#F8FBFF] py-2.5 pr-9 pl-9 text-sm text-slate-900 placeholder:text-slate-400 focus:border-[#0066E6] focus:bg-white focus:outline-none"
             />
             {query && (
               <button
                 type="button"
                 onClick={() => setQuery('')}
                 aria-label="অনুসন্ধান মুছুন"
-                className="absolute top-1/2 right-2.5 -translate-y-1/2 cursor-pointer rounded p-1 text-stone-400 hover:text-stone-700"
+                className="absolute top-1/2 right-2.5 -translate-y-1/2 cursor-pointer rounded-lg p-1 text-slate-400 hover:text-slate-700"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -198,7 +199,7 @@ export const SathiDirectoryView: React.FC<SathiDirectoryViewProps> = ({
                   e.target.value === 'all' ? 'all' : Number(e.target.value)
                 )
               }
-              className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 text-sm text-stone-800 focus:border-emerald-800 focus:outline-none"
+              className="w-full rounded-xl border border-[#DCE8F7] bg-white px-3 py-2.5 text-sm text-slate-800 focus:border-[#0066E6] focus:outline-none"
             >
               <option value="all">সকল মসজিদ ({toBn(mosques.length)}টি)</option>
               {mosques.map((m) => (
@@ -218,7 +219,7 @@ export const SathiDirectoryView: React.FC<SathiDirectoryViewProps> = ({
                   e.target.value as SathiCategory | 'all' | 'officials'
                 )
               }
-              className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 text-sm text-stone-800 focus:border-emerald-800 focus:outline-none"
+              className="w-full rounded-xl border border-[#DCE8F7] bg-white px-3 py-2.5 text-sm text-slate-800 focus:border-[#0066E6] focus:outline-none"
             >
               <option value="all">সকল বিভাগ</option>
               <option value="officials">খতিব / ইমাম / মোয়াজ্জিন</option>
@@ -239,7 +240,7 @@ export const SathiDirectoryView: React.FC<SathiDirectoryViewProps> = ({
                   e.target.value as 'all' | 'has_phone' | 'no_phone'
                 )
               }
-              className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 text-sm text-stone-800 focus:border-emerald-800 focus:outline-none"
+              className="w-full rounded-xl border border-[#DCE8F7] bg-white px-3 py-2.5 text-sm text-slate-800 focus:border-[#0066E6] focus:outline-none"
             >
               <option value="all">সকল তথ্য</option>
               <option value="has_phone">মোবাইল নম্বর আছে</option>
@@ -248,9 +249,13 @@ export const SathiDirectoryView: React.FC<SathiDirectoryViewProps> = ({
           </div>
         </div>
 
-        <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-stone-500">
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
           <span>
-            প্রদর্শিত ফলাফল: <strong className="font-mono text-stone-800 tabular-nums">{toBn(filteredItems.length)}</strong> টি এন্ট্রি
+            প্রদর্শিত ফলাফল:{' '}
+            <strong className="font-mono text-[#0066E6] tabular-nums">
+              {toBn(filteredItems.length)}
+            </strong>{' '}
+            টি এন্ট্রি
           </span>
           {hasActiveFilter && (
             <button
@@ -261,7 +266,7 @@ export const SathiDirectoryView: React.FC<SathiDirectoryViewProps> = ({
                 setCategoryFilter('all');
                 setPhoneFilter('all');
               }}
-              className="cursor-pointer font-medium text-emerald-900 hover:underline"
+              className="cursor-pointer font-semibold text-[#0066E6] hover:underline"
             >
               সকল ফিল্টার রিসেট করুন
             </button>
@@ -270,40 +275,40 @@ export const SathiDirectoryView: React.FC<SathiDirectoryViewProps> = ({
       </section>
 
       {/* Results Table */}
-      <section className="overflow-hidden rounded-xl border border-stone-200 bg-white">
+      <section className="overflow-hidden rounded-2xl border border-[#E2ECF7] bg-white shadow-[0_2px_10px_rgba(15,23,42,0.03)]">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[780px] border-collapse text-left text-sm">
             <thead>
-              <tr className="border-b border-stone-200 bg-stone-100/80 text-xs font-semibold text-stone-600">
-                <th className="w-12 px-4 py-3 text-center">ক্রম</th>
-                <th className="px-4 py-3">নাম</th>
-                <th className="px-4 py-3">বিভাগ / দায়িত্ব</th>
-                <th className="px-4 py-3">মসজিদ</th>
-                <th className="w-52 px-4 py-3">মোবাইল নম্বর</th>
+              <tr className="border-b border-[#E2ECF7] bg-[#F1F6FC] text-xs font-semibold text-slate-600">
+                <th className="w-12 px-4 py-3.5 text-center">ক্রম</th>
+                <th className="px-4 py-3.5">নাম</th>
+                <th className="px-4 py-3.5">বিভাগ / দায়িত্ব</th>
+                <th className="px-4 py-3.5">মসজিদ</th>
+                <th className="min-w-[270px] px-4 py-3.5">মোবাইল ও কল</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-stone-100">
+            <tbody className="divide-y divide-slate-100">
               {filteredItems.map((item, idx) => {
                 const hasPhone = Boolean(item.phone.trim());
                 return (
                   <tr
                     key={item.key}
-                    className="transition-colors hover:bg-stone-50"
+                    className="transition-colors hover:bg-[#F4F9FF]"
                   >
-                    <td className="px-4 py-3 text-center font-mono text-xs text-stone-400 tabular-nums">
+                    <td className="px-4 py-3 text-center font-mono text-xs text-slate-400 tabular-nums">
                       {toBn(idx + 1)}
                     </td>
-                    <td className="px-4 py-3 font-medium text-stone-900">
+                    <td className="px-4 py-3 font-medium text-slate-900">
                       {item.name}
                     </td>
-                    <td className="px-4 py-3 text-xs text-stone-600">
+                    <td className="px-4 py-3 text-xs text-slate-600">
                       {item.roleOrCategory}
                     </td>
                     <td className="px-4 py-3">
                       <button
                         type="button"
                         onClick={() => onOpenMosque(item.mosqueId)}
-                        className="inline-flex cursor-pointer items-center gap-1 text-left text-sm text-stone-700 hover:text-emerald-900 hover:underline"
+                        className="inline-flex cursor-pointer items-center gap-1 text-left text-sm text-slate-700 hover:text-[#0066E6] hover:underline"
                       >
                         <span>
                           {toBn(item.mosqueId)}. {item.mosqueName}
@@ -313,35 +318,13 @@ export const SathiDirectoryView: React.FC<SathiDirectoryViewProps> = ({
                     </td>
                     <td className="px-4 py-3">
                       {hasPhone ? (
-                        <div className="flex items-center gap-2">
-                          <a
-                            href={`tel:${item.phone.replace(/[^\d+]/g, '')}`}
-                            className="inline-flex items-center gap-1.5 font-mono text-xs font-medium text-emerald-900 hover:underline tabular-nums"
-                          >
-                            <Phone className="h-3 w-3" />
-                            <span>{item.phone}</span>
-                          </a>
-                          <button
-                            type="button"
-                            onClick={() => handleCopy(item.key, item.phone)}
-                            aria-label="নম্বর কপি করুন"
-                            className="cursor-pointer rounded border border-stone-200 px-1.5 py-0.5 text-[11px] text-stone-500 hover:bg-stone-100 hover:text-stone-800"
-                          >
-                            {copiedKey === item.key ? (
-                              <span className="inline-flex items-center gap-0.5 text-emerald-700">
-                                <Check className="h-3 w-3" />
-                                কপি
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center gap-0.5">
-                                <Copy className="h-3 w-3" />
-                                কপি
-                              </span>
-                            )}
-                          </button>
-                        </div>
+                        <PhoneActions
+                          phone={item.phone}
+                          copied={copiedKey === item.key}
+                          onCopy={() => handleCopy(item.key, item.phone)}
+                        />
                       ) : (
-                        <span className="text-xs text-stone-300">—</span>
+                        <span className="text-xs text-slate-300">—</span>
                       )}
                     </td>
                   </tr>
@@ -352,7 +335,7 @@ export const SathiDirectoryView: React.FC<SathiDirectoryViewProps> = ({
                 <tr>
                   <td
                     colSpan={5}
-                    className="px-4 py-12 text-center text-sm text-stone-500"
+                    className="px-4 py-12 text-center text-sm text-slate-500"
                   >
                     কোনো মিল খুঁজে পাওয়া যায়নি। অন্য কোনো নাম বা নম্বর দিয়ে চেষ্টা
                     করুন।

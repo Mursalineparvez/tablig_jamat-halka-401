@@ -30,6 +30,40 @@ export function normalizeSearchText(text: string): string {
     .replace(/[-\s]/g, '');
 }
 
+const BN_TO_EN: Record<string, string> = {
+  '০': '0',
+  '১': '1',
+  '২': '2',
+  '৩': '3',
+  '৪': '4',
+  '৫': '5',
+  '৬': '6',
+  '৭': '7',
+  '৮': '8',
+  '৯': '9',
+};
+
+export function getTelHref(phone: string): string {
+  const ascii = phone
+    .replace(/[০-৯]/g, (ch) => BN_TO_EN[ch] ?? ch)
+    .replace(/[^\d+]/g, '');
+  return `tel:${ascii}`;
+}
+
+export function getWhatsAppHref(phone: string): string {
+  const digits = phone
+    .replace(/[০-৯]/g, (ch) => BN_TO_EN[ch] ?? ch)
+    .replace(/\D/g, '');
+  if (!digits) return '';
+  let waDigits = digits;
+  if (digits.startsWith('01') && digits.length === 11) {
+    waDigits = `88${digits}`;
+  } else if (digits.startsWith('1') && digits.length === 10) {
+    waDigits = `880${digits}`;
+  }
+  return `https://wa.me/${waDigits}`;
+}
+
 export const CATEGORY_META: CategoryMeta[] = [
   {
     key: SathiCategory.SalwaliUlama,
