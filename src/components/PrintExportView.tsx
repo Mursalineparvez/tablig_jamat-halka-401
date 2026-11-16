@@ -491,7 +491,7 @@ export const PrintExportView: React.FC<PrintExportViewProps> = ({
                           <th className="w-12 border border-stone-400 px-2 py-1 text-center">
                             ক্র
                           </th>
-                          <th className="w-[32%] border border-stone-400 px-2.5 py-1 text-left">
+                          <th className="w-[34%] border border-stone-400 px-2.5 py-1 text-left">
                             নাম
                           </th>
                           <th className="w-44 whitespace-nowrap border border-stone-400 px-2.5 py-1 text-left">
