@@ -623,7 +623,10 @@ export default function App() {
     setAuthBusy(true);
     setAuthError(null);
     try {
-      await signInWithPopup(auth, googleProvider);
+      const cred = await signInWithPopup(auth, googleProvider);
+      if (isSuperAdminEmail(cred.user?.email)) {
+        setAccessModalOpen(false);
+      }
       showToast('সাইন ইন সফল হয়েছে।');
     } catch (error) {
       const errCode =
@@ -637,7 +640,8 @@ export default function App() {
           await signInWithRedirect(auth, googleProvider);
           return;
         } catch {
-          setAuthError('Google সাইন ইন রিডাইরেক্ট চালু করতে সমস্যা হয়েছে।');
+          setAuthError('Google সাইন ইন চালু করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।');
+          setAccessModalOpen(true);
         }
       } else if (
         errCode === 'auth/unauthorized-domain' ||
@@ -646,17 +650,20 @@ export default function App() {
         const host =
           typeof window !== 'undefined' ? window.location.hostname : 'this domain';
         setAuthError(
-          `এই ডোমেইনটি (${host}) Firebase Authorized Domains-এ যুক্ত করা নেই। Firebase Console → Authentication → Settings → Authorized domains-এ গিয়ে "${host}" যুক্ত করুন।`
+          `এই ডোমেইন (${host}) এখনো Firebase Authorized Domains-এ যোগ করা নেই। শুধু একবার যোগ করলেই সাথে সাথে সাইন ইন হয়ে যাবে।`
         );
+        setAccessModalOpen(true);
       } else if (
         errCode === 'auth/popup-closed-by-user' ||
         errMsg.includes('popup-closed')
       ) {
         setAuthError('সাইন ইন পপআপ বন্ধ করা হয়েছে। আবার চেষ্টা করুন।');
+        setAccessModalOpen(true);
       } else {
         setAuthError(
           'Google সাইন ইন করতে সমস্যা হয়েছে। পপআপ ব্লকার বন্ধ রেখে আবার চেষ্টা করুন।'
         );
+        setAccessModalOpen(true);
       }
     } finally {
       setAuthBusy(false);
@@ -1652,36 +1659,27 @@ export default function App() {
         isSuperAdmin={isSuperAdmin}
         pendingRequestCount={pendingRequestCount}
         onOpenAccessModal={() => setAccessModalOpen(true)}
+        onQuickSignIn={() => void handleSignIn()}
       />
 
       <OfflineIndicator />
 
-      {authReady && !canEdit && (
+      {authReady && user && !canEdit && (
         <div className="no-print border-b border-[#CFE3DF] bg-[#E8F4F1]">
           <div className="mx-auto flex max-w-[1320px] flex-wrap items-center justify-between gap-2 px-4 py-2 text-xs text-[#1D3F3B] sm:px-6 lg:px-8">
             <div className="flex items-center gap-2">
               <Lock className="h-3.5 w-3.5 shrink-0 text-[#0E6F66]" />
-              {user ? (
-                <span>
-                  সাইন ইন:{' '}
-                  <strong className="font-mono">{user.email}</strong> — তথ্য যোগ বা
-                  এডিট করতে{' '}
-                  <strong className="font-mono">{SUPER_ADMIN_EMAIL}</strong>-এর
-                  অনুমোদন প্রয়োজন।
-                </span>
-              ) : (
-                <span>
-                  সবাই তথ্য দেখতে, কল করতে ও প্রিন্ট করতে পারবেন। তথ্য যোগ বা এডিট
-                  করতে অনুমোদিত অ্যাকাউন্টে সাইন ইন করুন।
-                </span>
-              )}
+              <span>
+                সাইন ইন: <strong className="font-mono">{user.email}</strong> —
+                তথ্য যোগ বা এডিট করতে অ্যাডমিনের অনুমোদন প্রয়োজন।
+              </span>
             </div>
             <button
               type="button"
               onClick={() => setAccessModalOpen(true)}
               className="cursor-pointer rounded-lg bg-white px-2.5 py-1 font-semibold text-[#0E6F66] shadow-xs ring-1 ring-[#B7DBD3] transition-colors hover:bg-[#0E6F66] hover:text-white"
             >
-              {user ? 'অ্যাক্সেস অনুরোধ দেখুন' : 'এডিট সাইন ইন'}
+              অ্যাক্সেস অনুরোধ দেখুন
             </button>
           </div>
         </div>

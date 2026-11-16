@@ -13,6 +13,7 @@ interface HeaderProps {
   isSuperAdmin: boolean;
   pendingRequestCount: number;
   onOpenAccessModal: () => void;
+  onQuickSignIn: () => void;
 }
 
 const NAV_ITEMS: Array<{ id: ActiveTab; label: string }> = [
@@ -33,6 +34,7 @@ export const Header: React.FC<HeaderProps> = ({
   isSuperAdmin,
   pendingRequestCount,
   onOpenAccessModal,
+  onQuickSignIn,
 }) => {
   return (
     <header className="no-print sticky top-0 z-30 border-b border-[#D9EAE6] bg-white/95 backdrop-blur-md">
@@ -81,7 +83,7 @@ export const Header: React.FC<HeaderProps> = ({
           <PWAInstallButton />
           <button
             type="button"
-            onClick={onOpenAccessModal}
+            onClick={userEmail ? onOpenAccessModal : onQuickSignIn}
             className={`inline-flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-xl px-3 py-2 text-xs font-semibold transition-colors ${
               isSuperAdmin
                 ? 'border border-[#B7DBD3] bg-[#E5F3F0] text-[#0E6F66] hover:bg-[#D5ECE6]'
@@ -117,7 +119,7 @@ export const Header: React.FC<HeaderProps> = ({
             ) : (
               <>
                 <LogIn className="h-3.5 w-3.5" />
-                <span>এডিট সাইন ইন</span>
+                <span>Google সাইন ইন</span>
               </>
             )}
           </button>

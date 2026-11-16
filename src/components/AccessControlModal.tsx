@@ -1,10 +1,8 @@
 import React, { useState } from 'react';
 import type { User } from 'firebase/auth';
 import {
-  Check,
   CheckCircle2,
   Clock,
-  Copy,
   ExternalLink,
   Lock,
   LogIn,
@@ -71,24 +69,14 @@ export const AccessControlModal: React.FC<AccessControlModalProps> = ({
   const [requestNote, setRequestNote] = useState(myRequest?.note ?? '');
   const [formError, setFormError] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [copiedHost, setCopiedHost] = useState(false);
 
   const pendingRequests = accessRequests.filter((r) => r.status === 'pending');
-  const currentHost =
-    typeof window !== 'undefined' ? window.location.hostname : '';
   const isUnauthorizedDomainError = Boolean(
     authError &&
-      (authError.includes('Authorized Domains') ||
+      (authError.includes('Authorized') ||
         authError.includes('unauthorized-domain'))
   );
   const authorizedDomainsConsoleUrl = `https://console.firebase.google.com/project/${FIREBASE_PROJECT_ID}/authentication/settings`;
-
-  const handleCopyHost = () => {
-    if (!currentHost) return;
-    void navigator.clipboard?.writeText(currentHost);
-    setCopiedHost(true);
-    window.setTimeout(() => setCopiedHost(false), 1800);
-  };
 
   const handleGrantSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -134,7 +122,11 @@ export const AccessControlModal: React.FC<AccessControlModalProps> = ({
       aria-labelledby="access-modal-title"
       className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-[#09201D]/45 p-4 backdrop-blur-[2px]"
     >
-      <div className="my-auto w-full max-w-2xl rounded-2xl border border-[#D9EAE6] bg-white shadow-xl">
+      <div
+        className={`my-auto w-full rounded-2xl border border-[#D9EAE6] bg-white shadow-xl ${
+          !user ? 'max-w-md' : 'max-w-2xl'
+        }`}
+      >
         <div className="flex items-center justify-between rounded-t-2xl border-b border-[#D9EAE6] bg-gradient-to-r from-[#E4F2EF] via-[#F2F8F7] to-white px-5 py-4">
           <div className="flex items-center gap-2.5">
             <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#E5F3F0] text-[#0E6F66]">
@@ -153,7 +145,7 @@ export const AccessControlModal: React.FC<AccessControlModalProps> = ({
                   ? 'অ্যাডমিন এডিট অ্যাক্সেস কন্ট্রোল'
                   : user
                   ? 'অ্যাকাউন্ট ও এডিট অনুমতি'
-                  : 'এডিট করার জন্য সাইন ইন'}
+                  : 'Google দিয়ে সাইন ইন'}
               </h2>
               <p className="text-xs text-[#58726E]">
                 যাত্রাবাড়ী মারকাজ · ৪০১ নং হালকা
@@ -173,90 +165,44 @@ export const AccessControlModal: React.FC<AccessControlModalProps> = ({
 
         <div className="space-y-5 p-5 sm:p-6">
           {authError && (
-            <div className="space-y-3 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-xs font-medium text-rose-700">
-              <p className="leading-relaxed">{authError}</p>
-              {isUnauthorizedDomainError && currentHost && (
-                <div className="space-y-2.5 rounded-xl border border-rose-200/80 bg-white p-3 text-[#102A27]">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div>
-                      <span className="text-[11px] font-medium text-[#58726E]">
-                        যুক্ত করার ডোমেইন:
-                      </span>
-                      <p className="font-mono text-xs font-bold text-[#102A27]">
-                        {currentHost}
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={handleCopyHost}
-                      className="inline-flex cursor-pointer items-center gap-1 rounded-lg border border-[#D5E7E2] bg-[#F4FAF8] px-2.5 py-1.5 text-[11px] font-semibold text-[#0E6F66] hover:bg-[#E5F3F0]"
-                    >
-                      {copiedHost ? (
-                        <>
-                          <Check className="h-3.5 w-3.5" />
-                          <span>কপি হয়েছে</span>
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="h-3.5 w-3.5" />
-                          <span>ডোমেইন কপি করুন</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
-                  <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[#EDF5F3] pt-2.5">
-                    <span className="text-[11px] text-[#58726E]">
-                      প্রজেক্ট:{' '}
-                      <strong className="font-mono text-[#102A27]">
-                        {FIREBASE_PROJECT_ID}
-                      </strong>
-                    </span>
-                    <a
-                      href={authorizedDomainsConsoleUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 rounded-lg bg-[#0E6F66] px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-[#0B5A53]"
-                    >
-                      <span>Firebase Authorized Domains খুলুন</span>
-                      <ExternalLink className="h-3 w-3" />
-                    </a>
-                  </div>
-                </div>
+            <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-xs leading-relaxed font-medium text-rose-700">
+              <p>{authError}</p>
+              {isUnauthorizedDomainError && (
+                <a
+                  href={authorizedDomainsConsoleUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-2 inline-flex items-center gap-1 font-semibold text-[#0E6F66] underline underline-offset-2 hover:text-[#0B5A53]"
+                >
+                  <span>Firebase Settings খুলুন</span>
+                  <ExternalLink className="h-3 w-3" />
+                </a>
               )}
             </div>
           )}
 
-          {/* Case 1: Not Signed In */}
+          {/* Case 1: Not Signed In — Clean 1-click Google Sign-In */}
           {!user && (
-            <div className="space-y-4">
-              <div className="rounded-2xl border border-[#D5E7E2] bg-[#F4FAF8] p-4 text-sm leading-relaxed text-[#1D3F3B]">
-                <p>
-                  এই ওয়েবসাইটের সকল মসজিদ, সাথী ও দৈনিক কারগুজারি{' '}
-                  <strong className="text-[#102A27]">সবার দেখার জন্য উন্মুক্ত</strong>।
-                </p>
-                <p className="mt-2">
-                  তবে নতুন তথ্য যোগ, পরিবর্তন বা মুছে ফেলার জন্য Google অ্যাকাউন্ট দিয়ে{' '}
-                  <strong className="text-[#0E6F66]">সাইন ইন</strong> করতে হবে এবং{' '}
-                  <span className="font-mono text-xs font-semibold text-[#102A27]">
-                    {SUPER_ADMIN_EMAIL}
-                  </span>{' '}
-                  থেকে এডিট অ্যাক্সেস অনুমোদিত হতে হবে।
-                </p>
-              </div>
+            <div className="space-y-5">
+              <p className="text-sm leading-relaxed text-[#4F6B67]">
+                তথ্য দেখা সবার জন্য উন্মুক্ত। নতুন তথ্য যোগ বা এডিট করতে আপনার{' '}
+                <strong className="text-[#102A27]">Google অ্যাকাউন্ট</strong>{' '}
+                দিয়ে সাইন ইন করুন।
+              </p>
 
-              <div className="flex flex-wrap items-center justify-end gap-3">
+              <div className="flex flex-col-reverse gap-2.5 sm:flex-row sm:items-center sm:justify-end">
                 <button
                   type="button"
                   onClick={onClose}
                   className="cursor-pointer rounded-xl border border-[#D5E7E2] px-4 py-2.5 text-sm font-medium text-[#1D3F3B] hover:bg-[#EBF4F2]"
                 >
-                  শুধু দেখব (বাতিল)
+                  বাতিল
                 </button>
                 <button
                   type="button"
                   disabled={authBusy}
                   onClick={() => void onSignIn()}
-                  className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-[#0E6F66] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_2px_10px_rgba(14,111,102,0.24)] transition-colors hover:bg-[#0B5A53] disabled:opacity-60"
+                  className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#0E6F66] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_2px_10px_rgba(14,111,102,0.24)] transition-colors hover:bg-[#0B5A53] disabled:opacity-60"
                 >
                   <LogIn className="h-4 w-4" />
                   <span>
