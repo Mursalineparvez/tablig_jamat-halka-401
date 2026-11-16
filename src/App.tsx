@@ -5,7 +5,11 @@
 
 import { useEffect, useState } from 'react';
 import { Header } from './components/Header';
-import { KargoojariView } from './components/KargoojariView';
+import {
+  AssignKargoojariToMosquePayload,
+  AssignKargoojariToTakazaPayload,
+  KargoojariView,
+} from './components/KargoojariView';
 import {
   MosqueFormValues,
   MosqueInfoModal,
@@ -20,6 +24,7 @@ import { INITIAL_KARGOOJARIS, INITIAL_MOSQUES } from './data/halqaData';
 import {
   ActiveTab,
   KargoojariEntry,
+  KargoojariSathiItem,
   MosqueRecord,
   OfficialInfo,
   SathiCategory,
@@ -27,13 +32,13 @@ import {
   TakazaEntry,
   TakazaStatus,
 } from './types/directory';
-import { toBn } from './utils/bengali';
+import { formatBdPhone, getCategoryMeta, toBn } from './utils/bengali';
 
 const STORAGE_KEY = 'jatrabari_markaz_halqa_401_v1';
 const GIRIDHARA_CHATRA_SEED_KEY = 'jatrabari_markaz_seed_m3_chatra_v1';
 const TAKAZA_STORAGE_KEY = 'jatrabari_markaz_halqa_401_takaza_v1';
 const KARGOOJARI_STORAGE_KEY = 'jatrabari_markaz_halqa_401_kargoojari_v1';
-const KARGOOJARI_SEED_KEY = 'jatrabari_markaz_seed_karg_20261115_v1';
+const KARGOOJARI_SEED_KEY = 'jatrabari_markaz_seed_karg_20261115_sathis_v1';
 
 interface SathiModalState {
   mosqueId: number;
@@ -73,10 +78,53 @@ function loadFromStorage<T>(key: string, fallback: T): T {
   return fallback;
 }
 
+function normalizeMosquesPhones(list: MosqueRecord[]): MosqueRecord[] {
+  return list.map((m) => {
+    const normalizedCategories = { ...m.categories };
+    for (const key of Object.keys(normalizedCategories) as SathiCategory[]) {
+      normalizedCategories[key] = (normalizedCategories[key] ?? []).map(
+        (entry) => ({
+          ...entry,
+          phone: formatBdPhone(entry.phone),
+        })
+      );
+    }
+    return {
+      ...m,
+      khatib: { ...m.khatib, phone: formatBdPhone(m.khatib.phone) },
+      imam: { ...m.imam, phone: formatBdPhone(m.imam.phone) },
+      muazzin: { ...m.muazzin, phone: formatBdPhone(m.muazzin.phone) },
+      categories: normalizedCategories,
+    };
+  });
+}
+
+function normalizeTakazasPhones(list: TakazaEntry[]): TakazaEntry[] {
+  return list.map((t) => ({
+    ...t,
+    zimmadarPhone: formatBdPhone(t.zimmadarPhone),
+    committedSathis: t.committedSathis?.map((cs) => ({
+      ...cs,
+      phone: formatBdPhone(cs.phone),
+    })),
+  }));
+}
+
+function normalizeKargoojarisPhones(list: KargoojariEntry[]): KargoojariEntry[] {
+  return list.map((k) => ({
+    ...k,
+    sathis: k.sathis?.map((s) => ({
+      ...s,
+      phone: formatBdPhone(s.phone),
+    })),
+  }));
+}
+
 function loadInitialMosques(): MosqueRecord[] {
   const loaded = loadFromStorage<MosqueRecord[]>(STORAGE_KEY, INITIAL_MOSQUES);
-  const base =
-    Array.isArray(loaded) && loaded.length > 0 ? loaded : INITIAL_MOSQUES;
+  const base = normalizeMosquesPhones(
+    Array.isArray(loaded) && loaded.length > 0 ? loaded : INITIAL_MOSQUES
+  );
 
   try {
     const alreadySeeded = localStorage.getItem(GIRIDHARA_CHATRA_SEED_KEY);
@@ -89,10 +137,10 @@ function loadInitialMosques(): MosqueRecord[] {
         if (m.id !== 3) return m;
         const existing = m.categories?.[SathiCategory.ChatraNowjowan] ?? [];
         const existingKeys = new Set(
-          existing.map((e) => `${e.name.trim()}|${e.phone.trim()}`)
+          existing.map((e) => `${e.name.trim()}|${formatBdPhone(e.phone)}`)
         );
         const missing = seedEntries.filter(
-          (e) => !existingKeys.has(`${e.name.trim()}|${e.phone.trim()}`)
+          (e) => !existingKeys.has(`${e.name.trim()}|${formatBdPhone(e.phone)}`)
         );
         if (missing.length === 0) return m;
         return {
@@ -119,17 +167,31 @@ function loadInitialKargoojaris(): KargoojariEntry[] {
     KARGOOJARI_STORAGE_KEY,
     INITIAL_KARGOOJARIS
   );
-  const base = Array.isArray(loaded) ? loaded : INITIAL_KARGOOJARIS;
+  const base = normalizeKargoojarisPhones(
+    Array.isArray(loaded) ? loaded : INITIAL_KARGOOJARIS
+  );
 
   try {
     const alreadySeeded = localStorage.getItem(KARGOOJARI_SEED_KEY);
     if (!alreadySeeded) {
-      const existingIds = new Set(base.map((k) => k.id));
+      const seedById = new Map(INITIAL_KARGOOJARIS.map((k) => [k.id, k]));
+      // Hydrate missing structured sathis onto existing seeded baseline entries
+      const hydrated = base.map((entry) => {
+        const seedMatch = seedById.get(entry.id);
+        if (
+          seedMatch &&
+          (!entry.sathis || entry.sathis.length === 0) &&
+          seedMatch.sathis &&
+          seedMatch.sathis.length > 0
+        ) {
+          return { ...entry, sathis: seedMatch.sathis };
+        }
+        return entry;
+      });
+      const existingIds = new Set(hydrated.map((k) => k.id));
       const missing = INITIAL_KARGOOJARIS.filter((k) => !existingIds.has(k.id));
       localStorage.setItem(KARGOOJARI_SEED_KEY, '1');
-      if (missing.length > 0) {
-        return [...missing, ...base];
-      }
+      return [...missing, ...hydrated];
     }
   } catch {
     // Ignore storage read/write errors
@@ -143,7 +205,7 @@ export default function App() {
 
   const [takazas, setTakazas] = useState<TakazaEntry[]>(() => {
     const loaded = loadFromStorage<TakazaEntry[]>(TAKAZA_STORAGE_KEY, []);
-    return Array.isArray(loaded) ? loaded : [];
+    return Array.isArray(loaded) ? normalizeTakazasPhones(loaded) : [];
   });
 
   const [kargoojaris, setKargoojaris] = useState<KargoojariEntry[]>(
@@ -191,10 +253,11 @@ export default function App() {
   };
 
   const handleCopyPhone = (phone: string) => {
+    const formatted = formatBdPhone(phone);
     if (navigator.clipboard?.writeText) {
-      navigator.clipboard.writeText(phone).catch(() => {});
+      navigator.clipboard.writeText(formatted).catch(() => {});
     }
-    showToast(`নম্বর কপি করা হয়েছে: ${phone}`);
+    showToast(`নম্বর কপি করা হয়েছে: ${formatted}`);
   };
 
   const handleOpenMosque = (mosqueId: number) => {
@@ -214,20 +277,24 @@ export default function App() {
     category: SathiCategory,
     entryData: Omit<SathiEntry, 'id'> & { id?: string }
   ) => {
+    const normalizedEntry = {
+      ...entryData,
+      phone: formatBdPhone(entryData.phone),
+    };
     setMosques((prev) =>
       prev.map((m) => {
         if (m.id !== mosqueId) return m;
         const currentList = m.categories[category] ?? [];
-        const updatedList = entryData.id
+        const updatedList = normalizedEntry.id
           ? currentList.map((item) =>
-              item.id === entryData.id
-                ? { ...item, ...entryData, id: item.id }
+              item.id === normalizedEntry.id
+                ? { ...item, ...normalizedEntry, id: item.id }
                 : item
             )
           : [
               ...currentList,
               {
-                ...entryData,
+                ...normalizedEntry,
                 id: `m${mosqueId}-${category}-${Date.now()}`,
               },
             ];
@@ -243,7 +310,7 @@ export default function App() {
 
     setSathiModal(null);
     showToast(
-      entryData.id
+      normalizedEntry.id
         ? 'সাথীর তথ্য হালনাগাদ করা হয়েছে।'
         : 'নতুন সাথী তালিকায় যুক্ত করা হয়েছে।'
     );
@@ -275,6 +342,10 @@ export default function App() {
     values: MosqueFormValues,
     existingMosque?: MosqueRecord
   ) => {
+    const khatibPhone = formatBdPhone(values.khatibPhone);
+    const imamPhone = formatBdPhone(values.imamPhone);
+    const muazzinPhone = formatBdPhone(values.muazzinPhone);
+
     if (existingMosque) {
       setMosques((prev) =>
         prev.map((m) =>
@@ -283,11 +354,11 @@ export default function App() {
                 ...m,
                 name: values.name,
                 address: values.address,
-                khatib: { name: values.khatibName, phone: values.khatibPhone },
-                imam: { name: values.imamName, phone: values.imamPhone },
+                khatib: { name: values.khatibName, phone: khatibPhone },
+                imam: { name: values.imamName, phone: imamPhone },
                 muazzin: {
                   name: values.muazzinName,
-                  phone: values.muazzinPhone,
+                  phone: muazzinPhone,
                 },
               }
             : m
@@ -302,9 +373,9 @@ export default function App() {
         id: nextId,
         name: values.name,
         address: values.address,
-        khatib: { name: values.khatibName, phone: values.khatibPhone },
-        imam: { name: values.imamName, phone: values.imamPhone },
-        muazzin: { name: values.muazzinName, phone: values.muazzinPhone },
+        khatib: { name: values.khatibName, phone: khatibPhone },
+        imam: { name: values.imamName, phone: imamPhone },
+        muazzin: { name: values.muazzinName, phone: muazzinPhone },
         categories: createEmptyCategories(),
       };
       setMosques((prev) => [...prev, newMosque]);
@@ -334,15 +405,21 @@ export default function App() {
     role: 'khatib' | 'imam' | 'muazzin',
     official: OfficialInfo
   ) => {
+    const normalizedOfficial: OfficialInfo = {
+      name: official.name.trim(),
+      phone: formatBdPhone(official.phone),
+    };
     const roleLabels = {
       khatib: 'খতিব সাহেবের',
       imam: 'ইমাম সাহেবের',
       muazzin: 'মোয়াজ্জিন সাহেবের',
     };
     setMosques((prev) =>
-      prev.map((m) => (m.id === mosqueId ? { ...m, [role]: official } : m))
+      prev.map((m) =>
+        m.id === mosqueId ? { ...m, [role]: normalizedOfficial } : m
+      )
     );
-    const isEmpty = !official.name.trim() && !official.phone.trim();
+    const isEmpty = !normalizedOfficial.name && !normalizedOfficial.phone;
     showToast(
       isEmpty
         ? `${roleLabels[role]} তথ্য মুছে ফেলা হয়েছে।`
@@ -354,14 +431,20 @@ export default function App() {
   const handleSaveTakaza = (
     data: Omit<TakazaEntry, 'id' | 'createdAt'> & { id?: string }
   ) => {
-    if (data.id) {
+    const normalizedData = {
+      ...data,
+      zimmadarPhone: formatBdPhone(data.zimmadarPhone),
+    };
+    if (normalizedData.id) {
       setTakazas((prev) =>
-        prev.map((t) => (t.id === data.id ? { ...t, ...data, id: t.id } : t))
+        prev.map((t) =>
+          t.id === normalizedData.id ? { ...t, ...normalizedData, id: t.id } : t
+        )
       );
       showToast('তাকাজার তথ্য হালনাগাদ করা হয়েছে।');
     } else {
       const newEntry: TakazaEntry = {
-        ...data,
+        ...normalizedData,
         id: `takaza-${Date.now()}`,
         createdAt: new Date().toISOString(),
       };
@@ -402,14 +485,23 @@ export default function App() {
   const handleSaveKargoojari = (
     data: Omit<KargoojariEntry, 'id' | 'createdAt'> & { id?: string }
   ) => {
-    if (data.id) {
+    const normalizedData = {
+      ...data,
+      sathis: data.sathis?.map((s) => ({
+        ...s,
+        phone: formatBdPhone(s.phone),
+      })),
+    };
+    if (normalizedData.id) {
       setKargoojaris((prev) =>
-        prev.map((k) => (k.id === data.id ? { ...k, ...data, id: k.id } : k))
+        prev.map((k) =>
+          k.id === normalizedData.id ? { ...k, ...normalizedData, id: k.id } : k
+        )
       );
       showToast('দৈনিক কারগুজারি হালনাগাদ করা হয়েছে।');
     } else {
       const newEntry: KargoojariEntry = {
-        ...data,
+        ...normalizedData,
         id: `karg-${Date.now()}`,
         createdAt: new Date().toISOString(),
       };
@@ -423,14 +515,220 @@ export default function App() {
     showToast('কারগুজারি এন্ট্রিটি মুছে ফেলা হয়েছে।');
   };
 
+  const handleSaveKargoojariSathi = (
+    kargoojariId: string,
+    sathiData: Omit<KargoojariSathiItem, 'id'> & { id?: string }
+  ) => {
+    const normalizedSathi = {
+      ...sathiData,
+      phone: formatBdPhone(sathiData.phone),
+    };
+    setKargoojaris((prev) =>
+      prev.map((k) => {
+        if (k.id !== kargoojariId) return k;
+        const current = k.sathis ?? [];
+        const nextSathis = normalizedSathi.id
+          ? current.map((s) =>
+              s.id === normalizedSathi.id
+                ? { ...s, ...normalizedSathi, id: s.id }
+                : s
+            )
+          : [
+              ...current,
+              {
+                ...normalizedSathi,
+                id: `ks-${Date.now()}`,
+              },
+            ];
+        return { ...k, sathis: nextSathis };
+      })
+    );
+    showToast(
+      normalizedSathi.id
+        ? 'সাথীর তথ্য হালনাগাদ করা হয়েছে।'
+        : 'কারগুজারিতে নতুন সাথী যুক্ত করা হয়েছে।'
+    );
+  };
+
+  const handleDeleteKargoojariSathi = (
+    kargoojariId: string,
+    sathiId: string
+  ) => {
+    setKargoojaris((prev) =>
+      prev.map((k) => {
+        if (k.id !== kargoojariId) return k;
+        return {
+          ...k,
+          sathis: (k.sathis ?? []).filter((s) => s.id !== sathiId),
+        };
+      })
+    );
+    showToast('কারগুজারির তালিকা থেকে সাথীকে সরানো হয়েছে।');
+  };
+
+  const handleAssignKargoojariSathiToMosque = (
+    payload: AssignKargoojariToMosquePayload
+  ) => {
+    const formattedPhone = formatBdPhone(payload.phone);
+
+    // Add entry to chosen mosque & category in Mosque directory format
+    setMosques((prev) =>
+      prev.map((m) => {
+        if (m.id !== payload.mosqueId) return m;
+        const existingList = m.categories[payload.category] ?? [];
+        const newEntry: SathiEntry = {
+          id: `m${payload.mosqueId}-${payload.category}-${Date.now()}`,
+          name: payload.name,
+          phone: formattedPhone,
+          address: '',
+          notes: payload.notes,
+        };
+        return {
+          ...m,
+          categories: {
+            ...m.categories,
+            [payload.category]: [...existingList, newEntry],
+          },
+        };
+      })
+    );
+
+    // Record assignment status on the Kargoojari sathi row
+    setKargoojaris((prev) =>
+      prev.map((k) => {
+        if (k.id !== payload.kargoojariId) return k;
+        return {
+          ...k,
+          sathis: (k.sathis ?? []).map((s) =>
+            s.id === payload.kargSathiId
+              ? {
+                  ...s,
+                  name: payload.name,
+                  phone: formattedPhone,
+                  notes: payload.notes,
+                  assignedMosqueId: payload.mosqueId,
+                  assignedCategory: payload.category,
+                }
+              : s
+          ),
+        };
+      })
+    );
+
+    const mosqueName =
+      mosques.find((m) => m.id === payload.mosqueId)?.name ?? 'মসজিদ';
+    const catLabel = getCategoryMeta(payload.category).shortLabel;
+    showToast(`${payload.name}-কে ${mosqueName} (${catLabel})-এ যুক্ত করা হয়েছে।`);
+  };
+
+  const handleAssignKargoojariSathiToTakaza = (
+    payload: AssignKargoojariToTakazaPayload
+  ) => {
+    const formattedPhone = formatBdPhone(payload.sathiPhone);
+    let resolvedTakazaId = payload.existingTakazaId ?? '';
+    let resolvedTakazaTitle = '';
+
+    if (payload.existingTakazaId) {
+      const targetTakaza = takazas.find(
+        (t) => t.id === payload.existingTakazaId
+      );
+      resolvedTakazaTitle = targetTakaza?.title ?? 'চলমান তাকাজা';
+
+      setTakazas((prev) =>
+        prev.map((t) => {
+          if (t.id !== payload.existingTakazaId) return t;
+          const existingCommitted = t.committedSathis ?? [];
+          const alreadyListed = existingCommitted.some(
+            (cs) => cs.name.trim() === payload.sathiName.trim()
+          );
+          const nextCount = alreadyListed
+            ? t.completedCount
+            : t.completedCount + 1;
+          const nextStatus: TakazaStatus =
+            nextCount >= t.targetCount
+              ? 'completed'
+              : t.status === 'completed'
+              ? 'ongoing'
+              : t.status;
+          const nextCommitted = alreadyListed
+            ? existingCommitted
+            : [
+                ...existingCommitted,
+                {
+                  id: `tc-${Date.now()}`,
+                  name: payload.sathiName,
+                  phone: formattedPhone,
+                },
+              ];
+          return {
+            ...t,
+            completedCount: nextCount,
+            status: nextStatus,
+            committedSathis: nextCommitted,
+          };
+        })
+      );
+    } else if (payload.newTakaza) {
+      resolvedTakazaId = `takaza-${Date.now()}`;
+      resolvedTakazaTitle = payload.newTakaza.title;
+      const newTakaza: TakazaEntry = {
+        id: resolvedTakazaId,
+        title: payload.newTakaza.title,
+        mosqueId: payload.newTakaza.mosqueId,
+        type: payload.newTakaza.type,
+        targetCount: payload.newTakaza.targetCount,
+        completedCount: 1,
+        dueDate: payload.newTakaza.dueDate,
+        zimmadarName: '',
+        zimmadarPhone: '',
+        status: 1 >= payload.newTakaza.targetCount ? 'completed' : 'ongoing',
+        notes: payload.newTakaza.notes,
+        committedSathis: [
+          {
+            id: `tc-${Date.now()}`,
+            name: payload.sathiName,
+            phone: formattedPhone,
+          },
+        ],
+        createdAt: new Date().toISOString(),
+      };
+      setTakazas((prev) => [newTakaza, ...prev]);
+    }
+
+    if (resolvedTakazaId) {
+      setKargoojaris((prev) =>
+        prev.map((k) => {
+          if (k.id !== payload.kargoojariId) return k;
+          return {
+            ...k,
+            sathis: (k.sathis ?? []).map((s) =>
+              s.id === payload.kargSathiId
+                ? {
+                    ...s,
+                    assignedTakazaId: resolvedTakazaId,
+                    assignedTakazaTitle: resolvedTakazaTitle,
+                  }
+                : s
+            ),
+          };
+        })
+      );
+      showToast(
+        `${payload.sathiName}-কে "${resolvedTakazaTitle}" তাকাজায় যুক্ত করা হয়েছে।`
+      );
+    }
+  };
+
   const handleImportData = (payload: {
     mosques: MosqueRecord[];
     takazas?: TakazaEntry[];
     kargoojaris?: KargoojariEntry[];
   }) => {
-    setMosques(payload.mosques);
-    if (Array.isArray(payload.takazas)) setTakazas(payload.takazas);
-    if (Array.isArray(payload.kargoojaris)) setKargoojaris(payload.kargoojaris);
+    setMosques(normalizeMosquesPhones(payload.mosques));
+    if (Array.isArray(payload.takazas))
+      setTakazas(normalizeTakazasPhones(payload.takazas));
+    if (Array.isArray(payload.kargoojaris))
+      setKargoojaris(normalizeKargoojarisPhones(payload.kargoojaris));
     showToast('ব্যাকআপ থেকে সকল তথ্য রিস্টোর করা হয়েছে।');
   };
 
@@ -525,9 +823,15 @@ export default function App() {
         {activeTab === 'kargoojari' && (
           <KargoojariView
             mosques={mosques}
+            takazas={takazas}
             entries={kargoojaris}
             onSaveEntry={handleSaveKargoojari}
             onDeleteEntry={handleDeleteKargoojari}
+            onSaveKargoojariSathi={handleSaveKargoojariSathi}
+            onDeleteKargoojariSathi={handleDeleteKargoojariSathi}
+            onAssignToMosque={handleAssignKargoojariSathiToMosque}
+            onAssignToTakaza={handleAssignKargoojariSathiToTakaza}
+            onCopyPhone={handleCopyPhone}
           />
         )}
 

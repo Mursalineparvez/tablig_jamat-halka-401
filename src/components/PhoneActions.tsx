@@ -1,6 +1,6 @@
 import React from 'react';
 import { Check, Copy, MessageCircle, Phone } from 'lucide-react';
-import { getTelHref, getWhatsAppHref } from '../utils/bengali';
+import { formatBdPhone, getTelHref, getWhatsAppHref } from '../utils/bengali';
 
 interface PhoneActionsProps {
   phone: string;
@@ -15,26 +15,26 @@ export const PhoneActions: React.FC<PhoneActionsProps> = ({
   onCopy,
   compact = false,
 }) => {
-  const trimmed = phone.trim();
-  if (!trimmed) return null;
+  const formatted = formatBdPhone(phone);
+  if (!formatted) return null;
 
-  const telHref = getTelHref(trimmed);
-  const waHref = getWhatsAppHref(trimmed);
+  const telHref = getTelHref(formatted);
+  const waHref = getWhatsAppHref(formatted);
 
   return (
     <div className="flex flex-wrap items-center gap-1.5">
       <a
         href={telHref}
-        title={`${trimmed}-এ সরাসরি ফোন কল করুন`}
+        title={`${formatted}-এ সরাসরি ফোন কল করুন`}
         className="font-mono text-xs font-medium text-slate-800 hover:text-[#0066E6] hover:underline tabular-nums whitespace-nowrap"
       >
-        {trimmed}
+        {formatted}
       </a>
 
       <div className="flex items-center gap-1">
         <a
           href={telHref}
-          aria-label={`${trimmed}-এ ফোন কল করুন`}
+          aria-label={`${formatted}-এ ফোন কল করুন`}
           title="সরাসরি ফোন কল"
           className="inline-flex items-center gap-1 rounded-lg border border-[#BFD9FA] bg-[#EBF4FF] px-2 py-1 text-[11px] font-semibold text-[#0066E6] transition-colors hover:border-[#0066E6] hover:bg-[#0066E6] hover:text-white whitespace-nowrap"
         >
@@ -47,7 +47,7 @@ export const PhoneActions: React.FC<PhoneActionsProps> = ({
             href={waHref}
             target="_blank"
             rel="noopener noreferrer"
-            aria-label={`${trimmed}-এ হোয়াটসঅ্যাপ কল বা মেসেজ করুন`}
+            aria-label={`${formatted}-এ হোয়াটসঅ্যাপ কল বা মেসেজ করুন`}
             title="হোয়াটসঅ্যাপে কল / মেসেজ"
             className="inline-flex items-center gap-1 rounded-lg border border-emerald-200 bg-emerald-50 px-2 py-1 text-[11px] font-semibold text-emerald-700 transition-colors hover:border-emerald-600 hover:bg-emerald-600 hover:text-white whitespace-nowrap"
           >

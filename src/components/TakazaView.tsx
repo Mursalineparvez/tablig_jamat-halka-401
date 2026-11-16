@@ -14,7 +14,7 @@ import {
   TakazaStatus,
   TakazaType,
 } from '../types/directory';
-import { toBn } from '../utils/bengali';
+import { formatBdPhone, TAKAZA_TYPE_LABELS, toBn } from '../utils/bengali';
 import { PhoneActions } from './PhoneActions';
 
 interface TakazaViewProps {
@@ -25,16 +25,6 @@ interface TakazaViewProps {
   onToggleStatus: (id: string, status: TakazaStatus) => void;
   onDeleteTakaza: (id: string) => void;
 }
-
-const TAKAZA_TYPE_LABELS: Record<TakazaType, string> = {
-  three_days: '৩ দিনের জামাত',
-  ten_fifteen_days: '১০/১৫ দিনের জামাত',
-  one_chilla: '১ চিল্লা',
-  three_chilla: '৩ চিল্লা',
-  sal: '১ সাল (সালওয়ালী)',
-  masturat: 'মাস্তুরাত জামাত',
-  other: 'অন্যান্য তাকাজা',
-};
 
 const STATUS_LABELS: Record<TakazaStatus, string> = {
   ongoing: 'চলমান',
@@ -439,6 +429,36 @@ export const TakazaView: React.FC<TakazaViewProps> = ({
                     )}
                   </div>
                 </div>
+
+                {item.committedSathis && item.committedSathis.length > 0 && (
+                  <div className="mt-4 overflow-hidden rounded-xl border border-[#E2ECF7] bg-[#F8FBFF]">
+                    <div className="border-b border-[#E2ECF7] bg-[#F1F6FC] px-3.5 py-2 text-xs font-semibold text-slate-700">
+                      এই তাকাজায় রাজি / যুক্ত সাথীগণ ({toBn(item.committedSathis.length)} জন)
+                    </div>
+                    <div className="divide-y divide-[#E2ECF7]">
+                      {item.committedSathis.map((s, idx) => (
+                        <div
+                          key={s.id}
+                          className="flex flex-wrap items-center justify-between gap-2 px-3.5 py-2 text-xs"
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono text-slate-400 tabular-nums">
+                              {toBn(idx + 1)}.
+                            </span>
+                            <span className="font-semibold text-slate-900">
+                              {s.name}
+                            </span>
+                          </div>
+                          {s.phone ? (
+                            <PhoneActions phone={s.phone} compact />
+                          ) : (
+                            <span className="text-slate-400">নম্বর নেই</span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </article>
             );
           })}
@@ -625,7 +645,8 @@ export const TakazaView: React.FC<TakazaViewProps> = ({
                     type="text"
                     value={zimmadarPhone}
                     onChange={(e) => setZimmadarPhone(e.target.value)}
-                    placeholder="01..."
+                    onBlur={() => setZimmadarPhone((prev) => formatBdPhone(prev))}
+                    placeholder="+880 1711-000 000"
                     className="mt-1.5 w-full rounded-xl border border-[#DCE8F7] bg-[#F8FBFF] px-3 py-2 font-mono text-sm text-slate-900 focus:border-[#0066E6] focus:bg-white focus:outline-none"
                   />
                 </div>

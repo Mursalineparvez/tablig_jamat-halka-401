@@ -14,6 +14,7 @@ import {
 } from '../types/directory';
 import {
   CATEGORY_META,
+  formatBdPhone,
   getMosqueTotalSathi,
   toBn,
 } from '../utils/bengali';
@@ -260,7 +261,7 @@ export const MosquesView: React.FC<MosquesViewProps> = ({
                       e.preventDefault();
                       onUpdateOfficial(selectedMosque.id, item.key, {
                         name: editingOfficial.name.trim(),
-                        phone: editingOfficial.phone.trim(),
+                        phone: formatBdPhone(editingOfficial.phone),
                       });
                       setEditingOfficial(null);
                     }}
@@ -290,7 +291,14 @@ export const MosquesView: React.FC<MosquesViewProps> = ({
                           phone: e.target.value,
                         })
                       }
-                      placeholder="মোবাইল নম্বর (যেমন: 017...)"
+                      onBlur={() =>
+                        setEditingOfficial((curr) =>
+                          curr
+                            ? { ...curr, phone: formatBdPhone(curr.phone) }
+                            : null
+                        )
+                      }
+                      placeholder="মোবাইল (+880 1711-000 000)"
                       className="w-full rounded-lg border border-[#DCE8F7] px-2.5 py-1.5 font-mono text-xs text-slate-900 placeholder:text-slate-400 focus:border-[#0066E6] focus:outline-none"
                     />
                     <div className="flex items-center justify-end gap-2 pt-0.5">
@@ -459,7 +467,6 @@ export const MosquesView: React.FC<MosquesViewProps> = ({
                         <th className="min-w-[260px] px-4 py-2.5">
                           মোবাইল ও কল
                         </th>
-                        <th className="px-4 py-2.5">ঠিকানা</th>
                         <th className="px-4 py-2.5">মন্তব্য</th>
                         <th className="w-24 px-4 py-2.5 text-right">সম্পাদনা</th>
                       </tr>
@@ -491,9 +498,6 @@ export const MosquesView: React.FC<MosquesViewProps> = ({
                                   —
                                 </span>
                               )}
-                            </td>
-                            <td className="px-4 py-2.5 text-xs text-slate-600">
-                              {entry.address.trim() || '—'}
                             </td>
                             <td className="px-4 py-2.5 text-xs text-slate-600">
                               {entry.notes.trim() || '—'}
@@ -550,7 +554,6 @@ export const MosquesView: React.FC<MosquesViewProps> = ({
                               <span>নতুন নাম যুক্ত করতে ক্লিক করুন</span>
                             </span>
                           </td>
-                          <td className="px-4 py-2.5 text-xs text-slate-300" />
                           <td className="px-4 py-2.5 text-xs text-slate-300" />
                           <td className="px-4 py-2.5 text-xs text-slate-300" />
                           <td className="px-4 py-2.5 text-right text-xs text-slate-300" />

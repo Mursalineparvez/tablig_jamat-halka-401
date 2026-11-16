@@ -5,7 +5,7 @@ import {
   SathiCategory,
   SathiEntry,
 } from '../types/directory';
-import { CATEGORY_META, toBn } from '../utils/bengali';
+import { CATEGORY_META, formatBdPhone, toBn } from '../utils/bengali';
 
 interface SathiModalProps {
   mosques: MosqueRecord[];
@@ -45,7 +45,7 @@ export const SathiModal: React.FC<SathiModalProps> = ({
     onSave(mosqueId, category, {
       id: editingEntry?.id,
       name: name.trim(),
-      phone: phone.trim(),
+      phone: formatBdPhone(phone),
       address: address.trim(),
       notes: notes.trim(),
     });
@@ -140,7 +140,8 @@ export const SathiModal: React.FC<SathiModalProps> = ({
               type="text"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              placeholder="যেমন: 01711-000000"
+              onBlur={() => setPhone((prev) => formatBdPhone(prev))}
+              placeholder="যেমন: +880 1711-000 000"
               className="mt-1.5 w-full rounded-xl border border-[#DCE8F7] bg-[#F8FBFF] px-3 py-2 font-mono text-sm text-slate-900 placeholder:text-slate-400 focus:border-[#0066E6] focus:bg-white focus:outline-none"
             />
           </div>
@@ -243,11 +244,11 @@ export const MosqueInfoModal: React.FC<MosqueInfoModalProps> = ({
         name: name.trim(),
         address: address.trim(),
         khatibName: khatibName.trim(),
-        khatibPhone: khatibPhone.trim(),
+        khatibPhone: formatBdPhone(khatibPhone),
         imamName: imamName.trim(),
-        imamPhone: imamPhone.trim(),
+        imamPhone: formatBdPhone(imamPhone),
         muazzinName: muazzinName.trim(),
-        muazzinPhone: muazzinPhone.trim(),
+        muazzinPhone: formatBdPhone(muazzinPhone),
       },
       mosque ?? undefined
     );
@@ -338,6 +339,8 @@ export const MosqueInfoModal: React.FC<MosqueInfoModalProps> = ({
                   type="text"
                   value={khatibPhone}
                   onChange={(e) => setKhatibPhone(e.target.value)}
+                  onBlur={() => setKhatibPhone((prev) => formatBdPhone(prev))}
+                  placeholder="+880 1711-000 000"
                   className="mt-1 w-full rounded-xl border border-[#DCE8F7] px-3 py-2 font-mono text-sm focus:border-[#0066E6] focus:outline-none"
                 />
               </div>
@@ -363,6 +366,8 @@ export const MosqueInfoModal: React.FC<MosqueInfoModalProps> = ({
                   type="text"
                   value={imamPhone}
                   onChange={(e) => setImamPhone(e.target.value)}
+                  onBlur={() => setImamPhone((prev) => formatBdPhone(prev))}
+                  placeholder="+880 1711-000 000"
                   className="mt-1 w-full rounded-xl border border-[#DCE8F7] px-3 py-2 font-mono text-sm focus:border-[#0066E6] focus:outline-none"
                 />
               </div>
@@ -388,6 +393,8 @@ export const MosqueInfoModal: React.FC<MosqueInfoModalProps> = ({
                   type="text"
                   value={muazzinPhone}
                   onChange={(e) => setMuazzinPhone(e.target.value)}
+                  onBlur={() => setMuazzinPhone((prev) => formatBdPhone(prev))}
+                  placeholder="+880 1711-000 000"
                   className="mt-1 w-full rounded-xl border border-[#DCE8F7] px-3 py-2 font-mono text-sm focus:border-[#0066E6] focus:outline-none"
                 />
               </div>

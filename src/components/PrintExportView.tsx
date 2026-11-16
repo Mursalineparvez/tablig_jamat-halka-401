@@ -15,6 +15,7 @@ import {
 import {
   CATEGORY_META,
   exportMosquesToCSV,
+  formatBdPhone,
   getMosqueTotalSathi,
   SUMMARY_CATEGORIES,
   toBn,
@@ -443,7 +444,7 @@ export const PrintExportView: React.FC<PrintExportViewProps> = ({
                   {m.khatib.name.trim() || '—'}
                 </p>
                 <p className="font-mono text-stone-700">
-                  {m.khatib.phone.trim() || ''}
+                  {formatBdPhone(m.khatib.phone) || ''}
                 </p>
               </div>
               <div className="rounded border border-stone-800 p-2.5">
@@ -452,7 +453,7 @@ export const PrintExportView: React.FC<PrintExportViewProps> = ({
                   {m.imam.name.trim() || '—'}
                 </p>
                 <p className="font-mono text-stone-700">
-                  {m.imam.phone.trim() || ''}
+                  {formatBdPhone(m.imam.phone) || ''}
                 </p>
               </div>
               <div className="rounded border border-stone-800 p-2.5">
@@ -461,7 +462,7 @@ export const PrintExportView: React.FC<PrintExportViewProps> = ({
                   {m.muazzin.name.trim() || '—'}
                 </p>
                 <p className="font-mono text-stone-700">
-                  {m.muazzin.phone.trim() || ''}
+                  {formatBdPhone(m.muazzin.phone) || ''}
                 </p>
               </div>
             </div>
@@ -486,11 +487,8 @@ export const PrintExportView: React.FC<PrintExportViewProps> = ({
                           <th className="border border-stone-400 px-2.5 py-1 text-left">
                             নাম
                           </th>
-                          <th className="w-36 border border-stone-400 px-2.5 py-1 text-left">
+                          <th className="w-44 whitespace-nowrap border border-stone-400 px-2.5 py-1 text-left">
                             মোবাইল নম্বর
-                          </th>
-                          <th className="border border-stone-400 px-2.5 py-1 text-left">
-                            ঠিকানা
                           </th>
                           <th className="border border-stone-400 px-2.5 py-1 text-left">
                             মন্তব্য
@@ -506,11 +504,8 @@ export const PrintExportView: React.FC<PrintExportViewProps> = ({
                             <td className="border border-stone-300 px-2.5 py-1">
                               {entry.name}
                             </td>
-                            <td className="border border-stone-300 px-2.5 py-1 font-mono tabular-nums">
-                              {entry.phone}
-                            </td>
-                            <td className="border border-stone-300 px-2.5 py-1">
-                              {entry.address}
+                            <td className="whitespace-nowrap border border-stone-300 px-2.5 py-1 font-mono tabular-nums">
+                              {formatBdPhone(entry.phone)}
                             </td>
                             <td className="border border-stone-300 px-2.5 py-1">
                               {entry.notes}
@@ -522,7 +517,6 @@ export const PrintExportView: React.FC<PrintExportViewProps> = ({
                             <td className="border border-stone-300 px-2 py-2.5 text-center font-mono tabular-nums">
                               {toBn(list.length + blankOffset + 1)}
                             </td>
-                            <td className="border border-stone-300 px-2.5 py-2.5" />
                             <td className="border border-stone-300 px-2.5 py-2.5" />
                             <td className="border border-stone-300 px-2.5 py-2.5" />
                             <td className="border border-stone-300 px-2.5 py-2.5" />

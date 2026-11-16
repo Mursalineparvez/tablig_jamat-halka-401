@@ -3,7 +3,18 @@ import {
   MosqueRecord,
   SathiCategory,
   SathiEntry,
+  TakazaType,
 } from '../types/directory';
+
+export const TAKAZA_TYPE_LABELS: Record<TakazaType, string> = {
+  three_days: '৩ দিনের জামাত',
+  ten_fifteen_days: '১০/১৫ দিনের জামাত',
+  one_chilla: '১ চিল্লা',
+  three_chilla: '৩ চিল্লা',
+  sal: '১ সাল (সালওয়ালী)',
+  masturat: 'মাস্তুরাত জামাত',
+  other: 'অন্যান্য তাকাজা',
+};
 
 const BN_DIGITS = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
 
@@ -43,15 +54,41 @@ const BN_TO_EN: Record<string, string> = {
   '৯': '9',
 };
 
+export function formatBdPhone(phone: string): string {
+  const trimmed = phone.trim();
+  if (!trimmed) return '';
+  const digits = trimmed
+    .replace(/[০-৯]/g, (ch) => BN_TO_EN[ch] ?? ch)
+    .replace(/\D/g, '');
+
+  let localTen = '';
+  if (digits.startsWith('00880') && digits.length === 15) {
+    localTen = digits.slice(5);
+  } else if (digits.startsWith('880') && digits.length === 13) {
+    localTen = digits.slice(3);
+  } else if (digits.startsWith('0') && digits.length === 11) {
+    localTen = digits.slice(1);
+  } else if (digits.length === 10 && digits.startsWith('1')) {
+    localTen = digits;
+  }
+
+  if (localTen.length === 10) {
+    return `+880 ${localTen.slice(0, 4)}-${localTen.slice(4, 7)} ${localTen.slice(7, 10)}`;
+  }
+  return trimmed;
+}
+
 export function getTelHref(phone: string): string {
-  const ascii = phone
+  const formatted = formatBdPhone(phone);
+  const ascii = formatted
     .replace(/[০-৯]/g, (ch) => BN_TO_EN[ch] ?? ch)
     .replace(/[^\d+]/g, '');
   return `tel:${ascii}`;
 }
 
 export function getWhatsAppHref(phone: string): string {
-  const digits = phone
+  const formatted = formatBdPhone(phone);
+  const digits = formatted
     .replace(/[০-৯]/g, (ch) => BN_TO_EN[ch] ?? ch)
     .replace(/\D/g, '');
   if (!digits) return '';
@@ -190,15 +227,15 @@ export function exportMosquesToCSV(mosques: MosqueRecord[]): void {
             cat.shortLabel,
             toBn(index + 1),
             entry.name,
-            entry.phone,
+            formatBdPhone(entry.phone),
             entry.address,
             entry.notes,
             m.khatib.name,
-            m.khatib.phone,
+            formatBdPhone(m.khatib.phone),
             m.imam.name,
-            m.imam.phone,
+            formatBdPhone(m.imam.phone),
             m.muazzin.name,
-            m.muazzin.phone,
+            formatBdPhone(m.muazzin.phone),
           ]
             .map(escapeCsv)
             .join(',')

@@ -53,6 +53,12 @@ export type TakazaType =
   | 'masturat'
   | 'other';
 
+export interface TakazaCommittedSathi {
+  id: string;
+  name: string;
+  phone: string;
+}
+
 export interface TakazaEntry {
   id: string;
   title: string;
@@ -65,7 +71,19 @@ export interface TakazaEntry {
   zimmadarPhone: string;
   status: TakazaStatus;
   notes: string;
+  committedSathis?: TakazaCommittedSathi[];
   createdAt: string;
+}
+
+export interface KargoojariSathiItem {
+  id: string;
+  name: string;
+  phone: string;
+  notes: string;
+  assignedMosqueId?: number;
+  assignedCategory?: SathiCategory;
+  assignedTakazaId?: string;
+  assignedTakazaTitle?: string;
 }
 
 export interface KargoojariEntry {
@@ -79,6 +97,7 @@ export interface KargoojariEntry {
   tashkeelCount: number;
   reporterName: string;
   summary: string;
+  sathis?: KargoojariSathiItem[];
   createdAt: string;
 }
 

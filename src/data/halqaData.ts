@@ -4,6 +4,7 @@ import {
   SathiCategory,
   SathiEntry,
 } from '../types/directory';
+import { formatBdPhone } from '../utils/bengali';
 
 function entries(
   mosqueId: number,
@@ -13,13 +14,13 @@ function entries(
   return items.map(([name, phone = ''], idx) => ({
     id: `m${mosqueId}-${cat}-${idx + 1}`,
     name,
-    phone,
+    phone: formatBdPhone(phone),
     address: '',
     notes: '',
   }));
 }
 
-export const INITIAL_MOSQUES: MosqueRecord[] = [
+const RAW_INITIAL_MOSQUES: MosqueRecord[] = [
   {
     id: 1,
     name: 'ওয়ায়েজ করনী জামে মসজিদ',
@@ -678,6 +679,13 @@ export const INITIAL_MOSQUES: MosqueRecord[] = [
   },
 ];
 
+export const INITIAL_MOSQUES: MosqueRecord[] = RAW_INITIAL_MOSQUES.map((m) => ({
+  ...m,
+  khatib: { ...m.khatib, phone: formatBdPhone(m.khatib.phone) },
+  imam: { ...m.imam, phone: formatBdPhone(m.imam.phone) },
+  muazzin: { ...m.muazzin, phone: formatBdPhone(m.muazzin.phone) },
+}));
+
 export const INITIAL_KARGOOJARIS: KargoojariEntry[] = [
   {
     id: 'karg-2026-11-15-giridhara-chatra-gast',
@@ -713,6 +721,32 @@ export const INITIAL_KARGOOJARIS: KargoojariEntry[] = [
 আমাদের মাকসাদ শুধু কাউকে দাওয়াত দেওয়া নয়; বরং প্রত্যেকের অন্তরে দ্বীনের ফিকির পয়দা করা, মসজিদের সঙ্গে সম্পর্ক মজবুত করা এবং উম্মতের প্রতিটি সদস্যকে আল্লাহর হুকুম ও রাসুলুল্লাহ ﷺ-এর তরিকার ওপর জীবন পরিচালনার জন্য মেহনত করা।
 
 আল্লাহ তাআলা আমাদের এই মেহনতকে কবুল করুন। যাদের সঙ্গে আজ দাওয়াত ও মুজাকারা হয়েছে, তাদের সবাইকে দ্বীনের মেহনতের সঙ্গে কবুল করুন। যারা তিন দিনের জামাতে যাওয়ার নিয়ত করেছেন, তাদের জন্য সময় বের করা সহজ করে দিন এবং আমাদের সবাইকে ইখলাস ও ইস্তেকামাতের সঙ্গে দ্বীনের মেহনত করার তাওফিক দান করুন। আমিন, ইয়া রব্বাল আলামিন।`,
+    sathis: [
+      {
+        id: 'ks-2026-11-15-1',
+        name: 'ভাই মোঃ নাঈম',
+        phone: '',
+        notes: '৩ দিনের জামাত (১৯, ২০, ২১ নভেম্বর)',
+      },
+      {
+        id: 'ks-2026-11-15-2',
+        name: 'ভাই মোঃ কামরুল',
+        phone: '',
+        notes: '৩ দিনের জামাত (১৯, ২০, ২১ নভেম্বর)',
+      },
+      {
+        id: 'ks-2026-11-15-3',
+        name: 'ভাই মোঃ জুবায়ের',
+        phone: '',
+        notes: '৩ দিনের জামাত (১৯, ২০, ২১ নভেম্বর)',
+      },
+      {
+        id: 'ks-2026-11-15-4',
+        name: 'ভাই মোঃ জহিরুল ইসলাম',
+        phone: '',
+        notes: '৩ দিনের জামাত (১৯, ২০, ২১ নভেম্বর)',
+      },
+    ],
     createdAt: '2026-11-15T22:10:00.000Z',
   },
   {
@@ -760,6 +794,14 @@ export const INITIAL_KARGOOJARIS: KargoojariEntry[] = [
 আজকের এই মজলিশ থেকে আমাদের জন্য অন্যতম শিক্ষা হলো—দ্বীনের মেহনতকে সামনে এগিয়ে নিতে হলে ইখলাস, ইস্তেকামাত, মাসোয়ারার তাবেদারি, এহতেমাম এবং অধিক পরিমাণে দোয়ার প্রয়োজন। বিশেষ করে ছাত্র ও নওজোয়ানদের মাঝে দ্বীনের ফিকির পয়দা করতে হলে নিজেদের আমল, আখলাক ও মেহনতের মাধ্যমেও দৃষ্টান্ত স্থাপন করতে হবে।
 
 আল্লাহ তাআলা আমাদের সবাইকে নিজেদের জিম্মাদারি যথাযথভাবে আদায় করার, ইখলাসের সঙ্গে দ্বীনের মেহনত করার এবং এই মেহনতের ওপর আমৃত্যু ইস্তেকামাত থাকার তাওফিক দান করুন। আমিন, ইয়া রব্বাল আলামিন।`,
+    sathis: [
+      {
+        id: 'ks-2026-11-14-1',
+        name: 'অনিক ভাই (ফার্মেসি)',
+        phone: '',
+        notes: '৩ দিনের জামাতের জন্য তাশকিল (গিরিধারা মসজিদ সংলগ্ন)',
+      },
+    ],
     createdAt: '2026-11-14T20:30:00.000Z',
   },
 ];
