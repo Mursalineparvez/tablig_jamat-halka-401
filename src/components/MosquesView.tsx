@@ -19,12 +19,14 @@ import {
   toBn,
 } from '../utils/bengali';
 import { PhoneActions } from './PhoneActions';
+import { InspectedPersonInput } from './SathiProfileModal';
 
 type OfficialRoleKey = 'khatib' | 'imam' | 'muazzin';
 
 interface MosquesViewProps {
   mosques: MosqueRecord[];
   selectedMosqueId: number;
+  canEdit: boolean;
   onSelectMosque: (id: number) => void;
   onAddSathi: (mosqueId: number, category?: SathiCategory) => void;
   onEditSathi: (
@@ -45,11 +47,13 @@ interface MosquesViewProps {
   ) => void;
   onAddMosque: () => void;
   onCopyPhone: (phone: string) => void;
+  onSelectPerson: (person: InspectedPersonInput) => void;
 }
 
 export const MosquesView: React.FC<MosquesViewProps> = ({
   mosques,
   selectedMosqueId,
+  canEdit,
   onSelectMosque,
   onAddSathi,
   onEditSathi,
@@ -58,6 +62,7 @@ export const MosquesView: React.FC<MosquesViewProps> = ({
   onUpdateOfficial,
   onAddMosque,
   onCopyPhone,
+  onSelectPerson,
 }) => {
   const [sidebarQuery, setSidebarQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<SathiCategory | 'all'>(
@@ -160,16 +165,18 @@ export const MosquesView: React.FC<MosquesViewProps> = ({
             })}
           </div>
 
-          <div className="mt-3 border-t border-[#E2ECF7] pt-3">
-            <button
-              type="button"
-              onClick={onAddMosque}
-              className="flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-xl bg-[#EBF4FF] px-3 py-2.5 text-xs font-semibold text-[#0066E6] transition-colors hover:bg-[#DCEBFF]"
-            >
-              <Plus className="h-3.5 w-3.5" />
-              <span>নতুন মসজিদ যুক্ত করুন</span>
-            </button>
-          </div>
+          {canEdit && (
+            <div className="mt-3 border-t border-[#E2ECF7] pt-3">
+              <button
+                type="button"
+                onClick={onAddMosque}
+                className="flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-xl bg-[#EBF4FF] px-3 py-2.5 text-xs font-semibold text-[#0066E6] transition-colors hover:bg-[#DCEBFF]"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                <span>নতুন মসজিদ যুক্ত করুন</span>
+              </button>
+            </div>
+          )}
         </div>
       </aside>
 
@@ -192,14 +199,16 @@ export const MosquesView: React.FC<MosquesViewProps> = ({
                     ? selectedMosque.address
                     : 'ঠিকানা সংযুক্ত করা হয়নি'}
                 </span>
-                <button
-                  type="button"
-                  onClick={() => onEditMosqueInfo(selectedMosque)}
-                  className="ml-1 inline-flex cursor-pointer items-center gap-1 rounded-lg bg-[#EBF4FF] px-2.5 py-1 text-xs font-semibold text-[#0066E6] transition-colors hover:bg-[#DCEBFF]"
-                >
-                  <Edit3 className="h-3 w-3" />
-                  <span>তথ্য সম্পাদনা</span>
-                </button>
+                {canEdit && (
+                  <button
+                    type="button"
+                    onClick={() => onEditMosqueInfo(selectedMosque)}
+                    className="ml-1 inline-flex cursor-pointer items-center gap-1 rounded-lg bg-[#EBF4FF] px-2.5 py-1 text-xs font-semibold text-[#0066E6] transition-colors hover:bg-[#DCEBFF]"
+                  >
+                    <Edit3 className="h-3 w-3" />
+                    <span>তথ্য সম্পাদনা</span>
+                  </button>
+                )}
               </div>
             </div>
 
@@ -210,19 +219,21 @@ export const MosquesView: React.FC<MosquesViewProps> = ({
                   {toBn(totalCount)} জন
                 </span>
               </div>
-              <button
-                type="button"
-                onClick={() =>
-                  onAddSathi(
-                    selectedMosque.id,
-                    activeCategory === 'all' ? undefined : activeCategory
-                  )
-                }
-                className="inline-flex cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-xl bg-[#0066E6] px-4 py-2 text-xs font-semibold text-white shadow-[0_2px_8px_rgba(0,102,230,0.22)] transition-colors hover:bg-[#0052BD]"
-              >
-                <Plus className="h-3.5 w-3.5" />
-                <span>এই মসজিদে সাথী যোগ করুন</span>
-              </button>
+              {canEdit && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    onAddSathi(
+                      selectedMosque.id,
+                      activeCategory === 'all' ? undefined : activeCategory
+                    )
+                  }
+                  className="inline-flex cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-xl bg-[#0066E6] px-4 py-2 text-xs font-semibold text-white shadow-[0_2px_8px_rgba(0,102,230,0.22)] transition-colors hover:bg-[#0052BD]"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  <span>এই মসজিদে সাথী যোগ করুন</span>
+                </button>
+              )}
             </div>
           </div>
 
@@ -250,7 +261,7 @@ export const MosquesView: React.FC<MosquesViewProps> = ({
               const hasName = Boolean(item.data.name.trim());
               const hasPhone = Boolean(item.data.phone.trim());
               const isFilled = hasName || hasPhone;
-              const isEditingThis = editingOfficial?.role === item.key;
+              const isEditingThis = canEdit && editingOfficial?.role === item.key;
               const copyId = `official-${selectedMosque.id}-${item.key}`;
 
               if (isEditingThis && editingOfficial) {
@@ -326,59 +337,78 @@ export const MosquesView: React.FC<MosquesViewProps> = ({
                     <p className="text-xs font-medium text-slate-500">
                       {item.role}
                     </p>
-                    <div className="flex items-center gap-1">
-                      {isFilled ? (
-                        <>
+                    {canEdit && (
+                      <div className="flex items-center gap-1">
+                        {isFilled ? (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setEditingOfficial({
+                                  role: item.key,
+                                  name: item.data.name,
+                                  phone: item.data.phone,
+                                })
+                              }
+                              title={`${item.role} সম্পাদনা`}
+                              className="cursor-pointer rounded-lg p-1 text-slate-400 hover:bg-[#EBF4FF] hover:text-[#0066E6]"
+                            >
+                              <Edit3 className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                onUpdateOfficial(selectedMosque.id, item.key, {
+                                  name: '',
+                                  phone: '',
+                                })
+                              }
+                              title={`${item.role} মুছে ফেলুন`}
+                              className="cursor-pointer rounded-lg p-1 text-slate-400 hover:bg-rose-50 hover:text-rose-600"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          </>
+                        ) : (
                           <button
                             type="button"
                             onClick={() =>
                               setEditingOfficial({
                                 role: item.key,
-                                name: item.data.name,
-                                phone: item.data.phone,
-                              })
-                            }
-                            title={`${item.role} সম্পাদনা`}
-                            className="cursor-pointer rounded-lg p-1 text-slate-400 hover:bg-[#EBF4FF] hover:text-[#0066E6]"
-                          >
-                            <Edit3 className="h-3.5 w-3.5" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              onUpdateOfficial(selectedMosque.id, item.key, {
                                 name: '',
                                 phone: '',
                               })
                             }
-                            title={`${item.role} মুছে ফেলুন`}
-                            className="cursor-pointer rounded-lg p-1 text-slate-400 hover:bg-rose-50 hover:text-rose-600"
+                            className="inline-flex cursor-pointer items-center gap-1 rounded-lg bg-[#EBF4FF] px-2.5 py-1 text-[11px] font-semibold text-[#0066E6] transition-colors hover:bg-[#DCEBFF]"
                           >
-                            <Trash2 className="h-3.5 w-3.5" />
+                            <Plus className="h-3 w-3" />
+                            <span>যুক্ত করুন</span>
                           </button>
-                        </>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setEditingOfficial({
-                              role: item.key,
-                              name: '',
-                              phone: '',
-                            })
-                          }
-                          className="inline-flex cursor-pointer items-center gap-1 rounded-lg bg-[#EBF4FF] px-2.5 py-1 text-[11px] font-semibold text-[#0066E6] transition-colors hover:bg-[#DCEBFF]"
-                        >
-                          <Plus className="h-3 w-3" />
-                          <span>যুক্ত করুন</span>
-                        </button>
-                      )}
-                    </div>
+                        )}
+                      </div>
+                    )}
                   </div>
 
-                  <p className="mt-1 text-[15px] font-semibold text-slate-900">
-                    {hasName ? item.data.name : '—'}
-                  </p>
+                  <div className="mt-1">
+                    {hasName ? (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          onSelectPerson({
+                            name: item.data.name,
+                            phone: item.data.phone,
+                            mosqueId: selectedMosque.id,
+                            roleOrCategory: item.role,
+                          })
+                        }
+                        className="cursor-pointer text-left text-[15px] font-semibold text-slate-900 underline-offset-2 transition-colors hover:text-[#0066E6] hover:underline"
+                      >
+                        {item.data.name}
+                      </button>
+                    ) : (
+                      <p className="text-[15px] font-semibold text-slate-900">—</p>
+                    )}
+                  </div>
                   {hasPhone ? (
                     <div className="mt-2">
                       <PhoneActions
@@ -447,14 +477,16 @@ export const MosquesView: React.FC<MosquesViewProps> = ({
                     <span className="font-mono text-xs font-semibold text-slate-600 tabular-nums">
                       {toBn(list.length)} জন
                     </span>
-                    <button
-                      type="button"
-                      onClick={() => onAddSathi(selectedMosque.id, cat.key)}
-                      className="inline-flex cursor-pointer items-center gap-1 rounded-lg bg-[#EBF4FF] px-2.5 py-1 text-xs font-semibold text-[#0066E6] transition-colors hover:bg-[#DCEBFF]"
-                    >
-                      <Plus className="h-3.5 w-3.5" />
-                      <span>যোগ করুন</span>
-                    </button>
+                    {canEdit && (
+                      <button
+                        type="button"
+                        onClick={() => onAddSathi(selectedMosque.id, cat.key)}
+                        className="inline-flex cursor-pointer items-center gap-1 rounded-lg bg-[#EBF4FF] px-2.5 py-1 text-xs font-semibold text-[#0066E6] transition-colors hover:bg-[#DCEBFF]"
+                      >
+                        <Plus className="h-3.5 w-3.5" />
+                        <span>যোগ করুন</span>
+                      </button>
+                    )}
                   </div>
                 </div>
 
@@ -468,7 +500,9 @@ export const MosquesView: React.FC<MosquesViewProps> = ({
                           মোবাইল ও কল
                         </th>
                         <th className="px-4 py-2.5">মন্তব্য</th>
-                        <th className="w-24 px-4 py-2.5 text-right">সম্পাদনা</th>
+                        {canEdit && (
+                          <th className="w-24 px-4 py-2.5 text-right">সম্পাদনা</th>
+                        )}
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
@@ -484,7 +518,21 @@ export const MosquesView: React.FC<MosquesViewProps> = ({
                               {toBn(idx + 1)}
                             </td>
                             <td className="px-4 py-2.5 font-medium text-slate-900">
-                              {entry.name}
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  onSelectPerson({
+                                    name: entry.name,
+                                    phone: entry.phone,
+                                    mosqueId: selectedMosque.id,
+                                    roleOrCategory: cat.shortLabel,
+                                    notes: entry.notes,
+                                  })
+                                }
+                                className="cursor-pointer text-left font-medium text-slate-900 underline-offset-2 transition-colors hover:text-[#0066E6] hover:underline"
+                              >
+                                {entry.name}
+                              </button>
                             </td>
                             <td className="px-4 py-2.5">
                               {hasPhone ? (
@@ -502,63 +550,79 @@ export const MosquesView: React.FC<MosquesViewProps> = ({
                             <td className="px-4 py-2.5 text-xs text-slate-600">
                               {entry.notes.trim() || '—'}
                             </td>
-                            <td className="px-4 py-2.5 text-right">
-                              <div className="inline-flex items-center gap-1.5">
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    onEditSathi(
-                                      selectedMosque.id,
-                                      cat.key,
-                                      entry
-                                    )
-                                  }
-                                  title="সম্পাদনা"
-                                  className="cursor-pointer rounded-lg p-1 text-slate-400 hover:bg-[#EBF4FF] hover:text-[#0066E6]"
-                                >
-                                  <Edit3 className="h-3.5 w-3.5" />
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    onDeleteSathi(
-                                      selectedMosque.id,
-                                      cat.key,
-                                      entry.id
-                                    )
-                                  }
-                                  title="মুছে ফেলুন"
-                                  className="cursor-pointer rounded-lg p-1 text-slate-400 hover:bg-rose-50 hover:text-rose-600"
-                                >
-                                  <Trash2 className="h-3.5 w-3.5" />
-                                </button>
-                              </div>
-                            </td>
+                            {canEdit && (
+                              <td className="px-4 py-2.5 text-right">
+                                <div className="inline-flex items-center gap-1.5">
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      onEditSathi(
+                                        selectedMosque.id,
+                                        cat.key,
+                                        entry
+                                      )
+                                    }
+                                    title="সম্পাদনা"
+                                    className="cursor-pointer rounded-lg p-1 text-slate-400 hover:bg-[#EBF4FF] hover:text-[#0066E6]"
+                                  >
+                                    <Edit3 className="h-3.5 w-3.5" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      onDeleteSathi(
+                                        selectedMosque.id,
+                                        cat.key,
+                                        entry.id
+                                      )
+                                    }
+                                    title="মুছে ফেলুন"
+                                    className="cursor-pointer rounded-lg p-1 text-slate-400 hover:bg-rose-50 hover:text-rose-600"
+                                  >
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                  </button>
+                                </div>
+                              </td>
+                            )}
                           </tr>
                         );
                       })}
 
-                      {/* Always include 2 blank rows for adding new entries */}
-                      {[0, 1].map((blankOffset) => (
-                        <tr
-                          key={`blank-${cat.key}-${blankOffset}`}
-                          onClick={() => onAddSathi(selectedMosque.id, cat.key)}
-                          className="group cursor-pointer bg-[#F8FBFF]/50 transition-colors hover:bg-[#EBF4FF]/70"
-                        >
-                          <td className="px-4 py-2.5 text-center font-mono text-xs text-slate-400 tabular-nums">
-                            {toBn(list.length + blankOffset + 1)}
+                      {/* Blank rows for adding new entries (interactive only for authorized editors) */}
+                      {canEdit &&
+                        [0, 1].map((blankOffset) => (
+                          <tr
+                            key={`blank-${cat.key}-${blankOffset}`}
+                            onClick={() =>
+                              onAddSathi(selectedMosque.id, cat.key)
+                            }
+                            className="group cursor-pointer bg-[#F8FBFF]/50 transition-colors hover:bg-[#EBF4FF]/70"
+                          >
+                            <td className="px-4 py-2.5 text-center font-mono text-xs text-slate-400 tabular-nums">
+                              {toBn(list.length + blankOffset + 1)}
+                            </td>
+                            <td className="px-4 py-2.5 text-xs text-slate-400 group-hover:text-[#0066E6]">
+                              <span className="inline-flex items-center gap-1 font-medium">
+                                <Plus className="h-3 w-3 opacity-70 group-hover:opacity-100" />
+                                <span>নতুন নাম যুক্ত করতে ক্লিক করুন</span>
+                              </span>
+                            </td>
+                            <td className="px-4 py-2.5 text-xs text-slate-300" />
+                            <td className="px-4 py-2.5 text-xs text-slate-300" />
+                            <td className="px-4 py-2.5 text-right text-xs text-slate-300" />
+                          </tr>
+                        ))}
+
+                      {!canEdit && list.length === 0 && (
+                        <tr>
+                          <td
+                            colSpan={4}
+                            className="px-4 py-5 text-center text-xs text-slate-400"
+                          >
+                            এই বিভাগে এখনো কোনো নাম যুক্ত করা হয়নি।
                           </td>
-                          <td className="px-4 py-2.5 text-xs text-slate-400 group-hover:text-[#0066E6]">
-                            <span className="inline-flex items-center gap-1 font-medium">
-                              <Plus className="h-3 w-3 opacity-70 group-hover:opacity-100" />
-                              <span>নতুন নাম যুক্ত করতে ক্লিক করুন</span>
-                            </span>
-                          </td>
-                          <td className="px-4 py-2.5 text-xs text-slate-300" />
-                          <td className="px-4 py-2.5 text-xs text-slate-300" />
-                          <td className="px-4 py-2.5 text-right text-xs text-slate-300" />
                         </tr>
-                      ))}
+                      )}
                     </tbody>
                   </table>
                 </div>

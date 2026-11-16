@@ -3,7 +3,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import {
+  getRedirectResult,
+  onAuthStateChanged,
+  signInWithPopup,
+  signInWithRedirect,
+  signOut,
+  type User,
+} from 'firebase/auth';
+import { Lock } from 'lucide-react';
+import { AccessControlModal } from './components/AccessControlModal';
 import { Header } from './components/Header';
 import {
   AssignKargoojariToMosquePayload,
@@ -19,10 +29,47 @@ import { MosquesView } from './components/MosquesView';
 import { OverviewView } from './components/OverviewView';
 import { PrintExportView } from './components/PrintExportView';
 import { SathiDirectoryView } from './components/SathiDirectoryView';
+import {
+  InspectedPersonInput,
+  SathiProfileModal,
+} from './components/SathiProfileModal';
 import { TakazaView } from './components/TakazaView';
 import { INITIAL_KARGOOJARIS, INITIAL_MOSQUES } from './data/halqaData';
 import {
+  auth,
+  emailToDocId,
+  googleProvider,
+  isSuperAdminEmail,
+  SUPER_ADMIN_EMAIL,
+} from './firebase';
+import {
+  deleteAccessRequest,
+  deleteKargoojariFromFirestore,
+  deleteMosqueFromFirestore,
+  deleteTakazaFromFirestore,
+  grantEditorAccess,
+  rejectAccessRequest,
+  revokeEditorAccess,
+  saveKargoojariToFirestore,
+  saveMosqueToFirestore,
+  saveTakazaToFirestore,
+  seedInitialKargoojarisToFirestore,
+  seedInitialMosquesToFirestore,
+  seedInitialTakazasToFirestore,
+  submitAccessRequest,
+  subscribeAllAccessRequests,
+  subscribeAllEditors,
+  subscribeKargoojaris,
+  subscribeMosques,
+  subscribeMyAccessRequest,
+  subscribeMyEditorStatus,
+  subscribeTakazas,
+  toggleEditorActive,
+} from './services/firestoreService';
+import {
+  AccessRequestRecord,
   ActiveTab,
+  EditorRecord,
   KargoojariEntry,
   KargoojariSathiItem,
   MosqueRecord,
@@ -32,13 +79,22 @@ import {
   TakazaEntry,
   TakazaStatus,
 } from './types/directory';
-import { formatBdPhone, getCategoryMeta, toBn } from './utils/bengali';
+import {
+  formatBdPhone,
+  getCategoryMeta,
+  normalizeMemberCoreName,
+  toBn,
+} from './utils/bengali';
 
 const STORAGE_KEY = 'jatrabari_markaz_halqa_401_v1';
 const GIRIDHARA_CHATRA_SEED_KEY = 'jatrabari_markaz_seed_m3_chatra_v1';
 const TAKAZA_STORAGE_KEY = 'jatrabari_markaz_halqa_401_takaza_v1';
 const KARGOOJARI_STORAGE_KEY = 'jatrabari_markaz_halqa_401_kargoojari_v1';
 const KARGOOJARI_SEED_KEY = 'jatrabari_markaz_seed_karg_20261115_sathis_v1';
+const KARGOOJARI_ALL_MENTIONED_SEED_KEY =
+  'jatrabari_markaz_seed_karg_20261115_all_v2';
+const KARGOOJARI_NOV15_V3_SEED_KEY =
+  'jatrabari_markaz_seed_karg_20261115_v3';
 
 interface SathiModalState {
   mosqueId: number;
@@ -80,7 +136,7 @@ function loadFromStorage<T>(key: string, fallback: T): T {
 
 function normalizeMosquesPhones(list: MosqueRecord[]): MosqueRecord[] {
   return list.map((m) => {
-    const normalizedCategories = { ...m.categories };
+    const normalizedCategories = { ...createEmptyCategories(), ...m.categories };
     for (const key of Object.keys(normalizedCategories) as SathiCategory[]) {
       normalizedCategories[key] = (normalizedCategories[key] ?? []).map(
         (entry) => ({
@@ -91,9 +147,18 @@ function normalizeMosquesPhones(list: MosqueRecord[]): MosqueRecord[] {
     }
     return {
       ...m,
-      khatib: { ...m.khatib, phone: formatBdPhone(m.khatib.phone) },
-      imam: { ...m.imam, phone: formatBdPhone(m.imam.phone) },
-      muazzin: { ...m.muazzin, phone: formatBdPhone(m.muazzin.phone) },
+      khatib: {
+        name: m.khatib?.name ?? '',
+        phone: formatBdPhone(m.khatib?.phone ?? ''),
+      },
+      imam: {
+        name: m.imam?.name ?? '',
+        phone: formatBdPhone(m.imam?.phone ?? ''),
+      },
+      muazzin: {
+        name: m.muazzin?.name ?? '',
+        phone: formatBdPhone(m.muazzin?.phone ?? ''),
+      },
       categories: normalizedCategories,
     };
   });
@@ -173,24 +238,59 @@ function loadInitialKargoojaris(): KargoojariEntry[] {
 
   try {
     const alreadySeeded = localStorage.getItem(KARGOOJARI_SEED_KEY);
-    if (!alreadySeeded) {
+    const allMentionedSeeded = localStorage.getItem(
+      KARGOOJARI_ALL_MENTIONED_SEED_KEY
+    );
+    const nov15V3Seeded = localStorage.getItem(KARGOOJARI_NOV15_V3_SEED_KEY);
+    if (!alreadySeeded || !allMentionedSeeded || !nov15V3Seeded) {
       const seedById = new Map(INITIAL_KARGOOJARIS.map((k) => [k.id, k]));
-      // Hydrate missing structured sathis onto existing seeded baseline entries
       const hydrated = base.map((entry) => {
         const seedMatch = seedById.get(entry.id);
-        if (
-          seedMatch &&
-          (!entry.sathis || entry.sathis.length === 0) &&
-          seedMatch.sathis &&
-          seedMatch.sathis.length > 0
-        ) {
-          return { ...entry, sathis: seedMatch.sathis };
+        if (!seedMatch || !seedMatch.sathis?.length) return entry;
+
+        const nextSummary =
+          !nov15V3Seeded &&
+          entry.id === 'karg-2026-11-15-giridhara-chatra-gast'
+            ? seedMatch.summary
+            : entry.summary;
+
+        const existingSathis = entry.sathis ?? [];
+        if (existingSathis.length === 0) {
+          return { ...entry, summary: nextSummary, sathis: seedMatch.sathis };
         }
-        return entry;
+
+        const seedSathiById = new Map(
+          seedMatch.sathis.map((s) => [s.id, s])
+        );
+        const updatedExisting = existingSathis.map((s) => {
+          const match = seedSathiById.get(s.id);
+          if (match && !s.tashkeelStatus && match.tashkeelStatus) {
+            return { ...s, tashkeelStatus: match.tashkeelStatus };
+          }
+          return s;
+        });
+
+        const existingIds = new Set(updatedExisting.map((s) => s.id));
+        const existingNames = new Set(
+          updatedExisting.map((s) => normalizeMemberCoreName(s.name))
+        );
+        const missingSathis = seedMatch.sathis.filter(
+          (s) =>
+            !existingIds.has(s.id) &&
+            !existingNames.has(normalizeMemberCoreName(s.name))
+        );
+
+        return {
+          ...entry,
+          summary: nextSummary,
+          sathis: [...updatedExisting, ...missingSathis],
+        };
       });
       const existingIds = new Set(hydrated.map((k) => k.id));
       const missing = INITIAL_KARGOOJARIS.filter((k) => !existingIds.has(k.id));
       localStorage.setItem(KARGOOJARI_SEED_KEY, '1');
+      localStorage.setItem(KARGOOJARI_ALL_MENTIONED_SEED_KEY, '1');
+      localStorage.setItem(KARGOOJARI_NOV15_V3_SEED_KEY, '1');
       return [...missing, ...hydrated];
     }
   } catch {
@@ -212,6 +312,29 @@ export default function App() {
     loadInitialKargoojaris
   );
 
+  // Firebase Auth & RBAC state
+  const [user, setUser] = useState<User | null>(null);
+  const [authReady, setAuthReady] = useState(false);
+  const [authBusy, setAuthBusy] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [isApprovedEditor, setIsApprovedEditor] = useState(false);
+  const [myRequest, setMyRequest] = useState<AccessRequestRecord | null>(null);
+  const [editors, setEditors] = useState<EditorRecord[]>([]);
+  const [accessRequests, setAccessRequests] = useState<AccessRequestRecord[]>([]);
+  const [accessModalOpen, setAccessModalOpen] = useState(false);
+
+  // Firestore snapshot status for initial automatic seeding when authorized
+  const [mosquesLoaded, setMosquesLoaded] = useState(false);
+  const [mosquesEmptyInDb, setMosquesEmptyInDb] = useState(false);
+  const [takazasLoaded, setTakazasLoaded] = useState(false);
+  const [takazasEmptyInDb, setTakazasEmptyInDb] = useState(false);
+  const [kargoojarisLoaded, setKargoojarisLoaded] = useState(false);
+  const [kargoojarisEmptyInDb, setKargoojarisEmptyInDb] = useState(false);
+
+  const seededMosquesRef = useRef(false);
+  const seededTakazasRef = useRef(false);
+  const seededKargoojarisRef = useRef(false);
+
   const [activeTab, setActiveTab] = useState<ActiveTab>('overview');
   const [selectedMosqueId, setSelectedMosqueId] = useState<number>(1);
   const [directoryCategory, setDirectoryCategory] = useState<
@@ -219,8 +342,164 @@ export default function App() {
   >('all');
   const [sathiModal, setSathiModal] = useState<SathiModalState | null>(null);
   const [mosqueModal, setMosqueModal] = useState<MosqueModalState>(null);
+  const [inspectedPerson, setInspectedPerson] =
+    useState<InspectedPersonInput | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
+  const isSuperAdmin = Boolean(
+    user?.emailVerified && isSuperAdminEmail(user.email)
+  );
+  const canEdit = isSuperAdmin || (Boolean(user?.emailVerified) && isApprovedEditor);
+  const pendingRequestCount = accessRequests.filter(
+    (r) => r.status === 'pending'
+  ).length;
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    window.setTimeout(() => {
+      setToastMessage((curr) => (curr === msg ? null : curr));
+    }, 3000);
+  };
+
+  // Subscribe to Firebase Auth state and handle redirect sign-in results
+  useEffect(() => {
+    void getRedirectResult(auth)
+      .then((res) => {
+        if (res?.user) {
+          showToast('সাইন ইন সফল হয়েছে।');
+        }
+      })
+      .catch(() => {
+        // Ignore stale redirect errors on normal loads
+      });
+
+    const unsub = onAuthStateChanged(auth, (firebaseUser) => {
+      setUser(firebaseUser);
+      setAuthReady(true);
+    });
+    return unsub;
+  }, []);
+
+  // Subscribe to Public-Read Firestore collections
+  useEffect(() => {
+    const unsubMosques = subscribeMosques((remoteMosques, isEmpty) => {
+      setMosquesLoaded(true);
+      setMosquesEmptyInDb(isEmpty);
+      if (!isEmpty) {
+        setMosques(normalizeMosquesPhones(remoteMosques));
+      }
+    });
+
+    const unsubTakazas = subscribeTakazas((remoteTakazas, isEmpty) => {
+      setTakazasLoaded(true);
+      setTakazasEmptyInDb(isEmpty);
+      if (!isEmpty) {
+        setTakazas(normalizeTakazasPhones(remoteTakazas));
+      }
+    });
+
+    const unsubKargoojaris = subscribeKargoojaris((remoteKargs, isEmpty) => {
+      setKargoojarisLoaded(true);
+      setKargoojarisEmptyInDb(isEmpty);
+      if (!isEmpty) {
+        setKargoojaris(normalizeKargoojarisPhones(remoteKargs));
+      }
+    });
+
+    return () => {
+      unsubMosques();
+      unsubTakazas();
+      unsubKargoojaris();
+    };
+  }, []);
+
+  // Subscribe to user's own editor status & access request when signed in
+  useEffect(() => {
+    if (!user || !user.emailVerified || !user.email) {
+      setIsApprovedEditor(false);
+      setMyRequest(null);
+      return;
+    }
+
+    if (isSuperAdminEmail(user.email)) {
+      setIsApprovedEditor(true);
+      setMyRequest(null);
+      return;
+    }
+
+    const unsubEditor = subscribeMyEditorStatus(user.email, setIsApprovedEditor);
+    const unsubRequest = subscribeMyAccessRequest(user.uid, setMyRequest);
+
+    return () => {
+      unsubEditor();
+      unsubRequest();
+    };
+  }, [user]);
+
+  // Subscribe to all editors & access requests strictly when Super Admin is signed in
+  useEffect(() => {
+    if (!isSuperAdmin) {
+      setEditors([]);
+      setAccessRequests([]);
+      return;
+    }
+
+    const unsubEditors = subscribeAllEditors(setEditors);
+    const unsubRequests = subscribeAllAccessRequests(setAccessRequests);
+
+    return () => {
+      unsubEditors();
+      unsubRequests();
+    };
+  }, [isSuperAdmin]);
+
+  // Auto-seed Firestore once when an authorized editor / super admin signs in and collections are empty
+  useEffect(() => {
+    if (!canEdit) return;
+
+    if (mosquesLoaded && mosquesEmptyInDb && !seededMosquesRef.current) {
+      seededMosquesRef.current = true;
+      void seedInitialMosquesToFirestore(mosques).catch(() => {
+        seededMosquesRef.current = false;
+      });
+    }
+
+    if (
+      kargoojarisLoaded &&
+      kargoojarisEmptyInDb &&
+      !seededKargoojarisRef.current
+    ) {
+      seededKargoojarisRef.current = true;
+      void seedInitialKargoojarisToFirestore(kargoojaris).catch(() => {
+        seededKargoojarisRef.current = false;
+      });
+    }
+
+    if (
+      takazasLoaded &&
+      takazasEmptyInDb &&
+      takazas.length > 0 &&
+      !seededTakazasRef.current
+    ) {
+      seededTakazasRef.current = true;
+      void seedInitialTakazasToFirestore(takazas).catch(() => {
+        seededTakazasRef.current = false;
+      });
+    }
+  }, [
+    canEdit,
+    mosquesLoaded,
+    mosquesEmptyInDb,
+    kargoojarisLoaded,
+    kargoojarisEmptyInDb,
+    takazasLoaded,
+    takazasEmptyInDb,
+    mosques,
+    kargoojaris,
+    takazas,
+  ]);
+
+  // Keep localStorage mirrored as offline/print cache
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(mosques));
@@ -245,11 +524,118 @@ export default function App() {
     }
   }, [kargoojaris]);
 
-  const showToast = (msg: string) => {
-    setToastMessage(msg);
-    window.setTimeout(() => {
-      setToastMessage((curr) => (curr === msg ? null : curr));
-    }, 2600);
+  const requireEditAccess = (): boolean => {
+    if (canEdit) return true;
+    showToast(
+      user
+        ? 'আপনার এখনো এডিট অ্যাক্সেস নেই। অ্যাডমিনের অনুমোদনের জন্য অনুরোধ পাঠান।'
+        : 'তথ্য যোগ বা এডিট করতে Google দিয়ে সাইন ইন করুন।'
+    );
+    setAccessModalOpen(true);
+    return false;
+  };
+
+  // Auth & Access Control actions
+  const handleSignIn = async () => {
+    setAuthBusy(true);
+    setAuthError(null);
+    try {
+      await signInWithPopup(auth, googleProvider);
+      showToast('সাইন ইন সফল হয়েছে।');
+    } catch (error) {
+      const errCode =
+        error && typeof error === 'object' && 'code' in error
+          ? String((error as { code?: unknown }).code)
+          : '';
+      const errMsg = error instanceof Error ? error.message : '';
+
+      if (errCode === 'auth/popup-blocked' || errMsg.includes('popup-blocked')) {
+        try {
+          await signInWithRedirect(auth, googleProvider);
+          return;
+        } catch {
+          setAuthError('Google সাইন ইন রিডাইরেক্ট চালু করতে সমস্যা হয়েছে।');
+        }
+      } else if (
+        errCode === 'auth/unauthorized-domain' ||
+        errMsg.includes('unauthorized-domain')
+      ) {
+        const host =
+          typeof window !== 'undefined' ? window.location.hostname : 'this domain';
+        setAuthError(
+          `এই ডোমেইনটি (${host}) Firebase Authorized Domains-এ যুক্ত করা নেই। Firebase Console → Authentication → Settings → Authorized domains-এ গিয়ে "${host}" যুক্ত করুন।`
+        );
+      } else if (
+        errCode === 'auth/popup-closed-by-user' ||
+        errMsg.includes('popup-closed')
+      ) {
+        setAuthError('সাইন ইন পপআপ বন্ধ করা হয়েছে। আবার চেষ্টা করুন।');
+      } else {
+        setAuthError(
+          'Google সাইন ইন করতে সমস্যা হয়েছে। পপআপ ব্লকার বন্ধ রেখে আবার চেষ্টা করুন।'
+        );
+      }
+    } finally {
+      setAuthBusy(false);
+    }
+  };
+
+  const handleSignOut = async () => {
+    setAuthBusy(true);
+    setAuthError(null);
+    try {
+      await signOut(auth);
+      setSathiModal(null);
+      setMosqueModal(null);
+      showToast('সাইন আউট করা হয়েছে।');
+    } catch {
+      setAuthError('সাইন আউট করতে সমস্যা হয়েছে।');
+    } finally {
+      setAuthBusy(false);
+    }
+  };
+
+  const handleSubmitAccessRequest = async (note: string) => {
+    if (!user) return;
+    await submitAccessRequest(user, note, Boolean(myRequest));
+    showToast('অ্যাডমিনের কাছে এডিট অ্যাক্সেসের অনুরোধ পাঠানো হয়েছে।');
+  };
+
+  const handleGrantEditor = async (
+    email: string,
+    label: string,
+    requestUid?: string
+  ) => {
+    if (!isSuperAdmin) return;
+    const editorId = emailToDocId(email);
+    const alreadyExists = editors.some((ed) => ed.id === editorId);
+    await grantEditorAccess(email, label, alreadyExists, requestUid);
+    showToast(`${email}-কে এডিট অ্যাক্সেস দেওয়া হয়েছে।`);
+  };
+
+  const handleToggleEditor = async (editorId: string, active: boolean) => {
+    if (!isSuperAdmin) return;
+    await toggleEditorActive(editorId, active);
+    showToast(
+      active ? 'এডিটর অ্যাক্সেস সক্রিয় করা হয়েছে।' : 'এডিটর অ্যাক্সেস স্থগিত করা হয়েছে।'
+    );
+  };
+
+  const handleRevokeEditor = async (editorId: string) => {
+    if (!isSuperAdmin) return;
+    await revokeEditorAccess(editorId);
+    showToast('এডিটর তালিকা থেকে অ্যাক্সেস মুছে ফেলা হয়েছে।');
+  };
+
+  const handleRejectRequest = async (requestUid: string) => {
+    if (!isSuperAdmin) return;
+    await rejectAccessRequest(requestUid);
+    showToast('অনুরোধটি প্রত্যাখ্যান করা হয়েছে।');
+  };
+
+  const handleDeleteRequest = async (requestUid: string) => {
+    await deleteAccessRequest(requestUid);
+    showToast('অ্যাক্সেস অনুরোধ বাতিল করা হয়েছে।');
   };
 
   const handleCopyPhone = (phone: string) => {
@@ -277,43 +663,50 @@ export default function App() {
     category: SathiCategory,
     entryData: Omit<SathiEntry, 'id'> & { id?: string }
   ) => {
+    if (!requireEditAccess()) return;
+    const targetMosque = mosques.find((m) => m.id === mosqueId);
+    if (!targetMosque) return;
+
     const normalizedEntry = {
       ...entryData,
       phone: formatBdPhone(entryData.phone),
     };
-    setMosques((prev) =>
-      prev.map((m) => {
-        if (m.id !== mosqueId) return m;
-        const currentList = m.categories[category] ?? [];
-        const updatedList = normalizedEntry.id
-          ? currentList.map((item) =>
-              item.id === normalizedEntry.id
-                ? { ...item, ...normalizedEntry, id: item.id }
-                : item
-            )
-          : [
-              ...currentList,
-              {
-                ...normalizedEntry,
-                id: `m${mosqueId}-${category}-${Date.now()}`,
-              },
-            ];
-        return {
-          ...m,
-          categories: {
-            ...m.categories,
-            [category]: updatedList,
+    const currentList = targetMosque.categories[category] ?? [];
+    const updatedList = normalizedEntry.id
+      ? currentList.map((item) =>
+          item.id === normalizedEntry.id
+            ? { ...item, ...normalizedEntry, id: item.id }
+            : item
+        )
+      : [
+          ...currentList,
+          {
+            ...normalizedEntry,
+            id: `m${mosqueId}-${category}-${Date.now()}`,
           },
-        };
-      })
-    );
+        ];
 
+    const updatedMosque: MosqueRecord = {
+      ...targetMosque,
+      categories: {
+        ...targetMosque.categories,
+        [category]: updatedList,
+      },
+    };
+
+    setMosques((prev) =>
+      prev.map((m) => (m.id === mosqueId ? updatedMosque : m))
+    );
     setSathiModal(null);
     showToast(
       normalizedEntry.id
         ? 'সাথীর তথ্য হালনাগাদ করা হয়েছে।'
         : 'নতুন সাথী তালিকায় যুক্ত করা হয়েছে।'
     );
+
+    void saveMosqueToFirestore(updatedMosque).catch(() => {
+      showToast('ডাটাবেসে সংরক্ষণ করতে সমস্যা হয়েছে।');
+    });
   };
 
   const handleDeleteSathi = (
@@ -321,51 +714,60 @@ export default function App() {
     category: SathiCategory,
     entryId: string
   ) => {
+    if (!requireEditAccess()) return;
+    const targetMosque = mosques.find((m) => m.id === mosqueId);
+    if (!targetMosque) return;
+
+    const updatedMosque: MosqueRecord = {
+      ...targetMosque,
+      categories: {
+        ...targetMosque.categories,
+        [category]: (targetMosque.categories[category] ?? []).filter(
+          (item) => item.id !== entryId
+        ),
+      },
+    };
+
     setMosques((prev) =>
-      prev.map((m) => {
-        if (m.id !== mosqueId) return m;
-        return {
-          ...m,
-          categories: {
-            ...m.categories,
-            [category]: (m.categories[category] ?? []).filter(
-              (item) => item.id !== entryId
-            ),
-          },
-        };
-      })
+      prev.map((m) => (m.id === mosqueId ? updatedMosque : m))
     );
     showToast('তালিকা থেকে এন্ট্রিটি সরানো হয়েছে।');
+
+    void saveMosqueToFirestore(updatedMosque).catch(() => {
+      showToast('ডাটাবেস আপডেট করতে সমস্যা হয়েছে।');
+    });
   };
 
   const handleSaveMosqueInfo = (
     values: MosqueFormValues,
     existingMosque?: MosqueRecord
   ) => {
+    if (!requireEditAccess()) return;
     const khatibPhone = formatBdPhone(values.khatibPhone);
     const imamPhone = formatBdPhone(values.imamPhone);
     const muazzinPhone = formatBdPhone(values.muazzinPhone);
 
     if (existingMosque) {
+      const updatedMosque: MosqueRecord = {
+        ...existingMosque,
+        name: values.name,
+        address: values.address,
+        khatib: { name: values.khatibName, phone: khatibPhone },
+        imam: { name: values.imamName, phone: imamPhone },
+        muazzin: {
+          name: values.muazzinName,
+          phone: muazzinPhone,
+        },
+      };
       setMosques((prev) =>
-        prev.map((m) =>
-          m.id === existingMosque.id
-            ? {
-                ...m,
-                name: values.name,
-                address: values.address,
-                khatib: { name: values.khatibName, phone: khatibPhone },
-                imam: { name: values.imamName, phone: imamPhone },
-                muazzin: {
-                  name: values.muazzinName,
-                  phone: muazzinPhone,
-                },
-              }
-            : m
-        )
+        prev.map((m) => (m.id === existingMosque.id ? updatedMosque : m))
       );
       setMosqueModal(null);
       showToast(`${values.name}-এর তথ্য সংরক্ষণ করা হয়েছে।`);
+
+      void saveMosqueToFirestore(updatedMosque).catch(() => {
+        showToast('ডাটাবেসে সংরক্ষণ করতে সমস্যা হয়েছে।');
+      });
     } else {
       const nextId =
         mosques.reduce((maxId, m) => Math.max(maxId, m.id), 0) + 1;
@@ -386,10 +788,15 @@ export default function App() {
         `${values.name} যুক্ত করা হয়েছে এবং সকল বিভাগ স্বয়ংক্রিয়ভাবে তৈরি হয়েছে।`
       );
       window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      void saveMosqueToFirestore(newMosque).catch(() => {
+        showToast('ডাটাবেসে সংরক্ষণ করতে সমস্যা হয়েছে।');
+      });
     }
   };
 
   const handleDeleteMosque = (mosqueId: number) => {
+    if (!requireEditAccess()) return;
     const remaining = mosques.filter((m) => m.id !== mosqueId);
     if (remaining.length === 0) return;
     setMosques(remaining);
@@ -398,6 +805,10 @@ export default function App() {
     }
     setMosqueModal(null);
     showToast('মসজিদটি তালিকা থেকে সরানো হয়েছে।');
+
+    void deleteMosqueFromFirestore(mosqueId).catch(() => {
+      showToast('ডাটাবেস থেকে মুছতে সমস্যা হয়েছে।');
+    });
   };
 
   const handleUpdateOfficial = (
@@ -405,6 +816,10 @@ export default function App() {
     role: 'khatib' | 'imam' | 'muazzin',
     official: OfficialInfo
   ) => {
+    if (!requireEditAccess()) return;
+    const targetMosque = mosques.find((m) => m.id === mosqueId);
+    if (!targetMosque) return;
+
     const normalizedOfficial: OfficialInfo = {
       name: official.name.trim(),
       phone: formatBdPhone(official.phone),
@@ -414,10 +829,13 @@ export default function App() {
       imam: 'ইমাম সাহেবের',
       muazzin: 'মোয়াজ্জিন সাহেবের',
     };
+    const updatedMosque: MosqueRecord = {
+      ...targetMosque,
+      [role]: normalizedOfficial,
+    };
+
     setMosques((prev) =>
-      prev.map((m) =>
-        m.id === mosqueId ? { ...m, [role]: normalizedOfficial } : m
-      )
+      prev.map((m) => (m.id === mosqueId ? updatedMosque : m))
     );
     const isEmpty = !normalizedOfficial.name && !normalizedOfficial.phone;
     showToast(
@@ -425,23 +843,36 @@ export default function App() {
         ? `${roleLabels[role]} তথ্য মুছে ফেলা হয়েছে।`
         : `${roleLabels[role]} তথ্য সংরক্ষণ করা হয়েছে।`
     );
+
+    void saveMosqueToFirestore(updatedMosque).catch(() => {
+      showToast('ডাটাবেসে সংরক্ষণ করতে সমস্যা হয়েছে।');
+    });
   };
 
   // Takaza handlers
   const handleSaveTakaza = (
     data: Omit<TakazaEntry, 'id' | 'createdAt'> & { id?: string }
   ) => {
+    if (!requireEditAccess()) return;
     const normalizedData = {
       ...data,
       zimmadarPhone: formatBdPhone(data.zimmadarPhone),
     };
     if (normalizedData.id) {
+      const existing = takazas.find((t) => t.id === normalizedData.id);
+      if (!existing) return;
+      const updated: TakazaEntry = {
+        ...existing,
+        ...normalizedData,
+        id: existing.id,
+      };
       setTakazas((prev) =>
-        prev.map((t) =>
-          t.id === normalizedData.id ? { ...t, ...normalizedData, id: t.id } : t
-        )
+        prev.map((t) => (t.id === updated.id ? updated : t))
       );
       showToast('তাকাজার তথ্য হালনাগাদ করা হয়েছে।');
+      void saveTakazaToFirestore(updated).catch(() => {
+        showToast('ডাটাবেসে সংরক্ষণ করতে সমস্যা হয়েছে।');
+      });
     } else {
       const newEntry: TakazaEntry = {
         ...normalizedData,
@@ -450,41 +881,63 @@ export default function App() {
       };
       setTakazas((prev) => [newEntry, ...prev]);
       showToast('নতুন চলমান তাকাজা যুক্ত করা হয়েছে।');
+      void saveTakazaToFirestore(newEntry).catch(() => {
+        showToast('ডাটাবেসে সংরক্ষণ করতে সমস্যা হয়েছে।');
+      });
     }
   };
 
   const handleUpdateTakazaProgress = (id: string, delta: number) => {
-    setTakazas((prev) =>
-      prev.map((t) => {
-        if (t.id !== id) return t;
-        const nextCount = Math.max(0, t.completedCount + delta);
-        const nextStatus: TakazaStatus =
-          nextCount >= t.targetCount
-            ? 'completed'
-            : t.status === 'completed'
-            ? 'ongoing'
-            : t.status;
-        return { ...t, completedCount: nextCount, status: nextStatus };
-      })
-    );
+    if (!requireEditAccess()) return;
+    const existing = takazas.find((t) => t.id === id);
+    if (!existing) return;
+
+    const nextCount = Math.max(0, existing.completedCount + delta);
+    const nextStatus: TakazaStatus =
+      nextCount >= existing.targetCount
+        ? 'completed'
+        : existing.status === 'completed'
+        ? 'ongoing'
+        : existing.status;
+    const updated: TakazaEntry = {
+      ...existing,
+      completedCount: nextCount,
+      status: nextStatus,
+    };
+
+    setTakazas((prev) => prev.map((t) => (t.id === id ? updated : t)));
+    void saveTakazaToFirestore(updated).catch(() => {
+      showToast('ডাটাবেস আপডেট করতে সমস্যা হয়েছে।');
+    });
   };
 
   const handleToggleTakazaStatus = (id: string, status: TakazaStatus) => {
-    setTakazas((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, status } : t))
-    );
+    if (!requireEditAccess()) return;
+    const existing = takazas.find((t) => t.id === id);
+    if (!existing) return;
+
+    const updated: TakazaEntry = { ...existing, status };
+    setTakazas((prev) => prev.map((t) => (t.id === id ? updated : t)));
     showToast('তাকাজার অবস্থা পরিবর্তন করা হয়েছে।');
+    void saveTakazaToFirestore(updated).catch(() => {
+      showToast('ডাটাবেস আপডেট করতে সমস্যা হয়েছে।');
+    });
   };
 
   const handleDeleteTakaza = (id: string) => {
+    if (!requireEditAccess()) return;
     setTakazas((prev) => prev.filter((t) => t.id !== id));
     showToast('তাকাজাটি সরানো হয়েছে।');
+    void deleteTakazaFromFirestore(id).catch(() => {
+      showToast('ডাটাবেস থেকে মুছতে সমস্যা হয়েছে।');
+    });
   };
 
   // Kargoojari handlers
   const handleSaveKargoojari = (
     data: Omit<KargoojariEntry, 'id' | 'createdAt'> & { id?: string }
   ) => {
+    if (!requireEditAccess()) return;
     const normalizedData = {
       ...data,
       sathis: data.sathis?.map((s) => ({
@@ -493,12 +946,20 @@ export default function App() {
       })),
     };
     if (normalizedData.id) {
+      const existing = kargoojaris.find((k) => k.id === normalizedData.id);
+      if (!existing) return;
+      const updated: KargoojariEntry = {
+        ...existing,
+        ...normalizedData,
+        id: existing.id,
+      };
       setKargoojaris((prev) =>
-        prev.map((k) =>
-          k.id === normalizedData.id ? { ...k, ...normalizedData, id: k.id } : k
-        )
+        prev.map((k) => (k.id === updated.id ? updated : k))
       );
       showToast('দৈনিক কারগুজারি হালনাগাদ করা হয়েছে।');
+      void saveKargoojariToFirestore(updated).catch(() => {
+        showToast('ডাটাবেসে সংরক্ষণ করতে সমস্যা হয়েছে।');
+      });
     } else {
       const newEntry: KargoojariEntry = {
         ...normalizedData,
@@ -507,126 +968,165 @@ export default function App() {
       };
       setKargoojaris((prev) => [newEntry, ...prev]);
       showToast('দৈনিক কারগুজারি সংরক্ষণ করা হয়েছে।');
+      void saveKargoojariToFirestore(newEntry).catch(() => {
+        showToast('ডাটাবেসে সংরক্ষণ করতে সমস্যা হয়েছে।');
+      });
     }
   };
 
   const handleDeleteKargoojari = (id: string) => {
+    if (!requireEditAccess()) return;
     setKargoojaris((prev) => prev.filter((k) => k.id !== id));
     showToast('কারগুজারি এন্ট্রিটি মুছে ফেলা হয়েছে।');
+    void deleteKargoojariFromFirestore(id).catch(() => {
+      showToast('ডাটাবেস থেকে মুছতে সমস্যা হয়েছে।');
+    });
   };
 
   const handleSaveKargoojariSathi = (
     kargoojariId: string,
     sathiData: Omit<KargoojariSathiItem, 'id'> & { id?: string }
   ) => {
+    if (!requireEditAccess()) return;
+    const existingEntry = kargoojaris.find((k) => k.id === kargoojariId);
+    if (!existingEntry) return;
+
     const normalizedSathi = {
       ...sathiData,
       phone: formatBdPhone(sathiData.phone),
     };
+    const current = existingEntry.sathis ?? [];
+    const nextSathis = normalizedSathi.id
+      ? current.map((s) =>
+          s.id === normalizedSathi.id
+            ? { ...s, ...normalizedSathi, id: s.id }
+            : s
+        )
+      : [
+          ...current,
+          {
+            ...normalizedSathi,
+            id: `ks-${Date.now()}`,
+          },
+        ];
+    const updatedEntry: KargoojariEntry = {
+      ...existingEntry,
+      sathis: nextSathis,
+    };
+
     setKargoojaris((prev) =>
-      prev.map((k) => {
-        if (k.id !== kargoojariId) return k;
-        const current = k.sathis ?? [];
-        const nextSathis = normalizedSathi.id
-          ? current.map((s) =>
-              s.id === normalizedSathi.id
-                ? { ...s, ...normalizedSathi, id: s.id }
-                : s
-            )
-          : [
-              ...current,
-              {
-                ...normalizedSathi,
-                id: `ks-${Date.now()}`,
-              },
-            ];
-        return { ...k, sathis: nextSathis };
-      })
+      prev.map((k) => (k.id === kargoojariId ? updatedEntry : k))
     );
     showToast(
       normalizedSathi.id
         ? 'সাথীর তথ্য হালনাগাদ করা হয়েছে।'
         : 'কারগুজারিতে নতুন সাথী যুক্ত করা হয়েছে।'
     );
+
+    void saveKargoojariToFirestore(updatedEntry).catch(() => {
+      showToast('ডাটাবেসে সংরক্ষণ করতে সমস্যা হয়েছে।');
+    });
   };
 
   const handleDeleteKargoojariSathi = (
     kargoojariId: string,
     sathiId: string
   ) => {
+    if (!requireEditAccess()) return;
+    const existingEntry = kargoojaris.find((k) => k.id === kargoojariId);
+    if (!existingEntry) return;
+
+    const updatedEntry: KargoojariEntry = {
+      ...existingEntry,
+      sathis: (existingEntry.sathis ?? []).filter((s) => s.id !== sathiId),
+    };
+
     setKargoojaris((prev) =>
-      prev.map((k) => {
-        if (k.id !== kargoojariId) return k;
-        return {
-          ...k,
-          sathis: (k.sathis ?? []).filter((s) => s.id !== sathiId),
-        };
-      })
+      prev.map((k) => (k.id === kargoojariId ? updatedEntry : k))
     );
     showToast('কারগুজারির তালিকা থেকে সাথীকে সরানো হয়েছে।');
+
+    void saveKargoojariToFirestore(updatedEntry).catch(() => {
+      showToast('ডাটাবেস আপডেট করতে সমস্যা হয়েছে।');
+    });
   };
 
   const handleAssignKargoojariSathiToMosque = (
     payload: AssignKargoojariToMosquePayload
   ) => {
+    if (!requireEditAccess()) return;
     const formattedPhone = formatBdPhone(payload.phone);
 
-    // Add entry to chosen mosque & category in Mosque directory format
-    setMosques((prev) =>
-      prev.map((m) => {
-        if (m.id !== payload.mosqueId) return m;
-        const existingList = m.categories[payload.category] ?? [];
-        const newEntry: SathiEntry = {
-          id: `m${payload.mosqueId}-${payload.category}-${Date.now()}`,
-          name: payload.name,
-          phone: formattedPhone,
-          address: '',
-          notes: payload.notes,
-        };
-        return {
-          ...m,
-          categories: {
-            ...m.categories,
-            [payload.category]: [...existingList, newEntry],
-          },
-        };
-      })
-    );
+    const targetMosque = mosques.find((m) => m.id === payload.mosqueId);
+    let updatedMosque: MosqueRecord | null = null;
+    if (targetMosque) {
+      const existingList = targetMosque.categories[payload.category] ?? [];
+      const newEntry: SathiEntry = {
+        id: `m${payload.mosqueId}-${payload.category}-${Date.now()}`,
+        name: payload.name,
+        phone: formattedPhone,
+        address: '',
+        notes: payload.notes,
+      };
+      updatedMosque = {
+        ...targetMosque,
+        categories: {
+          ...targetMosque.categories,
+          [payload.category]: [...existingList, newEntry],
+        },
+      };
+      setMosques((prev) =>
+        prev.map((m) => (m.id === payload.mosqueId ? updatedMosque! : m))
+      );
+    }
 
-    // Record assignment status on the Kargoojari sathi row
-    setKargoojaris((prev) =>
-      prev.map((k) => {
-        if (k.id !== payload.kargoojariId) return k;
-        return {
-          ...k,
-          sathis: (k.sathis ?? []).map((s) =>
-            s.id === payload.kargSathiId
-              ? {
-                  ...s,
-                  name: payload.name,
-                  phone: formattedPhone,
-                  notes: payload.notes,
-                  assignedMosqueId: payload.mosqueId,
-                  assignedCategory: payload.category,
-                }
-              : s
-          ),
-        };
-      })
-    );
+    const targetKarg = kargoojaris.find((k) => k.id === payload.kargoojariId);
+    let updatedKarg: KargoojariEntry | null = null;
+    if (targetKarg) {
+      updatedKarg = {
+        ...targetKarg,
+        sathis: (targetKarg.sathis ?? []).map((s) =>
+          s.id === payload.kargSathiId
+            ? {
+                ...s,
+                name: payload.name,
+                phone: formattedPhone,
+                notes: payload.notes,
+                assignedMosqueId: payload.mosqueId,
+                assignedCategory: payload.category,
+              }
+            : s
+        ),
+      };
+      setKargoojaris((prev) =>
+        prev.map((k) => (k.id === payload.kargoojariId ? updatedKarg! : k))
+      );
+    }
 
-    const mosqueName =
-      mosques.find((m) => m.id === payload.mosqueId)?.name ?? 'মসজিদ';
+    const mosqueName = targetMosque?.name ?? 'মসজিদ';
     const catLabel = getCategoryMeta(payload.category).shortLabel;
     showToast(`${payload.name}-কে ${mosqueName} (${catLabel})-এ যুক্ত করা হয়েছে।`);
+
+    if (updatedMosque) {
+      void saveMosqueToFirestore(updatedMosque).catch(() => {
+        showToast('মসজিদের তথ্য সংরক্ষণ করতে সমস্যা হয়েছে।');
+      });
+    }
+    if (updatedKarg) {
+      void saveKargoojariToFirestore(updatedKarg).catch(() => {
+        showToast('কারগুজারির তথ্য সংরক্ষণ করতে সমস্যা হয়েছে।');
+      });
+    }
   };
 
   const handleAssignKargoojariSathiToTakaza = (
     payload: AssignKargoojariToTakazaPayload
   ) => {
+    if (!requireEditAccess()) return;
     const formattedPhone = formatBdPhone(payload.sathiPhone);
     let resolvedTakazaId = payload.existingTakazaId ?? '';
     let resolvedTakazaTitle = '';
+    let takazaToSave: TakazaEntry | null = null;
 
     if (payload.existingTakazaId) {
       const targetTakaza = takazas.find(
@@ -634,44 +1134,44 @@ export default function App() {
       );
       resolvedTakazaTitle = targetTakaza?.title ?? 'চলমান তাকাজা';
 
-      setTakazas((prev) =>
-        prev.map((t) => {
-          if (t.id !== payload.existingTakazaId) return t;
-          const existingCommitted = t.committedSathis ?? [];
-          const alreadyListed = existingCommitted.some(
-            (cs) => cs.name.trim() === payload.sathiName.trim()
-          );
-          const nextCount = alreadyListed
-            ? t.completedCount
-            : t.completedCount + 1;
-          const nextStatus: TakazaStatus =
-            nextCount >= t.targetCount
-              ? 'completed'
-              : t.status === 'completed'
-              ? 'ongoing'
-              : t.status;
-          const nextCommitted = alreadyListed
-            ? existingCommitted
-            : [
-                ...existingCommitted,
-                {
-                  id: `tc-${Date.now()}`,
-                  name: payload.sathiName,
-                  phone: formattedPhone,
-                },
-              ];
-          return {
-            ...t,
-            completedCount: nextCount,
-            status: nextStatus,
-            committedSathis: nextCommitted,
-          };
-        })
-      );
+      if (targetTakaza) {
+        const existingCommitted = targetTakaza.committedSathis ?? [];
+        const alreadyListed = existingCommitted.some(
+          (cs) => cs.name.trim() === payload.sathiName.trim()
+        );
+        const nextCount = alreadyListed
+          ? targetTakaza.completedCount
+          : targetTakaza.completedCount + 1;
+        const nextStatus: TakazaStatus =
+          nextCount >= targetTakaza.targetCount
+            ? 'completed'
+            : targetTakaza.status === 'completed'
+            ? 'ongoing'
+            : targetTakaza.status;
+        const nextCommitted = alreadyListed
+          ? existingCommitted
+          : [
+              ...existingCommitted,
+              {
+                id: `tc-${Date.now()}`,
+                name: payload.sathiName,
+                phone: formattedPhone,
+              },
+            ];
+        takazaToSave = {
+          ...targetTakaza,
+          completedCount: nextCount,
+          status: nextStatus,
+          committedSathis: nextCommitted,
+        };
+        setTakazas((prev) =>
+          prev.map((t) => (t.id === takazaToSave!.id ? takazaToSave! : t))
+        );
+      }
     } else if (payload.newTakaza) {
       resolvedTakazaId = `takaza-${Date.now()}`;
       resolvedTakazaTitle = payload.newTakaza.title;
-      const newTakaza: TakazaEntry = {
+      takazaToSave = {
         id: resolvedTakazaId,
         title: payload.newTakaza.title,
         mosqueId: payload.newTakaza.mosqueId,
@@ -692,30 +1192,45 @@ export default function App() {
         ],
         createdAt: new Date().toISOString(),
       };
-      setTakazas((prev) => [newTakaza, ...prev]);
+      setTakazas((prev) => [takazaToSave!, ...prev]);
     }
 
     if (resolvedTakazaId) {
-      setKargoojaris((prev) =>
-        prev.map((k) => {
-          if (k.id !== payload.kargoojariId) return k;
-          return {
-            ...k,
-            sathis: (k.sathis ?? []).map((s) =>
-              s.id === payload.kargSathiId
-                ? {
-                    ...s,
-                    assignedTakazaId: resolvedTakazaId,
-                    assignedTakazaTitle: resolvedTakazaTitle,
-                  }
-                : s
-            ),
-          };
-        })
-      );
+      const targetKarg = kargoojaris.find((k) => k.id === payload.kargoojariId);
+      let updatedKarg: KargoojariEntry | null = null;
+      if (targetKarg) {
+        updatedKarg = {
+          ...targetKarg,
+          sathis: (targetKarg.sathis ?? []).map((s) =>
+            s.id === payload.kargSathiId
+              ? {
+                  ...s,
+                  tashkeelStatus: 'tashkeel' as const,
+                  assignedTakazaId: resolvedTakazaId,
+                  assignedTakazaTitle: resolvedTakazaTitle,
+                }
+              : s
+          ),
+        };
+        setKargoojaris((prev) =>
+          prev.map((k) => (k.id === payload.kargoojariId ? updatedKarg! : k))
+        );
+      }
+
       showToast(
         `${payload.sathiName}-কে "${resolvedTakazaTitle}" তাকাজায় যুক্ত করা হয়েছে।`
       );
+
+      if (takazaToSave) {
+        void saveTakazaToFirestore(takazaToSave).catch(() => {
+          showToast('তাকাজা সংরক্ষণ করতে সমস্যা হয়েছে।');
+        });
+      }
+      if (updatedKarg) {
+        void saveKargoojariToFirestore(updatedKarg).catch(() => {
+          showToast('কারগুজারি সংরক্ষণ করতে সমস্যা হয়েছে।');
+        });
+      }
     }
   };
 
@@ -724,15 +1239,34 @@ export default function App() {
     takazas?: TakazaEntry[];
     kargoojaris?: KargoojariEntry[];
   }) => {
-    setMosques(normalizeMosquesPhones(payload.mosques));
-    if (Array.isArray(payload.takazas))
-      setTakazas(normalizeTakazasPhones(payload.takazas));
-    if (Array.isArray(payload.kargoojaris))
-      setKargoojaris(normalizeKargoojarisPhones(payload.kargoojaris));
+    if (!requireEditAccess()) return;
+    const normalizedMosques = normalizeMosquesPhones(payload.mosques);
+    setMosques(normalizedMosques);
+    void seedInitialMosquesToFirestore(normalizedMosques).catch(() => {
+      showToast('মসজিদের ব্যাকআপ ডাটাবেসে রিস্টোর করতে সমস্যা হয়েছে।');
+    });
+
+    if (Array.isArray(payload.takazas)) {
+      const normalizedTakazas = normalizeTakazasPhones(payload.takazas);
+      setTakazas(normalizedTakazas);
+      void seedInitialTakazasToFirestore(normalizedTakazas).catch(() => {
+        showToast('তাকাজার ব্যাকআপ রিস্টোর করতে সমস্যা হয়েছে।');
+      });
+    }
+
+    if (Array.isArray(payload.kargoojaris)) {
+      const normalizedKargs = normalizeKargoojarisPhones(payload.kargoojaris);
+      setKargoojaris(normalizedKargs);
+      void seedInitialKargoojarisToFirestore(normalizedKargs).catch(() => {
+        showToast('কারগুজারির ব্যাকআপ রিস্টোর করতে সমস্যা হয়েছে।');
+      });
+    }
+
     showToast('ব্যাকআপ থেকে সকল তথ্য রিস্টোর করা হয়েছে।');
   };
 
   const handleResetToBaseline = () => {
+    if (!requireEditAccess()) return;
     setMosques(INITIAL_MOSQUES);
     try {
       localStorage.removeItem(STORAGE_KEY);
@@ -740,6 +1274,9 @@ export default function App() {
       // Ignore
     }
     showToast('মূল পিডিএফের ১৪টি মসজিদ ও ২৫৬ জন সাথীর তথ্যে রিসেট করা হয়েছে।');
+    void seedInitialMosquesToFirestore(INITIAL_MOSQUES).catch(() => {
+      showToast('ডাটাবেস রিসেট করতে সমস্যা হয়েছে।');
+    });
   };
 
   return (
@@ -751,22 +1288,63 @@ export default function App() {
           setActiveTab(tab);
           window.scrollTo({ top: 0, behavior: 'smooth' });
         }}
-        onAddMember={() =>
+        onAddMember={() => {
+          if (!requireEditAccess()) return;
           setSathiModal({
             mosqueId: activeTab === 'mosques' ? selectedMosqueId : 1,
             category: SathiCategory.ThreeChillaSathi,
             editingEntry: null,
-          })
-        }
+          });
+        }}
+        userEmail={user?.email ?? null}
+        canEdit={canEdit}
+        isSuperAdmin={isSuperAdmin}
+        pendingRequestCount={pendingRequestCount}
+        onOpenAccessModal={() => setAccessModalOpen(true)}
       />
+
+      {authReady && !canEdit && (
+        <div className="no-print border-b border-[#DCE8F7] bg-[#EBF4FF]/80">
+          <div className="mx-auto flex max-w-[1320px] flex-wrap items-center justify-between gap-2 px-4 py-2 text-xs text-slate-700 sm:px-6 lg:px-8">
+            <div className="flex items-center gap-2">
+              <Lock className="h-3.5 w-3.5 shrink-0 text-[#0066E6]" />
+              {user ? (
+                <span>
+                  সাইন ইন:{' '}
+                  <strong className="font-mono">{user.email}</strong> — তথ্য যোগ বা
+                  এডিট করতে{' '}
+                  <strong className="font-mono">{SUPER_ADMIN_EMAIL}</strong>-এর
+                  অনুমোদন প্রয়োজন।
+                </span>
+              ) : (
+                <span>
+                  সবাই তথ্য দেখতে, কল করতে ও প্রিন্ট করতে পারবেন। তথ্য যোগ বা এডিট
+                  করতে অনুমোদিত অ্যাকাউন্টে সাইন ইন করুন।
+                </span>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={() => setAccessModalOpen(true)}
+              className="cursor-pointer rounded-lg bg-white px-2.5 py-1 font-semibold text-[#0066E6] shadow-xs ring-1 ring-[#BFD9FA] transition-colors hover:bg-[#0066E6] hover:text-white"
+            >
+              {user ? 'অ্যাক্সেস অনুরোধ দেখুন' : 'এডিট সাইন ইন'}
+            </button>
+          </div>
+        </div>
+      )}
 
       <main className="mx-auto w-full max-w-[1320px] flex-1 px-4 py-8 sm:px-6 lg:px-8">
         {activeTab === 'overview' && (
           <OverviewView
             mosques={mosques}
+            canEdit={canEdit}
             onOpenMosque={handleOpenMosque}
             onOpenDirectory={handleOpenDirectory}
-            onAddMosque={() => setMosqueModal({ mode: 'add' })}
+            onAddMosque={() => {
+              if (!requireEditAccess()) return;
+              setMosqueModal({ mode: 'add' });
+            }}
           />
         )}
 
@@ -774,28 +1352,36 @@ export default function App() {
           <MosquesView
             mosques={mosques}
             selectedMosqueId={selectedMosqueId}
+            canEdit={canEdit}
             onSelectMosque={setSelectedMosqueId}
-            onAddSathi={(mosqueId, category) =>
+            onAddSathi={(mosqueId, category) => {
+              if (!requireEditAccess()) return;
               setSathiModal({
                 mosqueId,
                 category: category ?? SathiCategory.ThreeChillaSathi,
                 editingEntry: null,
-              })
-            }
-            onEditSathi={(mosqueId, category, entry) =>
+              });
+            }}
+            onEditSathi={(mosqueId, category, entry) => {
+              if (!requireEditAccess()) return;
               setSathiModal({
                 mosqueId,
                 category,
                 editingEntry: entry,
-              })
-            }
+              });
+            }}
             onDeleteSathi={handleDeleteSathi}
-            onEditMosqueInfo={(mosque) =>
-              setMosqueModal({ mode: 'edit', mosque })
-            }
+            onEditMosqueInfo={(mosque) => {
+              if (!requireEditAccess()) return;
+              setMosqueModal({ mode: 'edit', mosque });
+            }}
             onUpdateOfficial={handleUpdateOfficial}
-            onAddMosque={() => setMosqueModal({ mode: 'add' })}
+            onAddMosque={() => {
+              if (!requireEditAccess()) return;
+              setMosqueModal({ mode: 'add' });
+            }}
             onCopyPhone={handleCopyPhone}
+            onSelectPerson={setInspectedPerson}
           />
         )}
 
@@ -806,6 +1392,7 @@ export default function App() {
             initialCategory={directoryCategory}
             onOpenMosque={handleOpenMosque}
             onCopyPhone={handleCopyPhone}
+            onSelectPerson={setInspectedPerson}
           />
         )}
 
@@ -813,10 +1400,12 @@ export default function App() {
           <TakazaView
             mosques={mosques}
             takazas={takazas}
+            canEdit={canEdit}
             onSaveTakaza={handleSaveTakaza}
             onUpdateProgress={handleUpdateTakazaProgress}
             onToggleStatus={handleToggleTakazaStatus}
             onDeleteTakaza={handleDeleteTakaza}
+            onSelectPerson={setInspectedPerson}
           />
         )}
 
@@ -825,6 +1414,7 @@ export default function App() {
             mosques={mosques}
             takazas={takazas}
             entries={kargoojaris}
+            canEdit={canEdit}
             onSaveEntry={handleSaveKargoojari}
             onDeleteEntry={handleDeleteKargoojari}
             onSaveKargoojariSathi={handleSaveKargoojariSathi}
@@ -832,6 +1422,7 @@ export default function App() {
             onAssignToMosque={handleAssignKargoojariSathiToMosque}
             onAssignToTakaza={handleAssignKargoojariSathiToTakaza}
             onCopyPhone={handleCopyPhone}
+            onSelectPerson={setInspectedPerson}
           />
         )}
 
@@ -840,6 +1431,7 @@ export default function App() {
             mosques={mosques}
             takazas={takazas}
             kargoojaris={kargoojaris}
+            canEdit={canEdit}
             onImportData={handleImportData}
             onResetToBaseline={handleResetToBaseline}
           />
@@ -853,12 +1445,12 @@ export default function App() {
           </p>
           <p>
             {toBn(mosques.length)}টি মসজিদের সমন্বিত ডিজিটাল ডিরেক্টরি ·
-            স্থানীয়ভাবে ব্রাউজারে সংরক্ষিত ও প্রিন্টযোগ্য
+            অ্যাডমিন-নিয়ন্ত্রিত ক্লাউড ডাটাবেস ও প্রিন্টযোগ্য
           </p>
         </div>
       </footer>
 
-      {sathiModal && (
+      {canEdit && sathiModal && (
         <SathiModal
           mosques={mosques}
           initialMosqueId={sathiModal.mosqueId}
@@ -869,13 +1461,45 @@ export default function App() {
         />
       )}
 
-      {mosqueModal && (
+      {canEdit && mosqueModal && (
         <MosqueInfoModal
           mosque={mosqueModal.mode === 'edit' ? mosqueModal.mosque : null}
           canDelete={mosques.length > 1}
           onClose={() => setMosqueModal(null)}
           onSave={handleSaveMosqueInfo}
           onDelete={handleDeleteMosque}
+        />
+      )}
+
+      {accessModalOpen && (
+        <AccessControlModal
+          user={user}
+          isSuperAdmin={isSuperAdmin}
+          canEdit={canEdit}
+          myRequest={myRequest}
+          editors={editors}
+          accessRequests={accessRequests}
+          authBusy={authBusy}
+          authError={authError}
+          onClose={() => setAccessModalOpen(false)}
+          onSignIn={handleSignIn}
+          onSignOut={handleSignOut}
+          onSubmitRequest={handleSubmitAccessRequest}
+          onGrantEditor={handleGrantEditor}
+          onToggleEditor={handleToggleEditor}
+          onRevokeEditor={handleRevokeEditor}
+          onRejectRequest={handleRejectRequest}
+          onDeleteRequest={handleDeleteRequest}
+        />
+      )}
+
+      {inspectedPerson && (
+        <SathiProfileModal
+          person={inspectedPerson}
+          mosques={mosques}
+          onOpenMosque={handleOpenMosque}
+          onCopyPhone={handleCopyPhone}
+          onClose={() => setInspectedPerson(null)}
         />
       )}
 

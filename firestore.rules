@@ -1,0 +1,286 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global default-deny safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Global Hardened Helpers ---
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isSuperAdmin() {
+      return isVerifiedUser()
+        && request.auth.token.email is string
+        && request.auth.token.email.lower() == 'mdmursalineparvez@gmail.com';
+    }
+
+    function emailDocId(email) {
+      return email.lower().replace('[.]', '_dot_').replace('@', '_at_').replace('[+]', '_plus_');
+    }
+
+    function isApprovedEditor() {
+      return isVerifiedUser()
+        && request.auth.token.email is string
+        && request.auth.token.email.size() <= 200
+        && exists(/databases/$(database)/documents/editors/$(emailDocId(request.auth.token.email)))
+        && get(/databases/$(database)/documents/editors/$(emailDocId(request.auth.token.email))).data.active == true;
+    }
+
+    function canEditContent() {
+      return isSuperAdmin() || isApprovedEditor();
+    }
+
+    function isValidOfficial(off) {
+      return off is map
+        && off.keys().hasAll(['name', 'phone'])
+        && off.keys().hasOnly(['name', 'phone'])
+        && off.name is string && off.name.size() <= 150
+        && off.phone is string && off.phone.size() <= 40;
+    }
+
+    function isValidMosque(data) {
+      return data.keys().hasAll([
+          'id', 'name', 'address', 'khatib', 'imam', 'muazzin', 'categories', 'updatedAt', 'updatedBy'
+        ])
+        && data.keys().hasOnly([
+          'id', 'name', 'address', 'khatib', 'imam', 'muazzin', 'categories', 'updatedAt', 'updatedBy'
+        ])
+        && data.id is int && data.id >= 1 && data.id <= 10000
+        && data.name is string && data.name.size() >= 1 && data.name.size() <= 200
+        && data.address is string && data.address.size() <= 300
+        && isValidOfficial(data.khatib)
+        && isValidOfficial(data.imam)
+        && isValidOfficial(data.muazzin)
+        && data.categories is map
+        && data.categories.keys().hasOnly([
+          'salwali_ulama',
+          'three_chilla_ulama',
+          'one_chilla_ulama',
+          'bidesh',
+          'three_chilla_sathi',
+          'one_chilla_sathi',
+          'masturat_chilla',
+          'masturat_ten_fifteen',
+          'masturat_three_days',
+          'chatra_nowjowan'
+        ])
+        && data.updatedAt == request.time
+        && data.updatedBy is string && data.updatedBy == request.auth.uid && data.updatedBy.size() <= 128;
+    }
+
+    function isValidTakaza(data) {
+      return data.keys().hasAll([
+          'id', 'title', 'mosqueId', 'type', 'targetCount', 'completedCount',
+          'dueDate', 'zimmadarName', 'zimmadarPhone', 'status', 'notes',
+          'committedSathis', 'createdAt', 'updatedAt', 'updatedBy'
+        ])
+        && data.keys().hasOnly([
+          'id', 'title', 'mosqueId', 'type', 'targetCount', 'completedCount',
+          'dueDate', 'zimmadarName', 'zimmadarPhone', 'status', 'notes',
+          'committedSathis', 'createdAt', 'updatedAt', 'updatedBy'
+        ])
+        && isValidId(data.id)
+        && data.title is string && data.title.size() >= 1 && data.title.size() <= 250
+        && (data.mosqueId == 'halqa' || (data.mosqueId is int && data.mosqueId >= 1 && data.mosqueId <= 10000))
+        && data.type in ['three_days', 'ten_fifteen_days', 'one_chilla', 'three_chilla', 'sal', 'masturat', 'other']
+        && data.targetCount is int && data.targetCount >= 1 && data.targetCount <= 10000
+        && data.completedCount is int && data.completedCount >= 0 && data.completedCount <= 10000
+        && data.dueDate is string && data.dueDate.size() <= 32
+        && data.zimmadarName is string && data.zimmadarName.size() <= 150
+        && data.zimmadarPhone is string && data.zimmadarPhone.size() <= 40
+        && data.status in ['ongoing', 'urgent', 'completed']
+        && data.notes is string && data.notes.size() <= 2000
+        && data.committedSathis is list && data.committedSathis.size() <= 300
+        && (data.committedSathis.size() == 0 || data.committedSathis[0] is map)
+        && data.createdAt is string && data.createdAt.size() <= 64
+        && data.updatedAt == request.time
+        && data.updatedBy is string && data.updatedBy == request.auth.uid && data.updatedBy.size() <= 128;
+    }
+
+    function isValidKargoojari(data) {
+      return data.keys().hasAll([
+          'id', 'date', 'mosqueId', 'gastDone', 'talimDone', 'mashwaraDone',
+          'sathiAttended', 'tashkeelCount', 'reporterName', 'summary', 'sathis',
+          'createdAt', 'updatedAt', 'updatedBy'
+        ])
+        && data.keys().hasOnly([
+          'id', 'date', 'mosqueId', 'gastDone', 'talimDone', 'mashwaraDone',
+          'sathiAttended', 'tashkeelCount', 'reporterName', 'summary', 'sathis',
+          'createdAt', 'updatedAt', 'updatedBy'
+        ])
+        && isValidId(data.id)
+        && data.date is string && data.date.size() >= 1 && data.date.size() <= 32
+        && (data.mosqueId == 'halqa' || (data.mosqueId is int && data.mosqueId >= 1 && data.mosqueId <= 10000))
+        && data.gastDone is bool
+        && data.talimDone is bool
+        && data.mashwaraDone is bool
+        && data.sathiAttended is int && data.sathiAttended >= 0 && data.sathiAttended <= 10000
+        && data.tashkeelCount is int && data.tashkeelCount >= 0 && data.tashkeelCount <= 10000
+        && data.reporterName is string && data.reporterName.size() <= 150
+        && data.summary is string && data.summary.size() <= 15000
+        && data.sathis is list && data.sathis.size() <= 300
+        && (data.sathis.size() == 0 || data.sathis[0] is map)
+        && data.createdAt is string && data.createdAt.size() <= 64
+        && data.updatedAt == request.time
+        && data.updatedBy is string && data.updatedBy == request.auth.uid && data.updatedBy.size() <= 128;
+    }
+
+    function isValidEditor(data) {
+      return data.keys().hasAll(['email', 'label', 'active', 'grantedBy', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['email', 'label', 'active', 'grantedBy', 'createdAt', 'updatedAt'])
+        && data.email is string && data.email.size() >= 3 && data.email.size() <= 200
+        && data.label is string && data.label.size() <= 120
+        && data.active is bool
+        && data.grantedBy is string && data.grantedBy.lower() == request.auth.token.email.lower() && data.grantedBy.size() <= 200
+        && data.createdAt is timestamp
+        && data.updatedAt == request.time;
+    }
+
+    function isValidAccessRequest(data) {
+      return data.keys().hasAll(['uid', 'email', 'displayName', 'note', 'status', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['uid', 'email', 'displayName', 'note', 'status', 'createdAt', 'updatedAt'])
+        && isValidId(data.uid)
+        && data.email is string && data.email.size() >= 3 && data.email.size() <= 200
+        && data.displayName is string && data.displayName.size() <= 150
+        && data.note is string && data.note.size() <= 300
+        && data.status in ['pending', 'approved', 'rejected']
+        && data.createdAt is timestamp
+        && data.updatedAt == request.time;
+    }
+
+    // --- Collection Rules ---
+
+    // Publicly readable Halqa mosques; only super admin or approved editors may write
+    match /mosques/{mosqueId} {
+      allow get: if isValidId(mosqueId);
+      allow list: if true;
+      allow create: if isValidId(mosqueId) && isValidMosque(incoming()) && canEditContent();
+      allow update: if isValidId(mosqueId)
+        && isValidMosque(incoming())
+        && canEditContent()
+        && incoming().id == existing().id
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'name', 'address', 'khatib', 'imam', 'muazzin', 'categories', 'updatedAt', 'updatedBy'
+        ]);
+      allow delete: if isValidId(mosqueId) && canEditContent();
+    }
+
+    // Publicly readable Takazas; only super admin or approved editors may write
+    match /takazas/{takazaId} {
+      allow get: if isValidId(takazaId);
+      allow list: if true;
+      allow create: if isValidId(takazaId)
+        && isValidTakaza(incoming())
+        && incoming().id == takazaId
+        && canEditContent();
+      allow update: if isValidId(takazaId)
+        && isValidTakaza(incoming())
+        && canEditContent()
+        && incoming().id == existing().id
+        && incoming().createdAt == existing().createdAt
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'title', 'mosqueId', 'type', 'targetCount', 'completedCount',
+          'dueDate', 'zimmadarName', 'zimmadarPhone', 'status', 'notes',
+          'committedSathis', 'updatedAt', 'updatedBy'
+        ]);
+      allow delete: if isValidId(takazaId) && canEditContent();
+    }
+
+    // Publicly readable Kargoojaris; only super admin or approved editors may write
+    match /kargoojaris/{kargoojariId} {
+      allow get: if isValidId(kargoojariId);
+      allow list: if true;
+      allow create: if isValidId(kargoojariId)
+        && isValidKargoojari(incoming())
+        && incoming().id == kargoojariId
+        && canEditContent();
+      allow update: if isValidId(kargoojariId)
+        && isValidKargoojari(incoming())
+        && canEditContent()
+        && incoming().id == existing().id
+        && incoming().createdAt == existing().createdAt
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'date', 'mosqueId', 'gastDone', 'talimDone', 'mashwaraDone',
+          'sathiAttended', 'tashkeelCount', 'reporterName', 'summary', 'sathis',
+          'updatedAt', 'updatedBy'
+        ]);
+      allow delete: if isValidId(kargoojariId) && canEditContent();
+    }
+
+    // Approved editors list: super admin manages all; verified user can read only their own entry
+    match /editors/{editorId} {
+      allow get: if isValidId(editorId) && (
+        isSuperAdmin() ||
+        (isVerifiedUser() && request.auth.token.email is string && editorId == emailDocId(request.auth.token.email))
+      );
+      allow list: if isSuperAdmin();
+      allow create: if isSuperAdmin()
+        && isValidId(editorId)
+        && isValidEditor(incoming())
+        && incoming().createdAt == request.time
+        && editorId == emailDocId(incoming().email);
+      allow update: if isSuperAdmin()
+        && isValidId(editorId)
+        && isValidEditor(incoming())
+        && incoming().email == existing().email
+        && incoming().createdAt == existing().createdAt
+        && incoming().diff(existing()).affectedKeys().hasOnly(['label', 'active', 'grantedBy', 'updatedAt']);
+      allow delete: if isSuperAdmin() && isValidId(editorId);
+    }
+
+    // Edit access requests: user manages their own pending request; super admin lists/approves/deletes
+    match /accessRequests/{requestId} {
+      allow get: if isValidId(requestId) && (
+        isSuperAdmin() ||
+        (isVerifiedUser() && request.auth.uid == requestId)
+      );
+      allow list: if isSuperAdmin();
+      allow create: if isVerifiedUser()
+        && isValidId(requestId)
+        && requestId == request.auth.uid
+        && isValidAccessRequest(incoming())
+        && incoming().uid == request.auth.uid
+        && incoming().email == request.auth.token.email
+        && incoming().status == 'pending'
+        && incoming().createdAt == request.time;
+      allow update: if isValidId(requestId)
+        && isValidAccessRequest(incoming())
+        && incoming().uid == existing().uid
+        && incoming().email == existing().email
+        && incoming().createdAt == existing().createdAt
+        && (
+          (isSuperAdmin() && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt'])) ||
+          (isVerifiedUser()
+            && request.auth.uid == requestId
+            && existing().status in ['pending', 'rejected', 'approved']
+            && incoming().status == 'pending'
+            && incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'note', 'status', 'updatedAt']))
+        );
+      allow delete: if isValidId(requestId) && (
+        isSuperAdmin() ||
+        (isVerifiedUser() && request.auth.uid == requestId)
+      );
+    }
+  }
+}

@@ -21,12 +21,14 @@ import {
 } from '../types/directory';
 import {
   CATEGORY_META,
+  findExistingMosqueMemberMatch,
   formatBdPhone,
   getCategoryMeta,
   TAKAZA_TYPE_LABELS,
   toBn,
 } from '../utils/bengali';
 import { PhoneActions } from './PhoneActions';
+import { InspectedPersonInput } from './SathiProfileModal';
 
 export interface AssignKargoojariToMosquePayload {
   kargoojariId: string;
@@ -58,6 +60,7 @@ interface KargoojariViewProps {
   mosques: MosqueRecord[];
   takazas: TakazaEntry[];
   entries: KargoojariEntry[];
+  canEdit: boolean;
   onSaveEntry: (
     entry: Omit<KargoojariEntry, 'id' | 'createdAt'> & { id?: string }
   ) => void;
@@ -70,6 +73,7 @@ interface KargoojariViewProps {
   onAssignToMosque: (payload: AssignKargoojariToMosquePayload) => void;
   onAssignToTakaza: (payload: AssignKargoojariToTakazaPayload) => void;
   onCopyPhone: (phone: string) => void;
+  onSelectPerson: (person: InspectedPersonInput) => void;
 }
 
 function getTodayISO(): string {
@@ -115,6 +119,7 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
   mosques,
   takazas,
   entries,
+  canEdit,
   onSaveEntry,
   onDeleteEntry,
   onSaveKargoojariSathi,
@@ -122,6 +127,7 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
   onAssignToMosque,
   onAssignToTakaza,
   onCopyPhone,
+  onSelectPerson,
 }) => {
   const todayISO = getTodayISO();
   const yesterdayISO = getYesterdayISO();
@@ -141,6 +147,10 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
   const [draftSathiName, setDraftSathiName] = useState('');
   const [draftSathiPhone, setDraftSathiPhone] = useState('');
   const [draftSathiNotes, setDraftSathiNotes] = useState('');
+  const [draftTashkeelStatus, setDraftTashkeelStatus] = useState<
+    'tashkeel' | 'not_tashkeel'
+  >('tashkeel');
+  const [draftSathiError, setDraftSathiError] = useState('');
   const [formError, setFormError] = useState('');
   const [formExpanded, setFormExpanded] = useState(true);
 
@@ -162,6 +172,9 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
   const [modalSathiName, setModalSathiName] = useState('');
   const [modalSathiPhone, setModalSathiPhone] = useState('');
   const [modalSathiNotes, setModalSathiNotes] = useState('');
+  const [modalTashkeelStatus, setModalTashkeelStatus] = useState<
+    'tashkeel' | 'not_tashkeel'
+  >('tashkeel');
   const [modalSathiError, setModalSathiError] = useState('');
 
   // Assign Kargoojari Sathi -> Mosque Section Modal
@@ -220,23 +233,38 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
     setDraftSathiName('');
     setDraftSathiPhone('');
     setDraftSathiNotes('');
+    setDraftTashkeelStatus('tashkeel');
+    setDraftSathiError('');
     setFormError('');
   };
 
   const handleAddDraftSathi = () => {
-    if (!draftSathiName.trim()) return;
+    const trimmedName = draftSathiName.trim();
+    if (!trimmedName) return;
+
+    const existingMatch = findExistingMosqueMemberMatch(trimmedName, mosques);
+    if (existingMatch) {
+      setDraftSathiError(
+        `"${trimmedName}" নামটি আগে থেকেই "${existingMatch.mosqueName}"-এর তালিকায় (${existingMatch.memberName}) রয়েছে, তাই কারগুজারির নতুন তালিকায় যুক্ত করা হয়নি।`
+      );
+      return;
+    }
+
     setFormSathis((prev) => [
       ...prev,
       {
         id: `ks-${Date.now()}-${prev.length + 1}`,
-        name: draftSathiName.trim(),
+        name: trimmedName,
         phone: formatBdPhone(draftSathiPhone),
         notes: draftSathiNotes.trim(),
+        tashkeelStatus: draftTashkeelStatus,
       },
     ]);
     setDraftSathiName('');
     setDraftSathiPhone('');
     setDraftSathiNotes('');
+    setDraftTashkeelStatus('tashkeel');
+    setDraftSathiError('');
   };
 
   const handleEdit = (entry: KargoojariEntry) => {
@@ -254,6 +282,8 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
     setDraftSathiName('');
     setDraftSathiPhone('');
     setDraftSathiNotes('');
+    setDraftTashkeelStatus('tashkeel');
+    setDraftSathiError('');
     setFormError('');
     setFormExpanded(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -263,11 +293,22 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
     e.preventDefault();
     const finalSathis = [...formSathis];
     if (draftSathiName.trim()) {
+      const existingMatch = findExistingMosqueMemberMatch(
+        draftSathiName.trim(),
+        mosques
+      );
+      if (existingMatch) {
+        setDraftSathiError(
+          `"${draftSathiName.trim()}" নামটি আগে থেকেই "${existingMatch.mosqueName}"-এর তালিকায় রয়েছে, তাই কারগুজারির নতুন তালিকায় যুক্ত করা হয়নি।`
+        );
+        return;
+      }
       finalSathis.push({
         id: `ks-${Date.now()}-${finalSathis.length + 1}`,
         name: draftSathiName.trim(),
         phone: formatBdPhone(draftSathiPhone),
         notes: draftSathiNotes.trim(),
+        tashkeelStatus: draftTashkeelStatus,
       });
     }
 
@@ -292,7 +333,9 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
       sathiAttended: Math.max(0, Number(sathiAttended) || 0),
       tashkeelCount: Math.max(
         0,
-        Number(tashkeelCount) || finalSathis.length || 0
+        Number(tashkeelCount) ||
+          finalSathis.filter((s) => s.tashkeelStatus !== 'not_tashkeel').length ||
+          0
       ),
       reporterName: reporterName.trim(),
       summary: summary.trim(),
@@ -310,6 +353,7 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
     setModalSathiName(editingSathi?.name ?? '');
     setModalSathiPhone(editingSathi?.phone ?? '');
     setModalSathiNotes(editingSathi?.notes ?? '');
+    setModalTashkeelStatus(editingSathi?.tashkeelStatus ?? 'tashkeel');
     setModalSathiError('');
   };
 
@@ -454,18 +498,20 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
               <Printer className="h-4 w-4 text-[#0066E6]" />
               <span>রিপোর্ট প্রিন্ট</span>
             </button>
-            <button
-              type="button"
-              onClick={() => setFormExpanded((prev) => !prev)}
-              className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl bg-[#0066E6] px-4 py-2.5 text-sm font-medium text-white shadow-[0_2px_8px_rgba(0,102,230,0.22)] transition-colors hover:bg-[#0052BD]"
-            >
-              <Plus className="h-4 w-4" />
-              <span>
-                {formExpanded
-                  ? 'ফরম গুটিয়ে রাখুন'
-                  : 'আজকের কারগুজারি যোগ করুন'}
-              </span>
-            </button>
+            {canEdit && (
+              <button
+                type="button"
+                onClick={() => setFormExpanded((prev) => !prev)}
+                className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl bg-[#0066E6] px-4 py-2.5 text-sm font-medium text-white shadow-[0_2px_8px_rgba(0,102,230,0.22)] transition-colors hover:bg-[#0052BD]"
+              >
+                <Plus className="h-4 w-4" />
+                <span>
+                  {formExpanded
+                    ? 'ফরম গুটিয়ে রাখুন'
+                    : 'আজকের কারগুজারি যোগ করুন'}
+                </span>
+              </button>
+            )}
           </div>
         </div>
       </section>
@@ -502,7 +548,7 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
       </section>
 
       {/* Daily Add / Edit Form */}
-      {formExpanded && (
+      {canEdit && formExpanded && (
         <section className="no-print rounded-2xl border border-[#E2ECF7] bg-white p-5 shadow-[0_2px_10px_rgba(15,23,42,0.03)] sm:p-6">
           <div className="flex items-center justify-between border-b border-[#EEF4FB] pb-3.5">
             <h2 className="font-display text-lg font-bold text-slate-900">
@@ -640,7 +686,7 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
                 <div className="flex items-center gap-2">
                   <UserPlus className="h-4 w-4 text-[#0066E6]" />
                   <span className="text-xs font-bold text-slate-800">
-                    কারগুজারিতে যুক্ত / তাশকিলকৃত সাথীদের নাম (মসজিদ ফরম্যাটে)
+                    তাশকিল ও দাওয়াতকৃত সাথীদের তালিকা (আগে থেকে থাকা সাথী বাদে)
                   </span>
                 </div>
                 <span className="font-mono text-xs text-slate-500 tabular-nums">
@@ -667,7 +713,18 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
                             {toBn(idx + 1)}
                           </td>
                           <td className="px-3 py-2 font-semibold text-slate-900">
-                            {s.name}
+                            <p>{s.name}</p>
+                            <p
+                              className={`text-[11px] font-medium ${
+                                s.tashkeelStatus === 'not_tashkeel'
+                                  ? 'text-amber-700'
+                                  : 'text-emerald-700'
+                              }`}
+                            >
+                              {s.tashkeelStatus === 'not_tashkeel'
+                                ? 'তাশকিল হয়নি (দাওয়াত)'
+                                : 'তাশকিল হয়েছেন'}
+                            </p>
                           </td>
                           <td className="px-3 py-2 font-mono text-slate-700 tabular-nums whitespace-nowrap">
                             {formatBdPhone(s.phone) || '—'}
@@ -696,55 +753,78 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
                 </div>
               )}
 
-              <div className="grid grid-cols-1 gap-2.5 p-3 sm:grid-cols-12">
-                <input
-                  type="text"
-                  value={draftSathiName}
-                  onChange={(e) => setDraftSathiName(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      handleAddDraftSathi();
+              <div className="space-y-2 p-3">
+                <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-12">
+                  <input
+                    type="text"
+                    value={draftSathiName}
+                    onChange={(e) => {
+                      setDraftSathiName(e.target.value);
+                      if (draftSathiError) setDraftSathiError('');
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddDraftSathi();
+                      }
+                    }}
+                    placeholder="সাথীর নাম (যেমন: ভাই মোঃ নাঈম)"
+                    className="rounded-xl border border-[#DCE8F7] bg-white px-3 py-2 text-xs text-slate-900 placeholder:text-slate-400 focus:border-[#0066E6] focus:outline-none sm:col-span-3"
+                  />
+                  <input
+                    type="text"
+                    value={draftSathiPhone}
+                    onChange={(e) => setDraftSathiPhone(e.target.value)}
+                    onBlur={() => setDraftSathiPhone((prev) => formatBdPhone(prev))}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddDraftSathi();
+                      }
+                    }}
+                    placeholder="+880 1711-000 000"
+                    className="rounded-xl border border-[#DCE8F7] bg-white px-3 py-2 font-mono text-xs text-slate-900 placeholder:text-slate-400 focus:border-[#0066E6] focus:outline-none sm:col-span-2"
+                  />
+                  <select
+                    aria-label="তাশকিলের অবস্থা"
+                    value={draftTashkeelStatus}
+                    onChange={(e) =>
+                      setDraftTashkeelStatus(
+                        e.target.value as 'tashkeel' | 'not_tashkeel'
+                      )
                     }
-                  }}
-                  placeholder="সাথীর নাম (যেমন: ভাই মোঃ নাঈম)"
-                  className="rounded-xl border border-[#DCE8F7] bg-white px-3 py-2 text-xs text-slate-900 placeholder:text-slate-400 focus:border-[#0066E6] focus:outline-none sm:col-span-4"
-                />
-                <input
-                  type="text"
-                  value={draftSathiPhone}
-                  onChange={(e) => setDraftSathiPhone(e.target.value)}
-                  onBlur={() => setDraftSathiPhone((prev) => formatBdPhone(prev))}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      handleAddDraftSathi();
-                    }
-                  }}
-                  placeholder="+880 1711-000 000"
-                  className="rounded-xl border border-[#DCE8F7] bg-white px-3 py-2 font-mono text-xs text-slate-900 placeholder:text-slate-400 focus:border-[#0066E6] focus:outline-none sm:col-span-3"
-                />
-                <input
-                  type="text"
-                  value={draftSathiNotes}
-                  onChange={(e) => setDraftSathiNotes(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      handleAddDraftSathi();
-                    }
-                  }}
-                  placeholder="মন্তব্য / যে তাকাজায় রাজি (যেমন: ৩ দিনের জামাত)"
-                  className="rounded-xl border border-[#DCE8F7] bg-white px-3 py-2 text-xs text-slate-900 placeholder:text-slate-400 focus:border-[#0066E6] focus:outline-none sm:col-span-3"
-                />
-                <button
-                  type="button"
-                  onClick={handleAddDraftSathi}
-                  className="inline-flex cursor-pointer items-center justify-center gap-1 rounded-xl border border-[#BFD9FA] bg-[#EBF4FF] px-3 py-2 text-xs font-semibold text-[#0066E6] transition-colors hover:bg-[#DCEBFF] sm:col-span-2"
-                >
-                  <Plus className="h-3.5 w-3.5" />
-                  <span>যোগ করুন</span>
-                </button>
+                    className="rounded-xl border border-[#DCE8F7] bg-white px-2.5 py-2 text-xs text-slate-900 focus:border-[#0066E6] focus:outline-none sm:col-span-2"
+                  >
+                    <option value="tashkeel">তাশকিল হয়েছেন</option>
+                    <option value="not_tashkeel">তাশকিল হয়নি</option>
+                  </select>
+                  <input
+                    type="text"
+                    value={draftSathiNotes}
+                    onChange={(e) => setDraftSathiNotes(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddDraftSathi();
+                      }
+                    }}
+                    placeholder="মন্তব্য / যে তাকাজায় রাজি বা দাওয়াত"
+                    className="rounded-xl border border-[#DCE8F7] bg-white px-3 py-2 text-xs text-slate-900 placeholder:text-slate-400 focus:border-[#0066E6] focus:outline-none sm:col-span-3"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddDraftSathi}
+                    className="inline-flex cursor-pointer items-center justify-center gap-1 rounded-xl border border-[#BFD9FA] bg-[#EBF4FF] px-3 py-2 text-xs font-semibold text-[#0066E6] transition-colors hover:bg-[#DCEBFF] sm:col-span-2"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    <span>যোগ করুন</span>
+                  </button>
+                </div>
+                {draftSathiError && (
+                  <p className="text-xs font-medium text-amber-700">
+                    {draftSathiError}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -881,7 +961,17 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
 
                 <div className="space-y-4">
                   {dayEntries.map((item) => {
-                    const cardSathis = item.sathis ?? [];
+                    // Show both tashkeel and non-tashkeel sathis, excluding names already present in mosque directory (unless assigned from here)
+                    const cardSathis = (item.sathis ?? []).filter(
+                      (s) =>
+                        Boolean(s.assignedMosqueId) ||
+                        !findExistingMosqueMemberMatch(s.name, mosques)
+                    );
+                    const tashkeelListCount = cardSathis.filter(
+                      (s) => s.tashkeelStatus !== 'not_tashkeel'
+                    ).length;
+                    const nonTashkeelListCount =
+                      cardSathis.length - tashkeelListCount;
                     return (
                       <article
                         key={item.id}
@@ -896,7 +986,25 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
                               {item.reporterName && (
                                 <>
                                   <span aria-hidden="true">·</span>
-                                  <span>রিপোর্ট: {item.reporterName}</span>
+                                  <span>
+                                    রিপোর্ট:{' '}
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        onSelectPerson({
+                                          name: item.reporterName,
+                                          mosqueId:
+                                            typeof item.mosqueId === 'number'
+                                              ? item.mosqueId
+                                              : undefined,
+                                          roleOrCategory: 'কারগুজারি রিপোর্টকারী',
+                                        })
+                                      }
+                                      className="cursor-pointer font-medium text-slate-700 underline-offset-2 transition-colors hover:text-[#0066E6] hover:underline"
+                                    >
+                                      {item.reporterName}
+                                    </button>
+                                  </span>
                                 </>
                               )}
                             </div>
@@ -939,32 +1047,34 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
                             </div>
                           </div>
 
-                          <div className="no-print flex shrink-0 items-center gap-1.5">
-                            <button
-                              type="button"
-                              onClick={() => openAddSathiModal(item.id, null)}
-                              className="inline-flex cursor-pointer items-center gap-1 rounded-xl border border-[#BFD9FA] bg-[#EBF4FF] px-2.5 py-1.5 text-xs font-semibold text-[#0066E6] transition-colors hover:bg-[#DCEBFF]"
-                            >
-                              <UserPlus className="h-3.5 w-3.5" />
-                              <span>সাথী যোগ</span>
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleEdit(item)}
-                              title="কারগুজারি সম্পাদনা"
-                              className="cursor-pointer rounded-xl border border-[#E2ECF7] p-1.5 text-slate-500 transition-colors hover:bg-[#EBF4FF] hover:text-[#0066E6]"
-                            >
-                              <Edit3 className="h-3.5 w-3.5" />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => onDeleteEntry(item.id)}
-                              title="মুছে ফেলুন"
-                              className="cursor-pointer rounded-xl border border-[#E2ECF7] p-1.5 text-slate-500 transition-colors hover:bg-rose-50 hover:text-rose-600"
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </button>
-                          </div>
+                          {canEdit && (
+                            <div className="no-print flex shrink-0 items-center gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() => openAddSathiModal(item.id, null)}
+                                className="inline-flex cursor-pointer items-center gap-1 rounded-xl border border-[#BFD9FA] bg-[#EBF4FF] px-2.5 py-1.5 text-xs font-semibold text-[#0066E6] transition-colors hover:bg-[#DCEBFF]"
+                              >
+                                <UserPlus className="h-3.5 w-3.5" />
+                                <span>সাথী যোগ</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleEdit(item)}
+                                title="কারগুজারি সম্পাদনা"
+                                className="cursor-pointer rounded-xl border border-[#E2ECF7] p-1.5 text-slate-500 transition-colors hover:bg-[#EBF4FF] hover:text-[#0066E6]"
+                              >
+                                <Edit3 className="h-3.5 w-3.5" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => onDeleteEntry(item.id)}
+                                title="মুছে ফেলুন"
+                                className="cursor-pointer rounded-xl border border-[#E2ECF7] p-1.5 text-slate-500 transition-colors hover:bg-rose-50 hover:text-rose-600"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
+                          )}
                         </div>
 
                         {item.summary && (
@@ -976,18 +1086,31 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
                         {/* Structured Sathi Table in exact Mosque Directory Format */}
                         <div className="mt-4 overflow-hidden rounded-2xl border border-[#E2ECF7] bg-white">
                           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#E2ECF7] bg-[#F1F6FC]/90 px-4 py-2.5">
-                            <span className="text-xs font-bold text-slate-800">
-                              তাশকিল / যুক্তকৃত সাথী তালিকা ({toBn(cardSathis.length)}{' '}
-                              জন)
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => openAddSathiModal(item.id, null)}
-                              className="no-print inline-flex cursor-pointer items-center gap-1 rounded-lg bg-[#EBF4FF] px-2.5 py-1 text-xs font-semibold text-[#0066E6] hover:bg-[#DCEBFF]"
-                            >
-                              <Plus className="h-3.5 w-3.5" />
-                              <span>নতুন সাথী যুক্ত করুন</span>
-                            </button>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="text-xs font-bold text-slate-800">
+                                দাওয়াত ও তাশকিলকৃত সাথী তালিকা (
+                                {toBn(cardSathis.length)} জন)
+                              </span>
+                              {cardSathis.length > 0 && (
+                                <span className="text-[11px] font-medium text-slate-500">
+                                  · তাশকিল {toBn(tashkeelListCount)} জন
+                                  {nonTashkeelListCount > 0 &&
+                                    ` · তাশকিল হয়নি ${toBn(
+                                      nonTashkeelListCount
+                                    )} জন`}
+                                </span>
+                              )}
+                            </div>
+                            {canEdit && (
+                              <button
+                                type="button"
+                                onClick={() => openAddSathiModal(item.id, null)}
+                                className="no-print inline-flex cursor-pointer items-center gap-1 rounded-lg bg-[#EBF4FF] px-2.5 py-1 text-xs font-semibold text-[#0066E6] hover:bg-[#DCEBFF]"
+                              >
+                                <Plus className="h-3.5 w-3.5" />
+                                <span>নতুন সাথী যুক্ত করুন</span>
+                              </button>
+                            )}
                           </div>
 
                           <div className="overflow-x-auto">
@@ -1002,9 +1125,11 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
                                     মোবাইল ও কল
                                   </th>
                                   <th className="px-4 py-2.5">মন্তব্য</th>
-                                  <th className="no-print min-w-[240px] px-4 py-2.5 text-right">
-                                    মসজিদ ও তাকাজায় যুক্ত
-                                  </th>
+                                  {canEdit && (
+                                    <th className="no-print min-w-[240px] px-4 py-2.5 text-right">
+                                      মসজিদ ও তাকাজায় যুক্ত
+                                    </th>
+                                  )}
                                 </tr>
                               </thead>
                               <tbody className="divide-y divide-slate-100">
@@ -1024,134 +1149,169 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
                                         {toBn(idx + 1)}
                                       </td>
                                       <td className="px-4 py-2.5">
-                                        <p className="font-medium text-slate-900">
+                                        <button
+                                          type="button"
+                                          onClick={() =>
+                                            onSelectPerson({
+                                              name: s.name,
+                                              phone: s.phone,
+                                              mosqueId: s.assignedMosqueId,
+                                              roleOrCategory: s.assignedCategory
+                                                ? getCategoryMeta(
+                                                    s.assignedCategory
+                                                  ).shortLabel
+                                                : `কারগুজারি · ${formatLongDateBn(
+                                                    item.date
+                                                  )}`,
+                                              notes: s.notes,
+                                            })
+                                          }
+                                          className="cursor-pointer text-left font-medium text-slate-900 underline-offset-2 transition-colors hover:text-[#0066E6] hover:underline"
+                                        >
                                           {s.name}
-                                        </p>
-                                        {(assignedMosqueText ||
-                                          s.assignedTakazaTitle) && (
-                                          <div className="mt-1 flex flex-col gap-0.5 text-[11px]">
-                                            {assignedMosqueText && (
-                                              <span className="font-medium text-[#0066E6]">
-                                                মসজিদে যুক্ত: {assignedMosqueText}
-                                              </span>
-                                            )}
-                                            {s.assignedTakazaTitle && (
-                                              <span className="font-medium text-emerald-700">
-                                                তাকাজায় যুক্ত:{' '}
-                                                {s.assignedTakazaTitle}
-                                              </span>
-                                            )}
-                                          </div>
-                                        )}
-                                      </td>
-                                      <td className="px-4 py-2.5">
-                                        {s.phone.trim() ? (
-                                          <PhoneActions
-                                            phone={s.phone}
-                                            copied={copiedKey === copyId}
-                                            onCopy={() =>
-                                              handleCopy(copyId, s.phone)
-                                            }
-                                          />
-                                        ) : (
-                                          <button
-                                            type="button"
-                                            onClick={() =>
-                                              openAddSathiModal(item.id, s)
-                                            }
-                                            className="no-print cursor-pointer text-xs text-slate-400 hover:text-[#0066E6] hover:underline"
+                                        </button>
+                                        <div className="mt-1 flex flex-col gap-0.5 text-[11px]">
+                                          <span
+                                            className={`font-medium ${
+                                              s.tashkeelStatus ===
+                                              'not_tashkeel'
+                                                ? 'text-amber-700'
+                                                : 'text-emerald-700'
+                                            }`}
                                           >
-                                            + নম্বর যোগ করুন
-                                          </button>
-                                        )}
-                                      </td>
-                                      <td className="px-4 py-2.5 text-xs text-slate-600">
-                                        {s.notes.trim() || '—'}
-                                      </td>
-                                      <td className="no-print px-4 py-2.5 text-right">
-                                        <div className="inline-flex flex-wrap items-center justify-end gap-1.5">
-                                          <button
-                                            type="button"
-                                            onClick={() =>
-                                              openMosqueAssignModal(
-                                                item.id,
-                                                item.mosqueId,
-                                                s
-                                              )
-                                            }
-                                            title="যেকোনো মসজিদের যেকোনো বিভাগে যুক্ত করুন"
-                                            className="inline-flex cursor-pointer items-center gap-1 rounded-lg border border-[#BFD9FA] bg-[#EBF4FF] px-2 py-1 text-[11px] font-semibold text-[#0066E6] transition-colors hover:bg-[#0066E6] hover:text-white whitespace-nowrap"
-                                          >
-                                            <Building2 className="h-3 w-3" />
-                                            <span>মসজিদে যুক্ত</span>
-                                          </button>
-
-                                          <button
-                                            type="button"
-                                            onClick={() =>
-                                              openTakazaAssignModal(
-                                                item.id,
-                                                item.mosqueId,
-                                                s
-                                              )
-                                            }
-                                            title="যে তাকাজায় রাজি হয়েছেন তাতে যুক্ত করুন"
-                                            className="inline-flex cursor-pointer items-center gap-1 rounded-lg border border-emerald-200 bg-emerald-50 px-2 py-1 text-[11px] font-semibold text-emerald-700 transition-colors hover:bg-emerald-600 hover:text-white whitespace-nowrap"
-                                          >
-                                            <Flag className="h-3 w-3" />
-                                            <span>তাকাজায় যুক্ত</span>
-                                          </button>
-
-                                          <button
-                                            type="button"
-                                            onClick={() =>
-                                              openAddSathiModal(item.id, s)
-                                            }
-                                            title="তথ্য সম্পাদনা"
-                                            className="cursor-pointer rounded-lg p-1 text-slate-400 hover:bg-[#EBF4FF] hover:text-[#0066E6]"
-                                          >
-                                            <Edit3 className="h-3.5 w-3.5" />
-                                          </button>
-                                          <button
-                                            type="button"
-                                            onClick={() =>
-                                              onDeleteKargoojariSathi(
-                                                item.id,
-                                                s.id
-                                              )
-                                            }
-                                            title="তালিকা থেকে সরান"
-                                            className="cursor-pointer rounded-lg p-1 text-slate-400 hover:bg-rose-50 hover:text-rose-600"
-                                          >
-                                            <Trash2 className="h-3.5 w-3.5" />
-                                          </button>
+                                            {s.tashkeelStatus === 'not_tashkeel'
+                                              ? 'তাশকিল হয়নি (দাওয়াত ও মুজাকারা)'
+                                              : 'তাশকিল হয়েছেন'}
+                                          </span>
+                                          {assignedMosqueText && (
+                                            <span className="font-medium text-[#0066E6]">
+                                              মসজিদে যুক্ত: {assignedMosqueText}
+                                            </span>
+                                          )}
+                                          {s.assignedTakazaTitle && (
+                                            <span className="font-medium text-emerald-700">
+                                              তাকাজায় যুক্ত:{' '}
+                                              {s.assignedTakazaTitle}
+                                            </span>
+                                          )}
                                         </div>
                                       </td>
-                                    </tr>
-                                  );
-                                })}
+                                        <td className="px-4 py-2.5">
+                                          {s.phone.trim() ? (
+                                            <PhoneActions
+                                              phone={s.phone}
+                                              copied={copiedKey === copyId}
+                                              onCopy={() =>
+                                                handleCopy(copyId, s.phone)
+                                              }
+                                            />
+                                          ) : canEdit ? (
+                                            <button
+                                              type="button"
+                                              onClick={() =>
+                                                openAddSathiModal(item.id, s)
+                                              }
+                                              className="no-print cursor-pointer text-xs text-slate-400 hover:text-[#0066E6] hover:underline"
+                                            >
+                                              + নম্বর যোগ করুন
+                                            </button>
+                                          ) : (
+                                            <span className="text-xs text-slate-400">
+                                              নম্বর নেই
+                                            </span>
+                                          )}
+                                        </td>
+                                        <td className="px-4 py-2.5 text-xs text-slate-600">
+                                          {s.notes.trim() || '—'}
+                                        </td>
+                                        {canEdit && (
+                                          <td className="no-print px-4 py-2.5 text-right">
+                                            <div className="inline-flex flex-wrap items-center justify-end gap-1.5">
+                                              <button
+                                                type="button"
+                                                onClick={() =>
+                                                  openMosqueAssignModal(
+                                                    item.id,
+                                                    item.mosqueId,
+                                                    s
+                                                  )
+                                                }
+                                                title="যেকোনো মসজিদের যেকোনো বিভাগে যুক্ত করুন"
+                                                className="inline-flex cursor-pointer items-center gap-1 rounded-lg border border-[#BFD9FA] bg-[#EBF4FF] px-2 py-1 text-[11px] font-semibold text-[#0066E6] transition-colors hover:bg-[#0066E6] hover:text-white whitespace-nowrap"
+                                              >
+                                                <Building2 className="h-3 w-3" />
+                                                <span>মসজিদে যুক্ত</span>
+                                              </button>
 
-                                {/* Quick blank row to add a new Sathi directly */}
-                                <tr
-                                  onClick={() =>
-                                    openAddSathiModal(item.id, null)
-                                  }
-                                  className="no-print group cursor-pointer bg-[#F8FBFF]/60 transition-colors hover:bg-[#EBF4FF]/70"
-                                >
-                                  <td className="px-4 py-2.5 text-center font-mono text-xs text-slate-400 tabular-nums">
-                                    {toBn(cardSathis.length + 1)}
-                                  </td>
-                                  <td className="px-4 py-2.5 text-xs text-slate-400 group-hover:text-[#0066E6]">
-                                    <span className="inline-flex items-center gap-1 font-medium">
-                                      <Plus className="h-3 w-3 opacity-70 group-hover:opacity-100" />
-                                      <span>নতুন সাথী যুক্ত করতে ক্লিক করুন</span>
-                                    </span>
-                                  </td>
-                                  <td className="px-4 py-2.5 text-xs text-slate-300" />
-                                  <td className="px-4 py-2.5 text-xs text-slate-300" />
-                                  <td className="px-4 py-2.5 text-xs text-slate-300" />
-                                </tr>
-                              </tbody>
+                                              <button
+                                                type="button"
+                                                onClick={() =>
+                                                  openTakazaAssignModal(
+                                                    item.id,
+                                                    item.mosqueId,
+                                                    s
+                                                  )
+                                                }
+                                                title="যে তাকাজায় রাজি হয়েছেন তাতে যুক্ত করুন"
+                                                className="inline-flex cursor-pointer items-center gap-1 rounded-lg border border-emerald-200 bg-emerald-50 px-2 py-1 text-[11px] font-semibold text-emerald-700 transition-colors hover:bg-emerald-600 hover:text-white whitespace-nowrap"
+                                              >
+                                                <Flag className="h-3 w-3" />
+                                                <span>তাকাজায় যুক্ত</span>
+                                              </button>
+
+                                              <button
+                                                type="button"
+                                                onClick={() =>
+                                                  openAddSathiModal(item.id, s)
+                                                }
+                                                title="তথ্য সম্পাদনা"
+                                                className="cursor-pointer rounded-lg p-1 text-slate-400 hover:bg-[#EBF4FF] hover:text-[#0066E6]"
+                                              >
+                                                <Edit3 className="h-3.5 w-3.5" />
+                                              </button>
+                                              <button
+                                                type="button"
+                                                onClick={() =>
+                                                  onDeleteKargoojariSathi(
+                                                    item.id,
+                                                    s.id
+                                                  )
+                                                }
+                                                title="তালিকা থেকে সরান"
+                                                className="cursor-pointer rounded-lg p-1 text-slate-400 hover:bg-rose-50 hover:text-rose-600"
+                                              >
+                                                <Trash2 className="h-3.5 w-3.5" />
+                                              </button>
+                                            </div>
+                                          </td>
+                                        )}
+                                      </tr>
+                                    );
+                                  })}
+
+                                  {/* Quick blank row to add a new Sathi directly */}
+                                  {canEdit && (
+                                    <tr
+                                      onClick={() =>
+                                        openAddSathiModal(item.id, null)
+                                      }
+                                      className="no-print group cursor-pointer bg-[#F8FBFF]/60 transition-colors hover:bg-[#EBF4FF]/70"
+                                    >
+                                      <td className="px-4 py-2.5 text-center font-mono text-xs text-slate-400 tabular-nums">
+                                        {toBn(cardSathis.length + 1)}
+                                      </td>
+                                      <td className="px-4 py-2.5 text-xs text-slate-400 group-hover:text-[#0066E6]">
+                                        <span className="inline-flex items-center gap-1 font-medium">
+                                          <Plus className="h-3 w-3 opacity-70 group-hover:opacity-100" />
+                                          <span>নতুন সাথী যুক্ত করতে ক্লিক করুন</span>
+                                        </span>
+                                      </td>
+                                      <td className="px-4 py-2.5 text-xs text-slate-300" />
+                                      <td className="px-4 py-2.5 text-xs text-slate-300" />
+                                      <td className="px-4 py-2.5 text-xs text-slate-300" />
+                                    </tr>
+                                  )}
+                                </tbody>
                             </table>
                           </div>
                         </div>
@@ -1209,15 +1369,29 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
             <form
               onSubmit={(e) => {
                 e.preventDefault();
-                if (!modalSathiName.trim()) {
+                const trimmedName = modalSathiName.trim();
+                if (!trimmedName) {
                   setModalSathiError('দয়া করে সাথীর নাম লিখুন।');
                   return;
                 }
+                if (!sathiModal.editingSathi?.assignedMosqueId) {
+                  const existingMatch = findExistingMosqueMemberMatch(
+                    trimmedName,
+                    mosques
+                  );
+                  if (existingMatch) {
+                    setModalSathiError(
+                      `"${trimmedName}" নামটি আগে থেকেই "${existingMatch.mosqueName}"-এর তালিকায় (${existingMatch.memberName}) রয়েছে, তাই এখানে যুক্ত করা হবে না।`
+                    );
+                    return;
+                  }
+                }
                 onSaveKargoojariSathi(sathiModal.kargoojariId, {
                   id: sathiModal.editingSathi?.id,
-                  name: modalSathiName.trim(),
+                  name: trimmedName,
                   phone: formatBdPhone(modalSathiPhone),
                   notes: modalSathiNotes.trim(),
+                  tashkeelStatus: modalTashkeelStatus,
                   assignedMosqueId: sathiModal.editingSathi?.assignedMosqueId,
                   assignedCategory: sathiModal.editingSathi?.assignedCategory,
                   assignedTakazaId: sathiModal.editingSathi?.assignedTakazaId,
@@ -1249,18 +1423,40 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
                 )}
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-700">
-                  মোবাইল নম্বর
-                </label>
-                <input
-                  type="text"
-                  value={modalSathiPhone}
-                  onChange={(e) => setModalSathiPhone(e.target.value)}
-                  onBlur={() => setModalSathiPhone((prev) => formatBdPhone(prev))}
-                  placeholder="যেমন: +880 1711-000 000"
-                  className="mt-1.5 w-full rounded-xl border border-[#DCE8F7] bg-[#F8FBFF] px-3 py-2 font-mono text-sm text-slate-900 focus:border-[#0066E6] focus:bg-white focus:outline-none"
-                />
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700">
+                    মোবাইল নম্বর
+                  </label>
+                  <input
+                    type="text"
+                    value={modalSathiPhone}
+                    onChange={(e) => setModalSathiPhone(e.target.value)}
+                    onBlur={() =>
+                      setModalSathiPhone((prev) => formatBdPhone(prev))
+                    }
+                    placeholder="যেমন: +880 1711-000 000"
+                    className="mt-1.5 w-full rounded-xl border border-[#DCE8F7] bg-[#F8FBFF] px-3 py-2 font-mono text-sm text-slate-900 focus:border-[#0066E6] focus:bg-white focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700">
+                    অবস্থা
+                  </label>
+                  <select
+                    value={modalTashkeelStatus}
+                    onChange={(e) =>
+                      setModalTashkeelStatus(
+                        e.target.value as 'tashkeel' | 'not_tashkeel'
+                      )
+                    }
+                    className="mt-1.5 w-full rounded-xl border border-[#DCE8F7] bg-[#F8FBFF] px-3 py-2 text-sm text-slate-900 focus:border-[#0066E6] focus:bg-white focus:outline-none"
+                  >
+                    <option value="tashkeel">তাশকিল হয়েছেন</option>
+                    <option value="not_tashkeel">তাশকিল হয়নি (দাওয়াত)</option>
+                  </select>
+                </div>
               </div>
 
               <div>

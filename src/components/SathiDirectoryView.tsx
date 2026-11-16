@@ -12,12 +12,14 @@ import {
   toBn,
 } from '../utils/bengali';
 import { PhoneActions } from './PhoneActions';
+import { InspectedPersonInput } from './SathiProfileModal';
 
 interface SathiDirectoryViewProps {
   mosques: MosqueRecord[];
   initialCategory?: SathiCategory | 'all';
   onOpenMosque: (mosqueId: number) => void;
   onCopyPhone: (phone: string) => void;
+  onSelectPerson: (person: InspectedPersonInput) => void;
 }
 
 interface FlatDirectoryItem {
@@ -38,6 +40,7 @@ export const SathiDirectoryView: React.FC<SathiDirectoryViewProps> = ({
   initialCategory = 'all',
   onOpenMosque,
   onCopyPhone,
+  onSelectPerson,
 }) => {
   const [query, setQuery] = useState('');
   const [mosqueFilter, setMosqueFilter] = useState<number | 'all'>('all');
@@ -299,7 +302,21 @@ export const SathiDirectoryView: React.FC<SathiDirectoryViewProps> = ({
                       {toBn(idx + 1)}
                     </td>
                     <td className="px-4 py-3 font-medium text-slate-900">
-                      {item.name}
+                      <button
+                        type="button"
+                        onClick={() =>
+                          onSelectPerson({
+                            name: item.name,
+                            phone: item.phone,
+                            mosqueId: item.mosqueId,
+                            roleOrCategory: item.roleOrCategory,
+                            notes: item.notes,
+                          })
+                        }
+                        className="cursor-pointer text-left font-medium text-slate-900 underline-offset-2 transition-colors hover:text-[#0066E6] hover:underline"
+                      >
+                        {item.name}
+                      </button>
                     </td>
                     <td className="px-4 py-3 text-xs text-slate-600">
                       {item.roleOrCategory}

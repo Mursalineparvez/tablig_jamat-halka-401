@@ -31,6 +31,7 @@ interface PrintExportViewProps {
   mosques: MosqueRecord[];
   takazas: TakazaEntry[];
   kargoojaris: KargoojariEntry[];
+  canEdit: boolean;
   onImportData: (payload: FullBackupPayload) => void;
   onResetToBaseline: () => void;
 }
@@ -41,6 +42,7 @@ export const PrintExportView: React.FC<PrintExportViewProps> = ({
   mosques,
   takazas,
   kargoojaris,
+  canEdit,
   onImportData,
   onResetToBaseline,
 }) => {
@@ -177,7 +179,7 @@ export const PrintExportView: React.FC<PrintExportViewProps> = ({
                 <Download className="h-3.5 w-3.5" />
                 <span>মূল ৪৪ পৃষ্ঠার পিডিএফ</span>
               </a>
-              <div className="grid grid-cols-2 gap-2">
+              <div className={canEdit ? 'grid grid-cols-2 gap-2' : 'grid grid-cols-1 gap-2'}>
                 <button
                   type="button"
                   onClick={handleExportJSON}
@@ -186,21 +188,25 @@ export const PrintExportView: React.FC<PrintExportViewProps> = ({
                   <Download className="h-3.5 w-3.5 text-[#0066E6]" />
                   <span>JSON ব্যাকআপ</span>
                 </button>
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-xl border border-[#DCE8F7] bg-white px-2.5 py-2 text-xs font-medium text-slate-700 transition-colors hover:bg-[#F1F6FC]"
-                >
-                  <Upload className="h-3.5 w-3.5 text-[#0066E6]" />
-                  <span>রিস্টোর করুন</span>
-                </button>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="application/json"
-                  onChange={handleImportJSON}
-                  className="hidden"
-                />
+                {canEdit && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-xl border border-[#DCE8F7] bg-white px-2.5 py-2 text-xs font-medium text-slate-700 transition-colors hover:bg-[#F1F6FC]"
+                    >
+                      <Upload className="h-3.5 w-3.5 text-[#0066E6]" />
+                      <span>রিস্টোর করুন</span>
+                    </button>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="application/json"
+                      onChange={handleImportJSON}
+                      className="hidden"
+                    />
+                  </>
+                )}
               </div>
               {importError && (
                 <p className="text-xs text-rose-600">{importError}</p>
@@ -231,36 +237,37 @@ export const PrintExportView: React.FC<PrintExportViewProps> = ({
                 <span>এখনই প্রিন্ট / PDF করুন</span>
               </button>
 
-              {!confirmReset ? (
-                <button
-                  type="button"
-                  onClick={() => setConfirmReset(true)}
-                  className="inline-flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-xl border border-[#DCE8F7] bg-[#F8FBFF] px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:bg-rose-50 hover:border-rose-200 hover:text-rose-700"
-                >
-                  <RotateCcw className="h-3.5 w-3.5" />
-                  <span>মূল পিডিএফ তথ্যে রিসেট</span>
-                </button>
-              ) : (
-                <div className="flex items-center gap-2">
+              {canEdit &&
+                (!confirmReset ? (
                   <button
                     type="button"
-                    onClick={() => {
-                      onResetToBaseline();
-                      setConfirmReset(false);
-                    }}
-                    className="flex-1 cursor-pointer rounded-xl bg-rose-600 px-2.5 py-1.5 text-xs font-medium text-white hover:bg-rose-700"
+                    onClick={() => setConfirmReset(true)}
+                    className="inline-flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-xl border border-[#DCE8F7] bg-[#F8FBFF] px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:bg-rose-50 hover:border-rose-200 hover:text-rose-700"
                   >
-                    নিশ্চিত রিসেট
+                    <RotateCcw className="h-3.5 w-3.5" />
+                    <span>মূল পিডিএফ তথ্যে রিসেট</span>
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => setConfirmReset(false)}
-                    className="cursor-pointer rounded-xl border border-[#DCE8F7] px-2.5 py-1.5 text-xs text-slate-700 hover:bg-[#F1F6FC]"
-                  >
-                    বাতিল
-                  </button>
-                </div>
-              )}
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onResetToBaseline();
+                        setConfirmReset(false);
+                      }}
+                      className="flex-1 cursor-pointer rounded-xl bg-rose-600 px-2.5 py-1.5 text-xs font-medium text-white hover:bg-rose-700"
+                    >
+                      নিশ্চিত রিসেট
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setConfirmReset(false)}
+                      className="cursor-pointer rounded-xl border border-[#DCE8F7] px-2.5 py-1.5 text-xs text-slate-700 hover:bg-[#F1F6FC]"
+                    >
+                      বাতিল
+                    </button>
+                  </div>
+                ))}
             </div>
           </div>
         </section>

@@ -191,6 +191,141 @@ export function getCategoryMeta(key: SathiCategory): CategoryMeta {
   );
 }
 
+const HONORIFIC_PREFIX_RE =
+  /^(?:ভাই\s*মোঃ|ভাই\s*মোহাম্মদ|ভাই|সাথী\s*মোঃ|সাথী|মাও(?:লানা)?[:.]?|মুফ[তথ][ীি]|হা(?:ফেজ)?[:.]?|ডাঃ|হাজী|জনাব\s*মোঃ|জনাব)\s+/g;
+
+export function normalizeMemberCoreName(name: string): string {
+  let cleaned = name
+    .normalize('NFC')
+    .replace(/য়/g, 'য়')
+    .replace(/\([^)]*\)/g, ' ')
+    .replace(/[—–\-.,:]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  for (let i = 0; i < 3; i += 1) {
+    const next = cleaned.replace(HONORIFIC_PREFIX_RE, '').trim();
+    if (next === cleaned) break;
+    cleaned = next;
+  }
+
+  return cleaned.replace(/সাহেব$/g, '').replace(/\s+/g, ' ').trim();
+}
+
+export function findExistingMosqueMemberMatch(
+  candidateName: string,
+  mosques: MosqueRecord[]
+): { mosqueName: string; memberName: string } | null {
+  const target = normalizeMemberCoreName(candidateName);
+  if (!target) return null;
+
+  for (const m of mosques) {
+    const officialNames = [m.khatib.name, m.imam.name, m.muazzin.name];
+    for (const offName of officialNames) {
+      if (offName.trim() && normalizeMemberCoreName(offName) === target) {
+        return { mosqueName: m.name, memberName: offName };
+      }
+    }
+    for (const cat of CATEGORY_META) {
+      const list = m.categories[cat.key] ?? [];
+      for (const entry of list) {
+        if (
+          entry.name.trim() &&
+          normalizeMemberCoreName(entry.name) === target
+        ) {
+          return { mosqueName: m.name, memberName: entry.name };
+        }
+      }
+    }
+  }
+
+  return null;
+}
+
+export interface MosqueMemberMatch {
+  mosqueId: number;
+  mosqueName: string;
+  mosqueAddress: string;
+  roleOrCategory: string;
+  memberName: string;
+  phone: string;
+  notes: string;
+}
+
+export function findAllMosqueMemberMatches(
+  candidateName: string,
+  mosques: MosqueRecord[],
+  candidatePhone?: string
+): MosqueMemberMatch[] {
+  const target = normalizeMemberCoreName(candidateName);
+  const formattedTargetPhone = candidatePhone ? formatBdPhone(candidatePhone) : '';
+  if (!target && !formattedTargetPhone) return [];
+
+  const matches: MosqueMemberMatch[] = [];
+  const seenKeys = new Set<string>();
+
+  for (const m of mosques) {
+    const officials: Array<{ role: string; name: string; phone: string }> = [
+      { role: 'খতিব সাহেব', name: m.khatib.name, phone: m.khatib.phone },
+      { role: 'ইমাম সাহেব', name: m.imam.name, phone: m.imam.phone },
+      { role: 'মোয়াজ্জিন সাহেব', name: m.muazzin.name, phone: m.muazzin.phone },
+    ];
+
+    for (const off of officials) {
+      if (!off.name.trim()) continue;
+      const nameMatch = Boolean(target && normalizeMemberCoreName(off.name) === target);
+      const phoneMatch = Boolean(
+        formattedTargetPhone && formatBdPhone(off.phone) === formattedTargetPhone
+      );
+      if (nameMatch || phoneMatch) {
+        const key = `${m.id}-off-${off.role}-${off.name}`;
+        if (!seenKeys.has(key)) {
+          seenKeys.add(key);
+          matches.push({
+            mosqueId: m.id,
+            mosqueName: m.name,
+            mosqueAddress: m.address,
+            roleOrCategory: off.role,
+            memberName: off.name,
+            phone: formatBdPhone(off.phone),
+            notes: '',
+          });
+        }
+      }
+    }
+
+    for (const cat of CATEGORY_META) {
+      const list = m.categories[cat.key] ?? [];
+      for (const entry of list) {
+        if (!entry.name.trim()) continue;
+        const nameMatch = Boolean(
+          target && normalizeMemberCoreName(entry.name) === target
+        );
+        const phoneMatch = Boolean(
+          formattedTargetPhone && formatBdPhone(entry.phone) === formattedTargetPhone
+        );
+        if (nameMatch || phoneMatch) {
+          const key = `${m.id}-${cat.key}-${entry.id}`;
+          if (!seenKeys.has(key)) {
+            seenKeys.add(key);
+            matches.push({
+              mosqueId: m.id,
+              mosqueName: m.name,
+              mosqueAddress: m.address,
+              roleOrCategory: cat.shortLabel,
+              memberName: entry.name,
+              phone: formatBdPhone(entry.phone),
+              notes: entry.notes,
+            });
+          }
+        }
+      }
+    }
+  }
+
+  return matches;
+}
+
 export function exportMosquesToCSV(mosques: MosqueRecord[]): void {
   const headers = [
     'মসজিদ নং',

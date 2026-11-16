@@ -1,11 +1,17 @@
 import React from 'react';
-import { Plus } from 'lucide-react';
+import { Lock, LogIn, Plus, ShieldCheck } from 'lucide-react';
 import { ActiveTab } from '../types/directory';
+import { toBn } from '../utils/bengali';
 
 interface HeaderProps {
   activeTab: ActiveTab;
   onSelectTab: (tab: ActiveTab) => void;
   onAddMember: () => void;
+  userEmail: string | null;
+  canEdit: boolean;
+  isSuperAdmin: boolean;
+  pendingRequestCount: number;
+  onOpenAccessModal: () => void;
 }
 
 const NAV_ITEMS: Array<{ id: ActiveTab; label: string }> = [
@@ -21,10 +27,15 @@ export const Header: React.FC<HeaderProps> = ({
   activeTab,
   onSelectTab,
   onAddMember,
+  userEmail,
+  canEdit,
+  isSuperAdmin,
+  pendingRequestCount,
+  onOpenAccessModal,
 }) => {
   return (
     <header className="no-print sticky top-0 z-30 border-b border-[#E2ECF7] bg-white/95 backdrop-blur-md">
-      <div className="mx-auto flex max-w-[1320px] items-center justify-between gap-6 px-4 py-3.5 sm:px-6 lg:px-8">
+      <div className="mx-auto flex max-w-[1320px] items-center justify-between gap-4 px-4 py-3.5 sm:px-6 lg:px-8">
         {/* Zone 1: Single-line brand wordmark */}
         <button
           type="button"
@@ -64,17 +75,62 @@ export const Header: React.FC<HeaderProps> = ({
           })}
         </nav>
 
-        {/* Zone 3: 1 primary CTA */}
-        <div className="shrink-0">
+        {/* Zone 3: Auth & Primary CTA */}
+        <div className="flex shrink-0 items-center gap-2">
           <button
             type="button"
-            onClick={onAddMember}
-            className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-xl bg-[#0066E6] px-3.5 py-2 text-sm font-medium text-white shadow-[0_2px_8px_rgba(0,102,230,0.22)] transition-colors duration-150 hover:bg-[#0052BD] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0066E6] sm:px-4"
+            onClick={onOpenAccessModal}
+            className={`inline-flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-xl px-3 py-2 text-xs font-semibold transition-colors ${
+              isSuperAdmin
+                ? 'border border-[#BFD9FA] bg-[#EBF4FF] text-[#0066E6] hover:bg-[#DCEBFF]'
+                : canEdit
+                ? 'border border-[#DCE8F7] bg-[#F8FBFF] text-slate-700 hover:bg-[#EBF4FF] hover:text-[#0066E6]'
+                : userEmail
+                ? 'border border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100'
+                : 'border border-[#BFD9FA] bg-[#EBF4FF] text-[#0066E6] hover:bg-[#0066E6] hover:text-white'
+            }`}
           >
-            <Plus className="h-4 w-4" aria-hidden="true" />
-            <span className="hidden sm:inline">নতুন সাথী যুক্ত করুন</span>
-            <span className="sm:hidden">যুক্ত করুন</span>
+            {isSuperAdmin ? (
+              <>
+                <ShieldCheck className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">অ্যাক্সেস কন্ট্রোল</span>
+                <span className="sm:hidden">অ্যাক্সেস</span>
+                {pendingRequestCount > 0 && (
+                  <span className="ml-0.5 rounded-md bg-[#0066E6] px-1.5 py-0.5 font-mono text-[10px] text-white">
+                    {toBn(pendingRequestCount)}
+                  </span>
+                )}
+              </>
+            ) : canEdit ? (
+              <>
+                <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
+                <span className="hidden sm:inline">এডিটর অ্যাকাউন্ট</span>
+                <span className="sm:hidden">অ্যাকাউন্ট</span>
+              </>
+            ) : userEmail ? (
+              <>
+                <Lock className="h-3.5 w-3.5" />
+                <span>অ্যাক্সেস অনুরোধ</span>
+              </>
+            ) : (
+              <>
+                <LogIn className="h-3.5 w-3.5" />
+                <span>এডিট সাইন ইন</span>
+              </>
+            )}
           </button>
+
+          {canEdit && (
+            <button
+              type="button"
+              onClick={onAddMember}
+              className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-xl bg-[#0066E6] px-3.5 py-2 text-sm font-medium text-white shadow-[0_2px_8px_rgba(0,102,230,0.22)] transition-colors duration-150 hover:bg-[#0052BD] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0066E6] sm:px-4"
+            >
+              <Plus className="h-4 w-4" aria-hidden="true" />
+              <span className="hidden sm:inline">নতুন সাথী যুক্ত করুন</span>
+              <span className="sm:hidden">যুক্ত করুন</span>
+            </button>
+          )}
         </div>
       </div>
 

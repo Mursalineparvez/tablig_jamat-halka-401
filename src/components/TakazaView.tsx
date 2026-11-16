@@ -16,14 +16,17 @@ import {
 } from '../types/directory';
 import { formatBdPhone, TAKAZA_TYPE_LABELS, toBn } from '../utils/bengali';
 import { PhoneActions } from './PhoneActions';
+import { InspectedPersonInput } from './SathiProfileModal';
 
 interface TakazaViewProps {
   mosques: MosqueRecord[];
   takazas: TakazaEntry[];
+  canEdit: boolean;
   onSaveTakaza: (entry: Omit<TakazaEntry, 'id' | 'createdAt'> & { id?: string }) => void;
   onUpdateProgress: (id: string, delta: number) => void;
   onToggleStatus: (id: string, status: TakazaStatus) => void;
   onDeleteTakaza: (id: string) => void;
+  onSelectPerson: (person: InspectedPersonInput) => void;
 }
 
 const STATUS_LABELS: Record<TakazaStatus, string> = {
@@ -42,10 +45,12 @@ function formatDateBn(dateStr: string): string {
 export const TakazaView: React.FC<TakazaViewProps> = ({
   mosques,
   takazas,
+  canEdit,
   onSaveTakaza,
   onUpdateProgress,
   onToggleStatus,
   onDeleteTakaza,
+  onSelectPerson,
 }) => {
   const [statusFilter, setStatusFilter] = useState<TakazaStatus | 'all'>('all');
   const [mosqueFilter, setMosqueFilter] = useState<number | 'all' | 'halqa'>('all');
@@ -175,14 +180,16 @@ export const TakazaView: React.FC<TakazaViewProps> = ({
             </p>
           </div>
 
-          <button
-            type="button"
-            onClick={openAddModal}
-            className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-xl bg-[#0066E6] px-4 py-2.5 text-sm font-medium text-white shadow-[0_2px_8px_rgba(0,102,230,0.22)] transition-colors hover:bg-[#0052BD]"
-          >
-            <Plus className="h-4 w-4" />
-            <span>নতুন তাকাজা যোগ করুন</span>
-          </button>
+          {canEdit && (
+            <button
+              type="button"
+              onClick={openAddModal}
+              className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-xl bg-[#0066E6] px-4 py-2.5 text-sm font-medium text-white shadow-[0_2px_8px_rgba(0,102,230,0.22)] transition-colors hover:bg-[#0052BD]"
+            >
+              <Plus className="h-4 w-4" />
+              <span>নতুন তাকাজা যোগ করুন</span>
+            </button>
+          )}
         </div>
       </section>
 
@@ -330,36 +337,38 @@ export const TakazaView: React.FC<TakazaViewProps> = ({
                     )}
                   </div>
 
-                  <div className="flex shrink-0 items-center gap-2">
-                    <select
-                      aria-label="তাকাজার অবস্থা পরিবর্তন"
-                      value={item.status}
-                      onChange={(e) =>
-                        onToggleStatus(item.id, e.target.value as TakazaStatus)
-                      }
-                      className="cursor-pointer rounded-xl border border-[#DCE8F7] bg-[#F8FBFF] px-2.5 py-1.5 text-xs font-medium text-slate-800 focus:border-[#0066E6] focus:bg-white focus:outline-none"
-                    >
-                      <option value="ongoing">চলমান</option>
-                      <option value="urgent">জরুরি</option>
-                      <option value="completed">সম্পন্ন</option>
-                    </select>
-                    <button
-                      type="button"
-                      onClick={() => openEditModal(item)}
-                      title="সম্পাদনা"
-                      className="cursor-pointer rounded-xl border border-[#E2ECF7] p-1.5 text-slate-500 transition-colors hover:bg-[#EBF4FF] hover:text-[#0066E6]"
-                    >
-                      <Edit3 className="h-4 w-4" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => onDeleteTakaza(item.id)}
-                      title="মুছে ফেলুন"
-                      className="cursor-pointer rounded-xl border border-[#E2ECF7] p-1.5 text-slate-500 transition-colors hover:bg-rose-50 hover:text-rose-600"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
+                  {canEdit && (
+                    <div className="flex shrink-0 items-center gap-2">
+                      <select
+                        aria-label="তাকাজার অবস্থা পরিবর্তন"
+                        value={item.status}
+                        onChange={(e) =>
+                          onToggleStatus(item.id, e.target.value as TakazaStatus)
+                        }
+                        className="cursor-pointer rounded-xl border border-[#DCE8F7] bg-[#F8FBFF] px-2.5 py-1.5 text-xs font-medium text-slate-800 focus:border-[#0066E6] focus:bg-white focus:outline-none"
+                      >
+                        <option value="ongoing">চলমান</option>
+                        <option value="urgent">জরুরি</option>
+                        <option value="completed">সম্পন্ন</option>
+                      </select>
+                      <button
+                        type="button"
+                        onClick={() => openEditModal(item)}
+                        title="সম্পাদনা"
+                        className="cursor-pointer rounded-xl border border-[#E2ECF7] p-1.5 text-slate-500 transition-colors hover:bg-[#EBF4FF] hover:text-[#0066E6]"
+                      >
+                        <Edit3 className="h-4 w-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => onDeleteTakaza(item.id)}
+                        title="মুছে ফেলুন"
+                        className="cursor-pointer rounded-xl border border-[#E2ECF7] p-1.5 text-slate-500 transition-colors hover:bg-rose-50 hover:text-rose-600"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 {/* Progress & Zimmadar Row */}
@@ -393,34 +402,50 @@ export const TakazaView: React.FC<TakazaViewProps> = ({
                   </div>
 
                   <div className="flex flex-wrap items-center justify-between gap-4 sm:justify-end">
-                    <div className="flex items-center gap-1.5">
-                      <button
-                        type="button"
-                        onClick={() => onUpdateProgress(item.id, -1)}
-                        disabled={item.completedCount <= 0}
-                        aria-label="সংখ্যা ১ কমান"
-                        className="cursor-pointer rounded-xl border border-[#DCE8F7] bg-white p-1.5 text-slate-700 transition-colors hover:bg-[#F1F6FC] disabled:cursor-not-allowed disabled:opacity-40"
-                      >
-                        <Minus className="h-3.5 w-3.5" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => onUpdateProgress(item.id, 1)}
-                        aria-label="সংখ্যা ১ বাড়ান"
-                        className="inline-flex cursor-pointer items-center gap-1 rounded-xl border border-[#BFD9FA] bg-[#EBF4FF] px-3 py-1.5 text-xs font-semibold text-[#0066E6] transition-colors hover:bg-[#DCEBFF]"
-                      >
-                        <Plus className="h-3.5 w-3.5" />
-                        <span>১ জন যুক্ত</span>
-                      </button>
-                    </div>
+                    {canEdit && (
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => onUpdateProgress(item.id, -1)}
+                          disabled={item.completedCount <= 0}
+                          aria-label="সংখ্যা ১ কমান"
+                          className="cursor-pointer rounded-xl border border-[#DCE8F7] bg-white p-1.5 text-slate-700 transition-colors hover:bg-[#F1F6FC] disabled:cursor-not-allowed disabled:opacity-40"
+                        >
+                          <Minus className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => onUpdateProgress(item.id, 1)}
+                          aria-label="সংখ্যা ১ বাড়ান"
+                          className="inline-flex cursor-pointer items-center gap-1 rounded-xl border border-[#BFD9FA] bg-[#EBF4FF] px-3 py-1.5 text-xs font-semibold text-[#0066E6] transition-colors hover:bg-[#DCEBFF]"
+                        >
+                          <Plus className="h-3.5 w-3.5" />
+                          <span>১ জন যুক্ত</span>
+                        </button>
+                      </div>
+                    )}
 
                     {item.zimmadarName && (
                       <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600">
                         <span>
                           <span className="text-slate-400">জিম্মাদার: </span>
-                          <span className="font-medium text-slate-800">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              onSelectPerson({
+                                name: item.zimmadarName,
+                                phone: item.zimmadarPhone,
+                                mosqueId:
+                                  typeof item.mosqueId === 'number'
+                                    ? item.mosqueId
+                                    : undefined,
+                                roleOrCategory: `${item.title} · জিম্মাদার`,
+                              })
+                            }
+                            className="cursor-pointer font-medium text-slate-800 underline-offset-2 transition-colors hover:text-[#0066E6] hover:underline"
+                          >
                             {item.zimmadarName}
-                          </span>
+                          </button>
                         </span>
                         {item.zimmadarPhone && (
                           <PhoneActions phone={item.zimmadarPhone} />
@@ -445,9 +470,23 @@ export const TakazaView: React.FC<TakazaViewProps> = ({
                             <span className="font-mono text-slate-400 tabular-nums">
                               {toBn(idx + 1)}.
                             </span>
-                            <span className="font-semibold text-slate-900">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                onSelectPerson({
+                                  name: s.name,
+                                  phone: s.phone,
+                                  mosqueId:
+                                    typeof item.mosqueId === 'number'
+                                      ? item.mosqueId
+                                      : undefined,
+                                  roleOrCategory: item.title,
+                                })
+                              }
+                              className="cursor-pointer text-left font-semibold text-slate-900 underline-offset-2 transition-colors hover:text-[#0066E6] hover:underline"
+                            >
                               {s.name}
-                            </span>
+                            </button>
                           </div>
                           {s.phone ? (
                             <PhoneActions phone={s.phone} compact />
@@ -475,14 +514,16 @@ export const TakazaView: React.FC<TakazaViewProps> = ({
             হালকা বা যেকোনো মসজিদের আসন্ন জামাতের তাকাজা (যেমন ৩ দিন, ১ চিল্লা,
             ৩ চিল্লা বা মাস্তুরাত জামাত) যুক্ত করতে নিচের বাটনে ক্লিক করুন।
           </p>
-          <button
-            type="button"
-            onClick={openAddModal}
-            className="mt-4 inline-flex cursor-pointer items-center gap-1.5 rounded-xl bg-[#0066E6] px-4 py-2 text-sm font-medium text-white shadow-[0_2px_8px_rgba(0,102,230,0.22)] hover:bg-[#0052BD]"
-          >
-            <Plus className="h-4 w-4" />
-            <span>প্রথম তাকাজা যুক্ত করুন</span>
-          </button>
+          {canEdit && (
+            <button
+              type="button"
+              onClick={openAddModal}
+              className="mt-4 inline-flex cursor-pointer items-center gap-1.5 rounded-xl bg-[#0066E6] px-4 py-2 text-sm font-medium text-white shadow-[0_2px_8px_rgba(0,102,230,0.22)] hover:bg-[#0052BD]"
+            >
+              <Plus className="h-4 w-4" />
+              <span>প্রথম তাকাজা যুক্ত করুন</span>
+            </button>
+          )}
         </section>
       )}
 

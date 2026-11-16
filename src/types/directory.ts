@@ -80,6 +80,7 @@ export interface KargoojariSathiItem {
   name: string;
   phone: string;
   notes: string;
+  tashkeelStatus?: 'tashkeel' | 'not_tashkeel';
   assignedMosqueId?: number;
   assignedCategory?: SathiCategory;
   assignedTakazaId?: string;
@@ -108,3 +109,19 @@ export type ActiveTab =
   | 'takaja'
   | 'kargoojari'
   | 'report';
+
+export interface EditorRecord {
+  id: string;
+  email: string;
+  label: string;
+  active: boolean;
+  grantedBy: string;
+}
+
+export interface AccessRequestRecord {
+  uid: string;
+  email: string;
+  displayName: string;
+  note: string;
+  status: 'pending' | 'approved' | 'rejected';
+}

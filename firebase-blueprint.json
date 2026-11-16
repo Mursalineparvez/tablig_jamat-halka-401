@@ -1,0 +1,120 @@
+{
+  "entities": {
+    "Mosque": {
+      "title": "Mosque",
+      "description": "A mosque record in Halqa 401 containing leadership info and categorized Sathi lists.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "integer", "description": "Numeric mosque serial ID" },
+        "name": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "address": { "type": "string", "maxLength": 300 },
+        "khatib": { "type": "object" },
+        "imam": { "type": "object" },
+        "muazzin": { "type": "object" },
+        "categories": { "type": "object" },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "updatedBy": { "type": "string", "maxLength": 128 }
+      },
+      "required": ["id", "name", "address", "khatib", "imam", "muazzin", "categories", "updatedAt", "updatedBy"]
+    },
+    "Takaza": {
+      "title": "Takaza",
+      "description": "An active Jamaat or Halqa Takaza target and committed Sathi list.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "title": { "type": "string", "minLength": 1, "maxLength": 250 },
+        "mosqueId": { "type": "string", "description": "Mosque numeric ID or 'halqa'" },
+        "type": {
+          "type": "string",
+          "enum": ["three_days", "ten_fifteen_days", "one_chilla", "three_chilla", "sal", "masturat", "other"]
+        },
+        "targetCount": { "type": "integer" },
+        "completedCount": { "type": "integer" },
+        "dueDate": { "type": "string", "maxLength": 32 },
+        "zimmadarName": { "type": "string", "maxLength": 150 },
+        "zimmadarPhone": { "type": "string", "maxLength": 40 },
+        "status": { "type": "string", "enum": ["ongoing", "urgent", "completed"] },
+        "notes": { "type": "string", "maxLength": 2000 },
+        "committedSathis": { "type": "array" },
+        "createdAt": { "type": "string", "maxLength": 64 },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "updatedBy": { "type": "string", "maxLength": 128 }
+      },
+      "required": ["id", "title", "mosqueId", "type", "targetCount", "completedCount", "dueDate", "zimmadarName", "zimmadarPhone", "status", "notes", "committedSathis", "createdAt", "updatedAt", "updatedBy"]
+    },
+    "Kargoojari": {
+      "title": "Kargoojari",
+      "description": "A daily Kargoojari report with structured Sathi tashkeel/dawat entries.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "date": { "type": "string", "minLength": 1, "maxLength": 32 },
+        "mosqueId": { "type": "string", "description": "Mosque numeric ID or 'halqa'" },
+        "gastDone": { "type": "boolean" },
+        "talimDone": { "type": "boolean" },
+        "mashwaraDone": { "type": "boolean" },
+        "sathiAttended": { "type": "integer" },
+        "tashkeelCount": { "type": "integer" },
+        "reporterName": { "type": "string", "maxLength": 150 },
+        "summary": { "type": "string", "maxLength": 15000 },
+        "sathis": { "type": "array" },
+        "createdAt": { "type": "string", "maxLength": 64 },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "updatedBy": { "type": "string", "maxLength": 128 }
+      },
+      "required": ["id", "date", "mosqueId", "gastDone", "talimDone", "mashwaraDone", "sathiAttended", "tashkeelCount", "reporterName", "summary", "sathis", "createdAt", "updatedAt", "updatedBy"]
+    },
+    "Editor": {
+      "title": "Editor",
+      "description": "Approved editor permission document granted by super admin mdmursalineparvez@gmail.com.",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string", "minLength": 3, "maxLength": 200 },
+        "label": { "type": "string", "maxLength": 120 },
+        "active": { "type": "boolean" },
+        "grantedBy": { "type": "string", "minLength": 3, "maxLength": 200 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["email", "label", "active", "grantedBy", "createdAt", "updatedAt"]
+    },
+    "AccessRequest": {
+      "title": "AccessRequest",
+      "description": "Edit access request submitted by a signed-in user for approval by mdmursalineparvez@gmail.com.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "email": { "type": "string", "minLength": 3, "maxLength": 200 },
+        "displayName": { "type": "string", "maxLength": 150 },
+        "note": { "type": "string", "maxLength": 300 },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "displayName", "note", "status", "createdAt", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/mosques/{mosqueId}": {
+      "schema": { "$ref": "#/entities/Mosque" },
+      "description": "Publicly readable Halqa 401 mosque records; writable only by super admin or approved editors."
+    },
+    "/takazas/{takazaId}": {
+      "schema": { "$ref": "#/entities/Takaza" },
+      "description": "Publicly readable Halqa 401 active Takazas; writable only by super admin or approved editors."
+    },
+    "/kargoojaris/{kargoojariId}": {
+      "schema": { "$ref": "#/entities/Kargoojari" },
+      "description": "Publicly readable daily Kargoojari reports; writable only by super admin or approved editors."
+    },
+    "/editors/{editorId}": {
+      "schema": { "$ref": "#/entities/Editor" },
+      "description": "Approved editor list managed exclusively by mdmursalineparvez@gmail.com; users may read only their own permission doc."
+    },
+    "/accessRequests/{requestId}": {
+      "schema": { "$ref": "#/entities/AccessRequest" },
+      "description": "User edit-access requests keyed by auth UID; super admin manages all, users manage only their own."
+    }
+  }
+}
