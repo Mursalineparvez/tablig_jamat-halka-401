@@ -4,16 +4,6 @@
  */
 
 import { useEffect, useRef, useState } from 'react';
-import {
-  getRedirectResult,
-  onAuthStateChanged,
-  signInWithPopup,
-  signInWithRedirect,
-  signOut,
-  type User,
-} from 'firebase/auth';
-import { Lock } from 'lucide-react';
-import { AccessControlModal } from './components/AccessControlModal';
 import { Header } from './components/Header';
 import {
   AssignKargoojariToMosquePayload,
@@ -27,6 +17,7 @@ import {
 } from './components/MemberModal';
 import { MosquesView } from './components/MosquesView';
 import { OverviewView } from './components/OverviewView';
+import { PinAuthModal } from './components/PinAuthModal';
 import { OfflineIndicator } from './components/PWAControls';
 import { PrintExportView } from './components/PrintExportView';
 import { SathiDirectoryView } from './components/SathiDirectoryView';
@@ -41,40 +32,30 @@ import {
   INITIAL_TAKAZAS,
 } from './data/halqaData';
 import {
-  auth,
-  emailToDocId,
-  googleProvider,
-  isSuperAdminEmail,
-  SUPER_ADMIN_EMAIL,
-} from './firebase';
-import {
-  deleteAccessRequest,
-  deleteKargoojariFromFirestore,
-  deleteMosqueFromFirestore,
-  deleteTakazaFromFirestore,
-  grantEditorAccess,
-  rejectAccessRequest,
-  revokeEditorAccess,
-  saveKargoojariToFirestore,
-  saveMosqueToFirestore,
-  saveTakazaToFirestore,
-  seedInitialKargoojarisToFirestore,
-  seedInitialMosquesToFirestore,
-  seedInitialTakazasToFirestore,
-  submitAccessRequest,
-  subscribeAllAccessRequests,
-  subscribeAllEditors,
   subscribeKargoojaris,
   subscribeMosques,
-  subscribeMyAccessRequest,
-  subscribeMyEditorStatus,
   subscribeTakazas,
-  toggleEditorActive,
 } from './services/firestoreService';
 import {
-  AccessRequestRecord,
+  changePinWithSheet,
+  deleteKargoojariFromSheet,
+  deleteMosqueFromSheet,
+  deleteTakazaFromSheet,
+  fetchAllFromSheet,
+  getSheetSyncUrl,
+  getStoredSessionPin,
+  pushAllToSheet,
+  saveSessionPin,
+  saveSheetSyncUrl,
+  setLocalPin,
+  upsertKargoojariToSheet,
+  upsertMosqueToSheet,
+  upsertTakazaToSheet,
+  verifyLocalPin,
+  verifyPinWithSheet,
+} from './services/sheetSyncService';
+import {
   ActiveTab,
-  EditorRecord,
   KargoojariEntry,
   KargoojariSathiItem,
   MosqueRecord,
@@ -342,28 +323,19 @@ export default function App() {
     loadInitialKargoojaris
   );
 
-  // Firebase Auth & RBAC state
-  const [user, setUser] = useState<User | null>(null);
-  const [authReady, setAuthReady] = useState(false);
+  // PIN Auth & Google Sheet Live Sync state
+  const [sheetUrl, setSheetUrl] = useState<string>(getSheetSyncUrl);
+  const [sessionPin, setSessionPin] = useState<string>(getStoredSessionPin);
+  const [canEdit, setCanEdit] = useState<boolean>(false);
   const [authBusy, setAuthBusy] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
-  const [isApprovedEditor, setIsApprovedEditor] = useState(false);
-  const [myRequest, setMyRequest] = useState<AccessRequestRecord | null>(null);
-  const [editors, setEditors] = useState<EditorRecord[]>([]);
-  const [accessRequests, setAccessRequests] = useState<AccessRequestRecord[]>([]);
-  const [accessModalOpen, setAccessModalOpen] = useState(false);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null);
 
-  // Firestore snapshot status for initial automatic seeding when authorized
-  const [mosquesLoaded, setMosquesLoaded] = useState(false);
-  const [mosquesEmptyInDb, setMosquesEmptyInDb] = useState(false);
-  const [takazasLoaded, setTakazasLoaded] = useState(false);
-  const [takazasEmptyInDb, setTakazasEmptyInDb] = useState(false);
-  const [kargoojarisLoaded, setKargoojarisLoaded] = useState(false);
-  const [kargoojarisEmptyInDb, setKargoojarisEmptyInDb] = useState(false);
-
-  const seededMosquesRef = useRef(false);
-  const seededTakazasRef = useRef(false);
-  const seededKargoojarisRef = useRef(false);
+  const latestDataRef = useRef({ mosques, takazas, kargoojaris });
+  latestDataRef.current = { mosques, takazas, kargoojaris };
+  const autoSeededUrlRef = useRef<string | null>(null);
 
   const [activeTab, setActiveTab] = useState<ActiveTab>('overview');
   const [selectedMosqueId, setSelectedMosqueId] = useState<number>(1);
@@ -377,14 +349,6 @@ export default function App() {
   const [focusedTakazaId, setFocusedTakazaId] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  const isSuperAdmin = Boolean(
-    user?.emailVerified && isSuperAdminEmail(user.email)
-  );
-  const canEdit = isSuperAdmin || (Boolean(user?.emailVerified) && isApprovedEditor);
-  const pendingRequestCount = accessRequests.filter(
-    (r) => r.status === 'pending'
-  ).length;
-
   const showToast = (msg: string) => {
     setToastMessage(msg);
     window.setTimeout(() => {
@@ -392,38 +356,195 @@ export default function App() {
     }, 3000);
   };
 
-  // Subscribe to Firebase Auth state and handle redirect sign-in results
+  // Keep localStorage mirrored as offline/print cache
   useEffect(() => {
-    void getRedirectResult(auth)
-      .then((res) => {
-        if (res?.user) {
-          showToast('সাইন ইন সফল হয়েছে।');
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(mosques));
+    } catch {
+      // Ignore storage quota errors
+    }
+  }, [mosques]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(TAKAZA_STORAGE_KEY, JSON.stringify(takazas));
+    } catch {
+      // Ignore storage quota errors
+    }
+  }, [takazas]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(KARGOOJARI_STORAGE_KEY, JSON.stringify(kargoojaris));
+    } catch {
+      // Ignore storage quota errors
+    }
+  }, [kargoojaris]);
+
+  // Verify any stored session PIN on mount or when sheetUrl changes
+  useEffect(() => {
+    let cancelled = false;
+    const storedPin = getStoredSessionPin();
+    if (!storedPin) {
+      setCanEdit(false);
+      return;
+    }
+
+    const validateStoredPin = async () => {
+      if (sheetUrl) {
+        if (typeof navigator !== 'undefined' && !navigator.onLine) {
+          if (!cancelled) {
+            setSessionPin(storedPin);
+            setCanEdit(true);
+          }
+          return;
         }
-      })
-      .catch(() => {
-        // Ignore stale redirect errors on normal loads
-      });
+        try {
+          const res = await verifyPinWithSheet(sheetUrl, storedPin);
+          if (cancelled) return;
+          if (res.ok) {
+            setSessionPin(storedPin);
+            setCanEdit(true);
+          } else {
+            saveSessionPin('');
+            setSessionPin('');
+            setCanEdit(false);
+          }
+        } catch {
+          if (!cancelled) {
+            setSessionPin(storedPin);
+            setCanEdit(true);
+          }
+        }
+      } else {
+        const ok = await verifyLocalPin(storedPin);
+        if (cancelled) return;
+        if (ok) {
+          setSessionPin(storedPin);
+          setCanEdit(true);
+        } else {
+          saveSessionPin('');
+          setSessionPin('');
+          setCanEdit(false);
+        }
+      }
+    };
 
-    const unsub = onAuthStateChanged(auth, (firebaseUser) => {
-      setUser(firebaseUser);
-      setAuthReady(true);
-    });
-    return unsub;
-  }, []);
+    void validateStoredPin();
+    return () => {
+      cancelled = true;
+    };
+  }, [sheetUrl]);
 
-  // Subscribe to Public-Read Firestore collections
+  const syncFromSheet = async (
+    targetUrl: string,
+    showFeedback = false,
+    pinOverride?: string,
+    editOverride?: boolean
+  ) => {
+    if (!targetUrl) return;
+    setIsSyncing(true);
+    try {
+      const snap = await fetchAllFromSheet(targetUrl);
+      const isEmptySheet =
+        snap.mosques.length === 0 &&
+        snap.takazas.length === 0 &&
+        snap.kargoojaris.length === 0;
+
+      const activePin = pinOverride ?? sessionPin;
+      const activeCanEdit = editOverride ?? canEdit;
+
+      if (isEmptySheet) {
+        if (
+          activeCanEdit &&
+          activePin &&
+          autoSeededUrlRef.current !== targetUrl
+        ) {
+          autoSeededUrlRef.current = targetUrl;
+          const seedRes = await pushAllToSheet(
+            targetUrl,
+            activePin,
+            latestDataRef.current
+          );
+          if (seedRes.ok) {
+            setLastSyncedAt(new Date().toISOString());
+            if (showFeedback) {
+              showToast('বর্তমান সব তথ্য Google Sheet-এ আপলোড হয়েছে।');
+            }
+          } else {
+            autoSeededUrlRef.current = null;
+          }
+        } else if (showFeedback) {
+          showToast('Google Sheet এখনো খালি আছে — পিন দিয়ে লগইন করলে আপলোড হবে।');
+        }
+        return;
+      }
+
+      if (snap.mosques.length > 0) {
+        setMosques(normalizeMosquesPhones(snap.mosques));
+      }
+      if (snap.takazas.length > 0) {
+        setTakazas(normalizeTakazasPhones(snap.takazas));
+      }
+      if (snap.kargoojaris.length > 0) {
+        setKargoojaris(normalizeKargoojarisPhones(snap.kargoojaris));
+      }
+      setLastSyncedAt(snap.serverTime || new Date().toISOString());
+      if (showFeedback) {
+        showToast('Google Sheet থেকে সর্বশেষ তথ্য সিঙ্ক হয়েছে।');
+      }
+    } catch {
+      if (showFeedback) {
+        showToast('Google Sheet থেকে তথ্য আনতে সমস্যা হয়েছে।');
+      }
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  // Live Google Sheet sync on mount, interval (25s), focus & reconnect
   useEffect(() => {
+    if (!sheetUrl) return;
+
+    void syncFromSheet(sheetUrl, false);
+
+    const intervalId = window.setInterval(() => {
+      if (
+        typeof navigator !== 'undefined' &&
+        navigator.onLine &&
+        document.visibilityState === 'visible'
+      ) {
+        void syncFromSheet(sheetUrl, false);
+      }
+    }, 25000);
+
+    const handleFocusOrOnline = () => {
+      if (typeof navigator === 'undefined' || navigator.onLine) {
+        void syncFromSheet(sheetUrl, false);
+      }
+    };
+
+    window.addEventListener('focus', handleFocusOrOnline);
+    window.addEventListener('online', handleFocusOrOnline);
+
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener('focus', handleFocusOrOnline);
+      window.removeEventListener('online', handleFocusOrOnline);
+    };
+  }, [sheetUrl, canEdit, sessionPin]);
+
+  // Read-only Firestore fallback ONLY when Google Sheet URL is not configured yet
+  useEffect(() => {
+    if (sheetUrl) return;
+
     const unsubMosques = subscribeMosques((remoteMosques, isEmpty) => {
-      setMosquesLoaded(true);
-      setMosquesEmptyInDb(isEmpty);
       if (!isEmpty) {
         setMosques(normalizeMosquesPhones(remoteMosques));
       }
     });
 
     const unsubTakazas = subscribeTakazas((remoteTakazas, isEmpty) => {
-      setTakazasLoaded(true);
-      setTakazasEmptyInDb(isEmpty);
       if (!isEmpty) {
         const normalized = normalizeTakazasPhones(remoteTakazas);
         const remoteIds = new Set(normalized.map((t) => t.id));
@@ -452,8 +573,6 @@ export default function App() {
     });
 
     const unsubKargoojaris = subscribeKargoojaris((remoteKargs, isEmpty) => {
-      setKargoojarisLoaded(true);
-      setKargoojarisEmptyInDb(isEmpty);
       if (!isEmpty) {
         setKargoojaris(normalizeKargoojarisPhones(remoteKargs));
       }
@@ -464,268 +583,275 @@ export default function App() {
       unsubTakazas();
       unsubKargoojaris();
     };
-  }, []);
+  }, [sheetUrl]);
 
-  // Subscribe to user's own editor status & access request when signed in
-  useEffect(() => {
-    if (!user || !user.emailVerified || !user.email) {
-      setIsApprovedEditor(false);
-      setMyRequest(null);
+  const handleSheetPostResult = (
+    res: { ok: boolean; error?: string },
+    fallbackMessage: string
+  ) => {
+    if (res.ok) {
+      setLastSyncedAt(new Date().toISOString());
       return;
     }
-
-    if (isSuperAdminEmail(user.email)) {
-      setIsApprovedEditor(true);
-      setMyRequest(null);
+    if (res.error === 'INVALID_PIN') {
+      saveSessionPin('');
+      setSessionPin('');
+      setCanEdit(false);
+      setAuthError('পিন কোড সঠিক নয় বা পরিবর্তন হয়েছে। আবার লগইন করুন।');
+      setAuthModalOpen(true);
+      showToast('পিন যাচাই ব্যর্থ হয়েছে — আবার লগইন করুন।');
       return;
     }
+    showToast(fallbackMessage);
+  };
 
-    const unsubEditor = subscribeMyEditorStatus(user.email, setIsApprovedEditor);
-    const unsubRequest = subscribeMyAccessRequest(user.uid, setMyRequest);
-
-    return () => {
-      unsubEditor();
-      unsubRequest();
-    };
-  }, [user]);
-
-  // Subscribe to all editors & access requests strictly when Super Admin is signed in
-  useEffect(() => {
-    if (!isSuperAdmin) {
-      setEditors([]);
-      setAccessRequests([]);
-      return;
-    }
-
-    const unsubEditors = subscribeAllEditors(setEditors);
-    const unsubRequests = subscribeAllAccessRequests(setAccessRequests);
-
-    return () => {
-      unsubEditors();
-      unsubRequests();
-    };
-  }, [isSuperAdmin]);
-
-  // Auto-seed Firestore once when an authorized editor / super admin signs in and collections are empty
-  useEffect(() => {
-    if (!canEdit) return;
-
-    if (mosquesLoaded && mosquesEmptyInDb && !seededMosquesRef.current) {
-      seededMosquesRef.current = true;
-      void seedInitialMosquesToFirestore(mosques).catch(() => {
-        seededMosquesRef.current = false;
+  const persistMosque = (mosque: MosqueRecord) => {
+    if (!sheetUrl || !sessionPin) return;
+    void upsertMosqueToSheet(sheetUrl, sessionPin, mosque)
+      .then((res) =>
+        handleSheetPostResult(res, 'Google Sheet-এ মসজিদের তথ্য পাঠাতে সমস্যা হয়েছে।')
+      )
+      .catch(() => {
+        showToast('অফলাইন বা নেটওয়ার্ক সমস্যা — এই ডিভাইসে সংরক্ষিত আছে।');
       });
-    }
+  };
 
-    if (
-      kargoojarisLoaded &&
-      kargoojarisEmptyInDb &&
-      !seededKargoojarisRef.current
-    ) {
-      seededKargoojarisRef.current = true;
-      void seedInitialKargoojarisToFirestore(kargoojaris).catch(() => {
-        seededKargoojarisRef.current = false;
+  const removeMosqueFromCloud = (mosqueId: number) => {
+    if (!sheetUrl || !sessionPin) return;
+    void deleteMosqueFromSheet(sheetUrl, sessionPin, mosqueId)
+      .then((res) =>
+        handleSheetPostResult(res, 'Google Sheet থেকে মসজিদ সরাতে সমস্যা হয়েছে।')
+      )
+      .catch(() => {
+        showToast('অফলাইন বা নেটওয়ার্ক সমস্যা — এই ডিভাইসে সংরক্ষিত আছে।');
       });
-    }
+  };
 
-    if (
-      takazasLoaded &&
-      takazasEmptyInDb &&
-      takazas.length > 0 &&
-      !seededTakazasRef.current
-    ) {
-      seededTakazasRef.current = true;
-      void seedInitialTakazasToFirestore(takazas)
-        .then(() => {
-          try {
-            localStorage.setItem(TAKAZA_NOV19_ABUBAKOR_FS_KEY, '1');
-          } catch {
-            // Ignore storage write errors
-          }
-        })
-        .catch(() => {
-          seededTakazasRef.current = false;
-        });
-    } else if (takazasLoaded && !takazasEmptyInDb && !seededTakazasRef.current) {
-      let fsSynced = false;
-      try {
-        fsSynced = localStorage.getItem(TAKAZA_NOV19_ABUBAKOR_FS_KEY) === '1';
-      } catch {
-        // Ignore storage read errors
-      }
-      const seedItem = INITIAL_TAKAZAS[0];
-      if (seedItem && !fsSynced) {
-        seededTakazasRef.current = true;
-        void saveTakazaToFirestore(seedItem)
-          .then(() => {
-            try {
-              localStorage.setItem(TAKAZA_NOV19_ABUBAKOR_FS_KEY, '1');
-            } catch {
-              // Ignore storage write errors
-            }
-          })
-          .catch(() => {
-            seededTakazasRef.current = false;
-          });
-      }
-    }
-  }, [
-    canEdit,
-    mosquesLoaded,
-    mosquesEmptyInDb,
-    kargoojarisLoaded,
-    kargoojarisEmptyInDb,
-    takazasLoaded,
-    takazasEmptyInDb,
-    mosques,
-    kargoojaris,
-    takazas,
-  ]);
+  const persistTakaza = (takaza: TakazaEntry) => {
+    if (!sheetUrl || !sessionPin) return;
+    void upsertTakazaToSheet(sheetUrl, sessionPin, takaza)
+      .then((res) =>
+        handleSheetPostResult(res, 'Google Sheet-এ তাকাজা সংরক্ষণ করতে সমস্যা হয়েছে।')
+      )
+      .catch(() => {
+        showToast('অফলাইন বা নেটওয়ার্ক সমস্যা — এই ডিভাইসে সংরক্ষিত আছে।');
+      });
+  };
 
-  // Keep localStorage mirrored as offline/print cache
-  useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(mosques));
-    } catch {
-      // Ignore storage quota errors
-    }
-  }, [mosques]);
+  const removeTakazaFromCloud = (takazaId: string) => {
+    if (!sheetUrl || !sessionPin) return;
+    void deleteTakazaFromSheet(sheetUrl, sessionPin, takazaId)
+      .then((res) =>
+        handleSheetPostResult(res, 'Google Sheet থেকে তাকাজা সরাতে সমস্যা হয়েছে।')
+      )
+      .catch(() => {
+        showToast('অফলাইন বা নেটওয়ার্ক সমস্যা — এই ডিভাইসে সংরক্ষিত আছে।');
+      });
+  };
 
-  useEffect(() => {
-    try {
-      localStorage.setItem(TAKAZA_STORAGE_KEY, JSON.stringify(takazas));
-    } catch {
-      // Ignore storage quota errors
-    }
-  }, [takazas]);
+  const persistKargoojari = (entry: KargoojariEntry) => {
+    if (!sheetUrl || !sessionPin) return;
+    void upsertKargoojariToSheet(sheetUrl, sessionPin, entry)
+      .then((res) =>
+        handleSheetPostResult(
+          res,
+          'Google Sheet-এ কারগুজারি সংরক্ষণ করতে সমস্যা হয়েছে।'
+        )
+      )
+      .catch(() => {
+        showToast('অফলাইন বা নেটওয়ার্ক সমস্যা — এই ডিভাইসে সংরক্ষিত আছে।');
+      });
+  };
 
-  useEffect(() => {
-    try {
-      localStorage.setItem(KARGOOJARI_STORAGE_KEY, JSON.stringify(kargoojaris));
-    } catch {
-      // Ignore storage quota errors
-    }
-  }, [kargoojaris]);
+  const removeKargoojariFromCloud = (kargoojariId: string) => {
+    if (!sheetUrl || !sessionPin) return;
+    void deleteKargoojariFromSheet(sheetUrl, sessionPin, kargoojariId)
+      .then((res) =>
+        handleSheetPostResult(
+          res,
+          'Google Sheet থেকে কারগুজারি সরাতে সমস্যা হয়েছে।'
+        )
+      )
+      .catch(() => {
+        showToast('অফলাইন বা নেটওয়ার্ক সমস্যা — এই ডিভাইসে সংরক্ষিত আছে।');
+      });
+  };
+
+  const persistAllToSheet = (data: {
+    mosques: MosqueRecord[];
+    takazas: TakazaEntry[];
+    kargoojaris: KargoojariEntry[];
+  }) => {
+    if (!sheetUrl || !sessionPin) return;
+    void pushAllToSheet(sheetUrl, sessionPin, data)
+      .then((res) =>
+        handleSheetPostResult(res, 'সব তথ্য Google Sheet-এ আপলোড করতে সমস্যা হয়েছে।')
+      )
+      .catch(() => {
+        showToast('নেটওয়ার্ক সমস্যার কারণে Sheet-এ পাঠানো যায়নি।');
+      });
+  };
 
   const requireEditAccess = (): boolean => {
     if (canEdit) return true;
-    showToast(
-      user
-        ? 'আপনার এখনো এডিট অ্যাক্সেস নেই। অ্যাডমিনের অনুমোদনের জন্য অনুরোধ পাঠান।'
-        : 'তথ্য যোগ বা এডিট করতে Google দিয়ে সাইন ইন করুন।'
-    );
-    setAccessModalOpen(true);
+    showToast('তথ্য যোগ বা এডিট করতে পিন কোড দিয়ে লগইন করুন।');
+    setAuthModalOpen(true);
     return false;
   };
 
-  // Auth & Access Control actions
-  const handleSignIn = async () => {
+  // PIN Auth & Sheet Sync Modal handlers
+  const handlePinLogin = async (pin: string) => {
     setAuthBusy(true);
     setAuthError(null);
     try {
-      const cred = await signInWithPopup(auth, googleProvider);
-      if (isSuperAdminEmail(cred.user?.email)) {
-        setAccessModalOpen(false);
-      }
-      showToast('সাইন ইন সফল হয়েছে।');
-    } catch (error) {
-      const errCode =
-        error && typeof error === 'object' && 'code' in error
-          ? String((error as { code?: unknown }).code)
-          : '';
-      const errMsg = error instanceof Error ? error.message : '';
-
-      if (errCode === 'auth/popup-blocked' || errMsg.includes('popup-blocked')) {
-        try {
-          await signInWithRedirect(auth, googleProvider);
-          return;
-        } catch {
-          setAuthError('Google সাইন ইন চালু করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।');
-          setAccessModalOpen(true);
+      if (sheetUrl) {
+        const res = await verifyPinWithSheet(sheetUrl, pin);
+        if (res.ok) {
+          saveSessionPin(pin);
+          setSessionPin(pin);
+          setCanEdit(true);
+          setAuthModalOpen(false);
+          showToast('পিন লগইন সফল — এডিট সক্রিয় হয়েছে।');
+          void syncFromSheet(sheetUrl, false, pin, true);
+        } else if (res.error === 'INVALID_PIN') {
+          setAuthError('পিন কোডটি ভুল হয়েছে। সঠিক পিন কোড লিখুন।');
+        } else {
+          setAuthError('পিন যাচাই করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।');
         }
-      } else if (
-        errCode === 'auth/unauthorized-domain' ||
-        errMsg.includes('unauthorized-domain')
-      ) {
-        const host =
-          typeof window !== 'undefined' ? window.location.hostname : 'this domain';
-        setAuthError(
-          `এই ডোমেইনটি (${host}) Google সাইন-ইনের জন্য অনুমোদিত নয়। এই ডোমেইন থেকে সাইন-ইন করতে অনুমোদিত ডোমেইন বা নিজস্ব Firebase প্রজেক্ট কনফিগ ব্যবহার করুন।`
-        );
-        setAccessModalOpen(true);
-      } else if (
-        errCode === 'auth/popup-closed-by-user' ||
-        errMsg.includes('popup-closed')
-      ) {
-        setAuthError('সাইন ইন পপআপ বন্ধ করা হয়েছে। আবার চেষ্টা করুন।');
-        setAccessModalOpen(true);
       } else {
-        setAuthError(
-          'Google সাইন ইন করতে সমস্যা হয়েছে। পপআপ ব্লকার বন্ধ রেখে আবার চেষ্টা করুন।'
-        );
-        setAccessModalOpen(true);
+        const ok = await verifyLocalPin(pin);
+        if (ok) {
+          saveSessionPin(pin);
+          setSessionPin(pin);
+          setCanEdit(true);
+          setAuthModalOpen(false);
+          showToast('পিন লগইন সফল হয়েছে।');
+        } else {
+          setAuthError('পিন কোডটি ভুল হয়েছে। সঠিক পিন কোড লিখুন।');
+        }
       }
+    } catch {
+      setAuthError('ইন্টারনেট সংযোগ পরীক্ষা করে আবার চেষ্টা করুন।');
     } finally {
       setAuthBusy(false);
     }
   };
 
-  const handleSignOut = async () => {
+  const handleCreateLocalPin = async (pin: string) => {
     setAuthBusy(true);
     setAuthError(null);
     try {
-      await signOut(auth);
-      setSathiModal(null);
-      setMosqueModal(null);
-      showToast('সাইন আউট করা হয়েছে।');
-    } catch {
-      setAuthError('সাইন আউট করতে সমস্যা হয়েছে।');
+      await setLocalPin(pin);
+      saveSessionPin(pin);
+      setSessionPin(pin);
+      setCanEdit(true);
+      setAuthModalOpen(false);
+      showToast('নতুন পিন সেট হয়েছে এবং এডিট চালু হয়েছে।');
     } finally {
       setAuthBusy(false);
     }
   };
 
-  const handleSubmitAccessRequest = async (note: string) => {
-    if (!user) return;
-    await submitAccessRequest(user, note, Boolean(myRequest));
-    showToast('অ্যাডমিনের কাছে এডিট অ্যাক্সেসের অনুরোধ পাঠানো হয়েছে।');
+  const handleChangeSheetPin = async (newPin: string): Promise<boolean> => {
+    if (!sheetUrl || !sessionPin) return false;
+    setAuthError(null);
+    try {
+      const res = await changePinWithSheet(sheetUrl, sessionPin, newPin);
+      if (res.ok) {
+        saveSessionPin(newPin);
+        setSessionPin(newPin);
+        showToast('Google Sheet-এর অ্যাডমিন পিন পরিবর্তন হয়েছে।');
+        return true;
+      }
+      if (res.error === 'INVALID_PIN') {
+        handleSheetPostResult(res, '');
+      } else {
+        setAuthError('পিন পরিবর্তন করতে সমস্যা হয়েছে।');
+      }
+      return false;
+    } catch {
+      setAuthError('নেটওয়ার্ক সমস্যার কারণে পিন পরিবর্তন করা যায়নি।');
+      return false;
+    }
   };
 
-  const handleGrantEditor = async (
-    email: string,
-    label: string,
-    requestUid?: string
-  ) => {
-    if (!isSuperAdmin) return;
-    const editorId = emailToDocId(email);
-    const alreadyExists = editors.some((ed) => ed.id === editorId);
-    await grantEditorAccess(email, label, alreadyExists, requestUid);
-    showToast(`${email}-কে এডিট অ্যাক্সেস দেওয়া হয়েছে।`);
+  const handleLogout = () => {
+    saveSessionPin('');
+    setSessionPin('');
+    setCanEdit(false);
+    setSathiModal(null);
+    setMosqueModal(null);
+    setAuthError(null);
+    showToast('এডিটর লগআউট করা হয়েছে।');
   };
 
-  const handleToggleEditor = async (editorId: string, active: boolean) => {
-    if (!isSuperAdmin) return;
-    await toggleEditorActive(editorId, active);
-    showToast(
-      active ? 'এডিটর অ্যাক্সেস সক্রিয় করা হয়েছে।' : 'এডিটর অ্যাক্সেস স্থগিত করা হয়েছে।'
-    );
+  const handleConnectSheetUrl = async (url: string): Promise<boolean> => {
+    try {
+      const snap = await fetchAllFromSheet(url);
+      saveSheetSyncUrl(url);
+      saveSessionPin('');
+      autoSeededUrlRef.current = null;
+      setSheetUrl(url);
+      setSessionPin('');
+      setCanEdit(false);
+      setAuthError(null);
+
+      if (snap.mosques.length > 0) {
+        setMosques(normalizeMosquesPhones(snap.mosques));
+      }
+      if (snap.takazas.length > 0) {
+        setTakazas(normalizeTakazasPhones(snap.takazas));
+      }
+      if (snap.kargoojaris.length > 0) {
+        setKargoojaris(normalizeKargoojarisPhones(snap.kargoojaris));
+      }
+      setLastSyncedAt(snap.serverTime || new Date().toISOString());
+      showToast(
+        'Google Sheet সফলভাবে সংযুক্ত হয়েছে! এখন পিন দিয়ে লগইন করুন।'
+      );
+      return true;
+    } catch {
+      return false;
+    }
   };
 
-  const handleRevokeEditor = async (editorId: string) => {
-    if (!isSuperAdmin) return;
-    await revokeEditorAccess(editorId);
-    showToast('এডিটর তালিকা থেকে অ্যাক্সেস মুছে ফেলা হয়েছে।');
+  const handleDisconnectSheetUrl = () => {
+    saveSheetSyncUrl('');
+    saveSessionPin('');
+    autoSeededUrlRef.current = null;
+    setSheetUrl('');
+    setSessionPin('');
+    setCanEdit(false);
+    setLastSyncedAt(null);
+    setAuthError(null);
+    showToast('Google Sheet সংযোগ বিচ্ছিন্ন করা হয়েছে।');
   };
 
-  const handleRejectRequest = async (requestUid: string) => {
-    if (!isSuperAdmin) return;
-    await rejectAccessRequest(requestUid);
-    showToast('অনুরোধটি প্রত্যাখ্যান করা হয়েছে।');
+  const handleManualSync = async () => {
+    if (!sheetUrl) return;
+    await syncFromSheet(sheetUrl, true);
   };
 
-  const handleDeleteRequest = async (requestUid: string) => {
-    await deleteAccessRequest(requestUid);
-    showToast('অ্যাক্সেস অনুরোধ বাতিল করা হয়েছে।');
+  const handlePushAllToSheet = async () => {
+    if (!sheetUrl || !sessionPin) return;
+    setIsSyncing(true);
+    try {
+      const res = await pushAllToSheet(
+        sheetUrl,
+        sessionPin,
+        latestDataRef.current
+      );
+      if (res.ok) {
+        setLastSyncedAt(new Date().toISOString());
+        showToast('সব তথ্য Google Sheet-এ সফলভাবে পাঠানো হয়েছে।');
+      } else {
+        handleSheetPostResult(res, 'Sheet-এ তথ্য পাঠাতে সমস্যা হয়েছে।');
+      }
+    } catch {
+      showToast('নেটওয়ার্ক সমস্যার কারণে Sheet-এ পাঠানো যায়নি।');
+    } finally {
+      setIsSyncing(false);
+    }
   };
 
   const handleCopyPhone = (phone: string) => {
@@ -794,9 +920,7 @@ export default function App() {
         : 'নতুন সাথী তালিকায় যুক্ত করা হয়েছে।'
     );
 
-    void saveMosqueToFirestore(updatedMosque).catch(() => {
-      showToast('ডাটাবেসে সংরক্ষণ করতে সমস্যা হয়েছে।');
-    });
+    persistMosque(updatedMosque);
   };
 
   const handleDeleteSathi = (
@@ -823,9 +947,7 @@ export default function App() {
     );
     showToast('তালিকা থেকে এন্ট্রিটি সরানো হয়েছে।');
 
-    void saveMosqueToFirestore(updatedMosque).catch(() => {
-      showToast('ডাটাবেস আপডেট করতে সমস্যা হয়েছে।');
-    });
+    persistMosque(updatedMosque);
   };
 
   const handleSaveMosqueInfo = (
@@ -855,9 +977,7 @@ export default function App() {
       setMosqueModal(null);
       showToast(`${values.name}-এর তথ্য সংরক্ষণ করা হয়েছে।`);
 
-      void saveMosqueToFirestore(updatedMosque).catch(() => {
-        showToast('ডাটাবেসে সংরক্ষণ করতে সমস্যা হয়েছে।');
-      });
+      persistMosque(updatedMosque);
     } else {
       const nextId =
         mosques.reduce((maxId, m) => Math.max(maxId, m.id), 0) + 1;
@@ -879,9 +999,7 @@ export default function App() {
       );
       window.scrollTo({ top: 0, behavior: 'smooth' });
 
-      void saveMosqueToFirestore(newMosque).catch(() => {
-        showToast('ডাটাবেসে সংরক্ষণ করতে সমস্যা হয়েছে।');
-      });
+      persistMosque(newMosque);
     }
   };
 
@@ -896,9 +1014,7 @@ export default function App() {
     setMosqueModal(null);
     showToast('মসজিদটি তালিকা থেকে সরানো হয়েছে।');
 
-    void deleteMosqueFromFirestore(mosqueId).catch(() => {
-      showToast('ডাটাবেস থেকে মুছতে সমস্যা হয়েছে।');
-    });
+    removeMosqueFromCloud(mosqueId);
   };
 
   const handleUpdateOfficial = (
@@ -934,9 +1050,7 @@ export default function App() {
         : `${roleLabels[role]} তথ্য সংরক্ষণ করা হয়েছে।`
     );
 
-    void saveMosqueToFirestore(updatedMosque).catch(() => {
-      showToast('ডাটাবেসে সংরক্ষণ করতে সমস্যা হয়েছে।');
-    });
+    persistMosque(updatedMosque);
   };
 
   // Takaza handlers
@@ -960,9 +1074,7 @@ export default function App() {
         prev.map((t) => (t.id === updated.id ? updated : t))
       );
       showToast('তাকাজার তথ্য হালনাগাদ করা হয়েছে।');
-      void saveTakazaToFirestore(updated).catch(() => {
-        showToast('ডাটাবেসে সংরক্ষণ করতে সমস্যা হয়েছে।');
-      });
+      persistTakaza(updated);
     } else {
       const newEntry: TakazaEntry = {
         ...normalizedData,
@@ -971,9 +1083,7 @@ export default function App() {
       };
       setTakazas((prev) => [newEntry, ...prev]);
       showToast('নতুন চলমান তাকাজা যুক্ত করা হয়েছে।');
-      void saveTakazaToFirestore(newEntry).catch(() => {
-        showToast('ডাটাবেসে সংরক্ষণ করতে সমস্যা হয়েছে।');
-      });
+      persistTakaza(newEntry);
     }
   };
 
@@ -996,9 +1106,7 @@ export default function App() {
     };
 
     setTakazas((prev) => prev.map((t) => (t.id === id ? updated : t)));
-    void saveTakazaToFirestore(updated).catch(() => {
-      showToast('ডাটাবেস আপডেট করতে সমস্যা হয়েছে।');
-    });
+    persistTakaza(updated);
   };
 
   const handleToggleTakazaStatus = (id: string, status: TakazaStatus) => {
@@ -1009,9 +1117,7 @@ export default function App() {
     const updated: TakazaEntry = { ...existing, status };
     setTakazas((prev) => prev.map((t) => (t.id === id ? updated : t)));
     showToast('তাকাজার অবস্থা পরিবর্তন করা হয়েছে।');
-    void saveTakazaToFirestore(updated).catch(() => {
-      showToast('ডাটাবেস আপডেট করতে সমস্যা হয়েছে।');
-    });
+    persistTakaza(updated);
   };
 
   const handleDeleteTakaza = (id: string) => {
@@ -1025,9 +1131,7 @@ export default function App() {
     }
     setTakazas((prev) => prev.filter((t) => t.id !== id));
     showToast('তাকাজাটি সরানো হয়েছে।');
-    void deleteTakazaFromFirestore(id).catch(() => {
-      showToast('ডাটাবেস থেকে মুছতে সমস্যা হয়েছে।');
-    });
+    removeTakazaFromCloud(id);
   };
 
   // Kargoojari handlers
@@ -1054,9 +1158,7 @@ export default function App() {
         prev.map((k) => (k.id === updated.id ? updated : k))
       );
       showToast('দৈনিক কারগুজারি হালনাগাদ করা হয়েছে।');
-      void saveKargoojariToFirestore(updated).catch(() => {
-        showToast('ডাটাবেসে সংরক্ষণ করতে সমস্যা হয়েছে।');
-      });
+      persistKargoojari(updated);
     } else {
       const newEntry: KargoojariEntry = {
         ...normalizedData,
@@ -1065,9 +1167,7 @@ export default function App() {
       };
       setKargoojaris((prev) => [newEntry, ...prev]);
       showToast('দৈনিক কারগুজারি সংরক্ষণ করা হয়েছে।');
-      void saveKargoojariToFirestore(newEntry).catch(() => {
-        showToast('ডাটাবেসে সংরক্ষণ করতে সমস্যা হয়েছে।');
-      });
+      persistKargoojari(newEntry);
     }
   };
 
@@ -1075,9 +1175,7 @@ export default function App() {
     if (!requireEditAccess()) return;
     setKargoojaris((prev) => prev.filter((k) => k.id !== id));
     showToast('কারগুজারি এন্ট্রিটি মুছে ফেলা হয়েছে।');
-    void deleteKargoojariFromFirestore(id).catch(() => {
-      showToast('ডাটাবেস থেকে মুছতে সমস্যা হয়েছে।');
-    });
+    removeKargoojariFromCloud(id);
   };
 
   const handleSaveKargoojariSathi = (
@@ -1120,9 +1218,7 @@ export default function App() {
         : 'কারগুজারিতে নতুন সাথী যুক্ত করা হয়েছে।'
     );
 
-    void saveKargoojariToFirestore(updatedEntry).catch(() => {
-      showToast('ডাটাবেসে সংরক্ষণ করতে সমস্যা হয়েছে।');
-    });
+    persistKargoojari(updatedEntry);
   };
 
   const handleDeleteKargoojariSathi = (
@@ -1143,9 +1239,7 @@ export default function App() {
     );
     showToast('কারগুজারির তালিকা থেকে সাথীকে সরানো হয়েছে।');
 
-    void saveKargoojariToFirestore(updatedEntry).catch(() => {
-      showToast('ডাটাবেস আপডেট করতে সমস্যা হয়েছে।');
-    });
+    persistKargoojari(updatedEntry);
   };
 
   const handleAssignKargoojariSathiToMosque = (
@@ -1205,14 +1299,10 @@ export default function App() {
     showToast(`${payload.name}-কে ${mosqueName} (${catLabel})-এ যুক্ত করা হয়েছে।`);
 
     if (updatedMosque) {
-      void saveMosqueToFirestore(updatedMosque).catch(() => {
-        showToast('মসজিদের তথ্য সংরক্ষণ করতে সমস্যা হয়েছে।');
-      });
+      persistMosque(updatedMosque);
     }
     if (updatedKarg) {
-      void saveKargoojariToFirestore(updatedKarg).catch(() => {
-        showToast('কারগুজারির তথ্য সংরক্ষণ করতে সমস্যা হয়েছে।');
-      });
+      persistKargoojari(updatedKarg);
     }
   };
 
@@ -1319,14 +1409,10 @@ export default function App() {
       );
 
       if (takazaToSave) {
-        void saveTakazaToFirestore(takazaToSave).catch(() => {
-          showToast('তাকাজা সংরক্ষণ করতে সমস্যা হয়েছে।');
-        });
+        persistTakaza(takazaToSave);
       }
       if (updatedKarg) {
-        void saveKargoojariToFirestore(updatedKarg).catch(() => {
-          showToast('কারগুজারি সংরক্ষণ করতে সমস্যা হয়েছে।');
-        });
+        persistKargoojari(updatedKarg);
       }
     }
   };
@@ -1430,9 +1516,7 @@ export default function App() {
           setTakazas((prev) =>
             prev.map((t) => (t.id === takazaToSave!.id ? takazaToSave! : t))
           );
-          void saveTakazaToFirestore(takazaToSave).catch(() => {
-            showToast('তাকাজা সংরক্ষণ করতে সমস্যা হয়েছে।');
-          });
+          persistTakaza(takazaToSave);
         }
 
         if (
@@ -1455,9 +1539,7 @@ export default function App() {
           setKargoojaris((prev) =>
             prev.map((k) => (k.id === kargoojari.id ? updatedKarg : k))
           );
-          void saveKargoojariToFirestore(updatedKarg).catch(() => {
-            showToast('কারগুজারি সংরক্ষণ করতে সমস্যা হয়েছে।');
-          });
+          persistKargoojari(updatedKarg);
         }
 
         showToast(
@@ -1491,9 +1573,7 @@ export default function App() {
         };
         targetId = newId;
         setTakazas((prev) => [newTakaza, ...prev]);
-        void saveTakazaToFirestore(newTakaza).catch(() => {
-          showToast('তাকাজা সংরক্ষণ করতে সমস্যা হয়েছে।');
-        });
+        persistTakaza(newTakaza);
 
         const updatedKarg: KargoojariEntry = {
           ...kargoojari,
@@ -1511,9 +1591,7 @@ export default function App() {
         setKargoojaris((prev) =>
           prev.map((k) => (k.id === kargoojari.id ? updatedKarg : k))
         );
-        void saveKargoojariToFirestore(updatedKarg).catch(() => {
-          showToast('কারগুজারি সংরক্ষণ করতে সমস্যা হয়েছে।');
-        });
+        persistKargoojari(updatedKarg);
         showToast(`${cleanName}-কে নতুন চলমান তাকাজায় যুক্ত করা হয়েছে।`);
       }
     }
@@ -1552,41 +1630,42 @@ export default function App() {
     setTakazas((prev) =>
       prev.map((t) => (t.id === takazaId ? updatedTakaza : t))
     );
-    void saveTakazaToFirestore(updatedTakaza).catch(() => {
-      showToast('তাকাজা আপডেট করতে সমস্যা হয়েছে।');
-    });
+    persistTakaza(updatedTakaza);
 
     if (removedItem) {
       const removedCore = normalizeMemberCoreName(removedItem.name);
-      setKargoojaris((prev) =>
-        prev.map((k) => {
-          const hasMatch = (k.sathis ?? []).some(
-            (s) =>
-              s.assignedTakazaId === takazaId &&
-              (s.name.trim() === removedItem.name.trim() ||
-                (removedCore &&
-                  normalizeMemberCoreName(s.name) === removedCore))
-          );
-          if (!hasMatch) return k;
-          const updatedKarg: KargoojariEntry = {
-            ...k,
-            sathis: (k.sathis ?? []).map((s) =>
-              s.assignedTakazaId === takazaId &&
-              (s.name.trim() === removedItem.name.trim() ||
-                (removedCore &&
-                  normalizeMemberCoreName(s.name) === removedCore))
-                ? {
-                    ...s,
-                    assignedTakazaId: undefined,
-                    assignedTakazaTitle: undefined,
-                  }
-                : s
-            ),
-          };
-          void saveKargoojariToFirestore(updatedKarg).catch(() => {});
-          return updatedKarg;
-        })
-      );
+      const updatedKargsToPersist: KargoojariEntry[] = [];
+      const nextKargoojaris = kargoojaris.map((k) => {
+        const hasMatch = (k.sathis ?? []).some(
+          (s) =>
+            s.assignedTakazaId === takazaId &&
+            (s.name.trim() === removedItem.name.trim() ||
+              (removedCore &&
+                normalizeMemberCoreName(s.name) === removedCore))
+        );
+        if (!hasMatch) return k;
+        const updatedKarg: KargoojariEntry = {
+          ...k,
+          sathis: (k.sathis ?? []).map((s) =>
+            s.assignedTakazaId === takazaId &&
+            (s.name.trim() === removedItem.name.trim() ||
+              (removedCore &&
+                normalizeMemberCoreName(s.name) === removedCore))
+              ? {
+                  ...s,
+                  assignedTakazaId: undefined,
+                  assignedTakazaTitle: undefined,
+                }
+              : s
+          ),
+        };
+        updatedKargsToPersist.push(updatedKarg);
+        return updatedKarg;
+      });
+      if (updatedKargsToPersist.length > 0) {
+        setKargoojaris(nextKargoojaris);
+        updatedKargsToPersist.forEach((k) => persistKargoojari(k));
+      }
     }
 
     showToast('তাকাজার তালিকা থেকে সাথীকে সরানো হয়েছে।');
@@ -1599,27 +1678,26 @@ export default function App() {
   }) => {
     if (!requireEditAccess()) return;
     const normalizedMosques = normalizeMosquesPhones(payload.mosques);
+    const nextTakazas = Array.isArray(payload.takazas)
+      ? normalizeTakazasPhones(payload.takazas)
+      : takazas;
+    const nextKargs = Array.isArray(payload.kargoojaris)
+      ? normalizeKargoojarisPhones(payload.kargoojaris)
+      : kargoojaris;
+
     setMosques(normalizedMosques);
-    void seedInitialMosquesToFirestore(normalizedMosques).catch(() => {
-      showToast('মসজিদের ব্যাকআপ ডাটাবেসে রিস্টোর করতে সমস্যা হয়েছে।');
-    });
-
     if (Array.isArray(payload.takazas)) {
-      const normalizedTakazas = normalizeTakazasPhones(payload.takazas);
-      setTakazas(normalizedTakazas);
-      void seedInitialTakazasToFirestore(normalizedTakazas).catch(() => {
-        showToast('তাকাজার ব্যাকআপ রিস্টোর করতে সমস্যা হয়েছে।');
-      });
+      setTakazas(nextTakazas);
     }
-
     if (Array.isArray(payload.kargoojaris)) {
-      const normalizedKargs = normalizeKargoojarisPhones(payload.kargoojaris);
-      setKargoojaris(normalizedKargs);
-      void seedInitialKargoojarisToFirestore(normalizedKargs).catch(() => {
-        showToast('কারগুজারির ব্যাকআপ রিস্টোর করতে সমস্যা হয়েছে।');
-      });
+      setKargoojaris(nextKargs);
     }
 
+    persistAllToSheet({
+      mosques: normalizedMosques,
+      takazas: nextTakazas,
+      kargoojaris: nextKargs,
+    });
     showToast('ব্যাকআপ থেকে সকল তথ্য রিস্টোর করা হয়েছে।');
   };
 
@@ -1632,8 +1710,10 @@ export default function App() {
       // Ignore
     }
     showToast('মূল পিডিএফের ১৪টি মসজিদ ও ২৫৬ জন সাথীর তথ্যে রিসেট করা হয়েছে।');
-    void seedInitialMosquesToFirestore(INITIAL_MOSQUES).catch(() => {
-      showToast('ডাটাবেস রিসেট করতে সমস্যা হয়েছে।');
+    persistAllToSheet({
+      mosques: INITIAL_MOSQUES,
+      takazas,
+      kargoojaris,
     });
   };
 
@@ -1654,36 +1734,17 @@ export default function App() {
             editingEntry: null,
           });
         }}
-        userEmail={user?.email ?? null}
         canEdit={canEdit}
-        isSuperAdmin={isSuperAdmin}
-        pendingRequestCount={pendingRequestCount}
-        onOpenAccessModal={() => setAccessModalOpen(true)}
-        onQuickSignIn={() => void handleSignIn()}
+        sheetConnected={Boolean(sheetUrl)}
+        isSyncing={isSyncing}
+        onOpenAuthModal={() => {
+          setAuthError(null);
+          setAuthModalOpen(true);
+        }}
+        onManualSync={() => void handleManualSync()}
       />
 
       <OfflineIndicator />
-
-      {authReady && user && !canEdit && (
-        <div className="no-print border-b border-[#CFE3DF] bg-[#E8F4F1]">
-          <div className="mx-auto flex max-w-[1320px] flex-wrap items-center justify-between gap-2 px-4 py-2 text-xs text-[#1D3F3B] sm:px-6 lg:px-8">
-            <div className="flex items-center gap-2">
-              <Lock className="h-3.5 w-3.5 shrink-0 text-[#0E6F66]" />
-              <span>
-                সাইন ইন: <strong className="font-mono">{user.email}</strong> —
-                তথ্য যোগ বা এডিট করতে অ্যাডমিনের অনুমোদন প্রয়োজন।
-              </span>
-            </div>
-            <button
-              type="button"
-              onClick={() => setAccessModalOpen(true)}
-              className="cursor-pointer rounded-lg bg-white px-2.5 py-1 font-semibold text-[#0E6F66] shadow-xs ring-1 ring-[#B7DBD3] transition-colors hover:bg-[#0E6F66] hover:text-white"
-            >
-              অ্যাক্সেস অনুরোধ দেখুন
-            </button>
-          </div>
-        </div>
-      )}
 
       <main className="mx-auto w-full max-w-[1320px] flex-1 px-4 py-8 sm:px-6 lg:px-8">
         {activeTab === 'overview' && (
@@ -1831,25 +1892,23 @@ export default function App() {
         />
       )}
 
-      {accessModalOpen && (
-        <AccessControlModal
-          user={user}
-          isSuperAdmin={isSuperAdmin}
+      {authModalOpen && (
+        <PinAuthModal
           canEdit={canEdit}
-          myRequest={myRequest}
-          editors={editors}
-          accessRequests={accessRequests}
+          sheetUrl={sheetUrl}
+          isSyncing={isSyncing}
+          lastSyncedAt={lastSyncedAt}
           authBusy={authBusy}
           authError={authError}
-          onClose={() => setAccessModalOpen(false)}
-          onSignIn={handleSignIn}
-          onSignOut={handleSignOut}
-          onSubmitRequest={handleSubmitAccessRequest}
-          onGrantEditor={handleGrantEditor}
-          onToggleEditor={handleToggleEditor}
-          onRevokeEditor={handleRevokeEditor}
-          onRejectRequest={handleRejectRequest}
-          onDeleteRequest={handleDeleteRequest}
+          onClose={() => setAuthModalOpen(false)}
+          onPinLogin={handlePinLogin}
+          onCreateLocalPin={handleCreateLocalPin}
+          onChangeSheetPin={handleChangeSheetPin}
+          onLogout={handleLogout}
+          onConnectSheetUrl={handleConnectSheetUrl}
+          onDisconnectSheetUrl={handleDisconnectSheetUrl}
+          onSyncNow={handleManualSync}
+          onPushAllToSheet={handlePushAllToSheet}
         />
       )}
 
