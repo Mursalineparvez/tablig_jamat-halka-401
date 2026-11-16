@@ -165,16 +165,16 @@ export const TakazaView: React.FC<TakazaViewProps> = ({
   return (
     <div className="space-y-8">
       {/* Masthead */}
-      <section className="rounded-2xl border border-[#DCE8F7] bg-gradient-to-r from-[#EBF4FF] via-[#F3F8FF] to-white p-6 shadow-[0_2px_10px_rgba(15,23,42,0.03)] sm:p-8">
+      <section className="rounded-2xl border border-[#CFE4DF] bg-gradient-to-r from-[#E4F2EF] via-[#F2F8F7] to-white p-6 shadow-[0_2px_14px_rgba(14,111,102,0.04)] sm:p-8">
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
           <div>
-            <p className="text-xs font-semibold tracking-wide text-[#0066E6]">
+            <p className="text-xs font-semibold tracking-wide text-[#0E6F66]">
               যাত্রাবাড়ী মারকাজ · ৪০১ নং হালকা
             </p>
-            <h1 className="font-display mt-1 text-2xl font-bold text-slate-900 sm:text-3xl">
+            <h1 className="font-display mt-1 text-2xl font-bold text-[#102A27] sm:text-3xl">
               চলমান তাকাজা ও তশকিল ব্যবস্থাপনা
             </h1>
-            <p className="mt-1.5 max-w-2xl text-sm text-slate-600">
+            <p className="mt-1.5 max-w-2xl text-sm text-[#4F6B67]">
               হালকা ও প্রতিটি মসজিদের ৩ দিন, ১০/১৫ দিন, ১ চিল্লা, ৩ চিল্লা ও
               মাস্তুরাত জামাতের চলমান তাকাজা, লক্ষ্যমাত্রা ও অগ্রগতি পরিচালনা করুন।
             </p>
@@ -184,7 +184,7 @@ export const TakazaView: React.FC<TakazaViewProps> = ({
             <button
               type="button"
               onClick={openAddModal}
-              className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-xl bg-[#0066E6] px-4 py-2.5 text-sm font-medium text-white shadow-[0_2px_8px_rgba(0,102,230,0.22)] transition-colors hover:bg-[#0052BD]"
+              className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-xl bg-[#0E6F66] px-4 py-2.5 text-sm font-medium text-white shadow-[0_2px_10px_rgba(14,111,102,0.24)] transition-colors hover:bg-[#0B5A53]"
             >
               <Plus className="h-4 w-4" />
               <span>নতুন তাকাজা যোগ করুন</span>
@@ -194,38 +194,38 @@ export const TakazaView: React.FC<TakazaViewProps> = ({
       </section>
 
       {/* 4-column Summary Metrics */}
-      <section className="grid grid-cols-2 divide-x divide-y divide-[#E2ECF7] overflow-hidden rounded-2xl border border-[#E2ECF7] bg-white shadow-[0_2px_10px_rgba(15,23,42,0.03)] sm:grid-cols-4 sm:divide-y-0">
+      <section className="grid grid-cols-2 divide-x divide-y divide-[#D9EAE6] overflow-hidden rounded-2xl border border-[#D9EAE6] bg-white shadow-[0_2px_14px_rgba(14,111,102,0.04)] sm:grid-cols-4 sm:divide-y-0">
         <div className="p-5">
-          <p className="text-xs font-medium text-slate-500">চলমান তাকাজা</p>
-          <p className="mt-1.5 font-mono text-3xl font-semibold text-slate-900 tabular-nums">
+          <p className="text-xs font-medium text-[#58726E]">চলমান তাকাজা</p>
+          <p className="mt-1.5 font-mono text-3xl font-semibold text-[#102A27] tabular-nums">
             {toBn(counts.ongoing)}
           </p>
         </div>
         <div className="p-5">
-          <p className="text-xs font-medium text-slate-500">জরুরি তাকাজা</p>
-          <p className="mt-1.5 font-mono text-3xl font-semibold text-amber-600 tabular-nums">
+          <p className="text-xs font-medium text-[#58726E]">জরুরি তাকাজা</p>
+          <p className="mt-1.5 font-mono text-3xl font-semibold text-[#D97706] tabular-nums">
             {toBn(counts.urgent)}
           </p>
         </div>
         <div className="p-5">
-          <p className="text-xs font-medium text-slate-500">সম্পন্ন হয়েছে</p>
+          <p className="text-xs font-medium text-[#58726E]">সম্পন্ন হয়েছে</p>
           <p className="mt-1.5 font-mono text-3xl font-semibold text-emerald-600 tabular-nums">
             {toBn(counts.completed)}
           </p>
         </div>
         <div className="p-5">
-          <p className="text-xs font-medium text-slate-500">
+          <p className="text-xs font-medium text-[#58726E]">
             চলমান তশকিল অগ্রগতি
           </p>
-          <p className="mt-1.5 font-mono text-2xl font-semibold text-[#0066E6] tabular-nums">
+          <p className="mt-1.5 font-mono text-2xl font-semibold text-[#0E6F66] tabular-nums">
             {toBn(counts.totalDone)} / {toBn(counts.totalTarget)} জন
           </p>
         </div>
       </section>
 
       {/* Filter Bar */}
-      <section className="flex flex-col justify-between gap-3 rounded-2xl border border-[#E2ECF7] bg-white p-4 shadow-[0_2px_10px_rgba(15,23,42,0.03)] lg:flex-row lg:items-center">
-        <div className="flex flex-wrap items-center gap-1.5">
+      <section className="flex flex-col justify-between gap-3 rounded-2xl border border-[#D9EAE6] bg-white p-4 shadow-[0_2px_14px_rgba(14,111,102,0.04)] lg:flex-row lg:items-center">
+        <div className="flex flex-wrap items-center gap-1.5 rounded-xl bg-[#EBF4F2] p-1">
           {(
             [
               ['all', `সকল (${toBn(takazas.length)})`],
@@ -238,10 +238,10 @@ export const TakazaView: React.FC<TakazaViewProps> = ({
               key={key}
               type="button"
               onClick={() => setStatusFilter(key)}
-              className={`cursor-pointer whitespace-nowrap rounded-xl px-3.5 py-2 text-xs font-medium transition-colors ${
+              className={`cursor-pointer whitespace-nowrap rounded-lg px-3.5 py-1.5 text-xs font-semibold transition-colors ${
                 statusFilter === key
-                  ? 'bg-[#0066E6] text-white shadow-[0_2px_8px_rgba(0,102,230,0.2)]'
-                  : 'bg-[#F1F6FC] text-slate-700 hover:bg-[#E2EEFC]'
+                  ? 'bg-[#0E6F66] text-white shadow-[0_2px_8px_rgba(14,111,102,0.22)]'
+                  : 'text-[#284B47] hover:bg-white/80 hover:text-[#0E6F66]'
               }`}
             >
               {label}
@@ -259,7 +259,7 @@ export const TakazaView: React.FC<TakazaViewProps> = ({
                 v === 'all' ? 'all' : v === 'halqa' ? 'halqa' : Number(v)
               );
             }}
-            className="rounded-xl border border-[#DCE8F7] bg-[#F8FBFF] px-3 py-2 text-sm text-slate-800 focus:border-[#0066E6] focus:bg-white focus:outline-none"
+            className="rounded-xl border border-[#D5E7E2] bg-[#F4FAF8] px-3 py-2 text-sm text-[#1D3F3B] focus:border-[#0E6F66] focus:bg-white focus:outline-none"
           >
             <option value="all">সকল মসজিদ ও হালকা</option>
             <option value="halqa">শুধু সম্পূর্ণ ৪০১ নং হালকা</option>
@@ -272,7 +272,7 @@ export const TakazaView: React.FC<TakazaViewProps> = ({
 
           <div className="relative w-full sm:w-64">
             <Search
-              className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400"
+              className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-[#6B8682]"
               aria-hidden="true"
             />
             <input
@@ -280,7 +280,7 @@ export const TakazaView: React.FC<TakazaViewProps> = ({
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="তাকাজা বা জিম্মাদার খুঁজুন..."
-              className="w-full rounded-xl border border-[#DCE8F7] bg-[#F8FBFF] py-2 pr-3 pl-9 text-sm text-slate-900 placeholder:text-slate-400 focus:border-[#0066E6] focus:bg-white focus:outline-none"
+              className="w-full rounded-xl border border-[#D5E7E2] bg-[#F4FAF8] py-2 pr-3 pl-9 text-sm text-[#102A27] placeholder:text-[#7D9793] focus:border-[#0E6F66] focus:bg-white focus:outline-none"
             />
           </div>
         </div>
@@ -298,18 +298,18 @@ export const TakazaView: React.FC<TakazaViewProps> = ({
             return (
               <article
                 key={item.id}
-                className="rounded-2xl border border-[#E2ECF7] bg-white p-5 shadow-[0_2px_10px_rgba(15,23,42,0.03)] transition-colors hover:border-[#BFD9FA]"
+                className="rounded-2xl border border-[#D9EAE6] bg-white p-5 shadow-[0_2px_14px_rgba(14,111,102,0.04)] transition-colors hover:border-[#B7DBD3]"
               >
-                <div className="flex flex-col justify-between gap-4 border-b border-[#EEF4FB] pb-4 sm:flex-row sm:items-start">
+                <div className="flex flex-col justify-between gap-4 border-b border-[#EAF3F0] pb-4 sm:flex-row sm:items-start">
                   <div className="space-y-1">
-                    <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                    <div className="flex flex-wrap items-center gap-2 text-xs text-[#58726E]">
                       <span
                         className={`font-semibold ${
                           item.status === 'urgent'
-                            ? 'text-amber-600'
+                            ? 'text-[#D97706]'
                             : item.status === 'completed'
                             ? 'text-emerald-600'
-                            : 'text-[#0066E6]'
+                            : 'text-[#0E6F66]'
                         }`}
                       >
                         {STATUS_LABELS[item.status]}
@@ -326,12 +326,12 @@ export const TakazaView: React.FC<TakazaViewProps> = ({
                       )}
                     </div>
 
-                    <h2 className="font-display text-xl font-bold text-slate-900">
+                    <h2 className="font-display text-xl font-bold text-[#102A27]">
                       {item.title}
                     </h2>
 
                     {item.notes && (
-                      <p className="text-sm leading-relaxed text-slate-600">
+                      <p className="text-sm leading-relaxed text-[#4F6B67]">
                         {item.notes}
                       </p>
                     )}
@@ -345,7 +345,7 @@ export const TakazaView: React.FC<TakazaViewProps> = ({
                         onChange={(e) =>
                           onToggleStatus(item.id, e.target.value as TakazaStatus)
                         }
-                        className="cursor-pointer rounded-xl border border-[#DCE8F7] bg-[#F8FBFF] px-2.5 py-1.5 text-xs font-medium text-slate-800 focus:border-[#0066E6] focus:bg-white focus:outline-none"
+                        className="cursor-pointer rounded-xl border border-[#D5E7E2] bg-[#F4FAF8] px-2.5 py-1.5 text-xs font-medium text-[#1D3F3B] focus:border-[#0E6F66] focus:bg-white focus:outline-none"
                       >
                         <option value="ongoing">চলমান</option>
                         <option value="urgent">জরুরি</option>
@@ -355,7 +355,7 @@ export const TakazaView: React.FC<TakazaViewProps> = ({
                         type="button"
                         onClick={() => openEditModal(item)}
                         title="সম্পাদনা"
-                        className="cursor-pointer rounded-xl border border-[#E2ECF7] p-1.5 text-slate-500 transition-colors hover:bg-[#EBF4FF] hover:text-[#0066E6]"
+                        className="cursor-pointer rounded-xl border border-[#D9EAE6] p-1.5 text-[#58726E] transition-colors hover:bg-[#E5F3F0] hover:text-[#0E6F66]"
                       >
                         <Edit3 className="h-4 w-4" />
                       </button>
@@ -363,7 +363,7 @@ export const TakazaView: React.FC<TakazaViewProps> = ({
                         type="button"
                         onClick={() => onDeleteTakaza(item.id)}
                         title="মুছে ফেলুন"
-                        className="cursor-pointer rounded-xl border border-[#E2ECF7] p-1.5 text-slate-500 transition-colors hover:bg-rose-50 hover:text-rose-600"
+                        className="cursor-pointer rounded-xl border border-[#D9EAE6] p-1.5 text-[#58726E] transition-colors hover:bg-rose-50 hover:text-rose-600"
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>
@@ -375,26 +375,26 @@ export const TakazaView: React.FC<TakazaViewProps> = ({
                 <div className="mt-4 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
                   <div className="flex-1 space-y-1.5">
                     <div className="flex items-center justify-between text-xs">
-                      <span className="font-medium text-slate-700">
+                      <span className="font-medium text-[#1D3F3B]">
                         প্রস্তুত/তশকিল:{' '}
-                        <strong className="font-mono text-slate-900 tabular-nums">
+                        <strong className="font-mono text-[#102A27] tabular-nums">
                           {toBn(item.completedCount)} / {toBn(item.targetCount)} জন
                         </strong>
                       </span>
-                      <span className="font-mono text-slate-500 tabular-nums">
+                      <span className="font-mono text-[#58726E] tabular-nums">
                         {remaining > 0
                           ? `বাকি ${toBn(remaining)} জন (${toBn(pct)}%)`
                           : 'লক্ষ্যমাত্রা পূর্ণ (১০০%)'}
                       </span>
                     </div>
-                    <div className="h-2 w-full overflow-hidden rounded-full bg-[#E2ECF7]">
+                    <div className="h-2 w-full overflow-hidden rounded-full bg-[#DCECE8]">
                       <div
                         className={`h-full rounded-full transition-all duration-300 ${
                           item.status === 'completed' || remaining === 0
                             ? 'bg-emerald-600'
                             : item.status === 'urgent'
-                            ? 'bg-amber-500'
-                            : 'bg-[#0066E6]'
+                            ? 'bg-[#E59A2E]'
+                            : 'bg-[#0E6F66]'
                         }`}
                         style={{ width: `${pct}%` }}
                       />
@@ -409,7 +409,7 @@ export const TakazaView: React.FC<TakazaViewProps> = ({
                           onClick={() => onUpdateProgress(item.id, -1)}
                           disabled={item.completedCount <= 0}
                           aria-label="সংখ্যা ১ কমান"
-                          className="cursor-pointer rounded-xl border border-[#DCE8F7] bg-white p-1.5 text-slate-700 transition-colors hover:bg-[#F1F6FC] disabled:cursor-not-allowed disabled:opacity-40"
+                          className="cursor-pointer rounded-xl border border-[#D5E7E2] bg-white p-1.5 text-[#1D3F3B] transition-colors hover:bg-[#EBF4F2] disabled:cursor-not-allowed disabled:opacity-40"
                         >
                           <Minus className="h-3.5 w-3.5" />
                         </button>
@@ -417,7 +417,7 @@ export const TakazaView: React.FC<TakazaViewProps> = ({
                           type="button"
                           onClick={() => onUpdateProgress(item.id, 1)}
                           aria-label="সংখ্যা ১ বাড়ান"
-                          className="inline-flex cursor-pointer items-center gap-1 rounded-xl border border-[#BFD9FA] bg-[#EBF4FF] px-3 py-1.5 text-xs font-semibold text-[#0066E6] transition-colors hover:bg-[#DCEBFF]"
+                          className="inline-flex cursor-pointer items-center gap-1 rounded-xl border border-[#B7DBD3] bg-[#E5F3F0] px-3 py-1.5 text-xs font-semibold text-[#0E6F66] transition-colors hover:bg-[#D5ECE6]"
                         >
                           <Plus className="h-3.5 w-3.5" />
                           <span>১ জন যুক্ত</span>
@@ -426,9 +426,9 @@ export const TakazaView: React.FC<TakazaViewProps> = ({
                     )}
 
                     {item.zimmadarName && (
-                      <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600">
+                      <div className="flex flex-wrap items-center gap-2 text-xs text-[#4F6B67]">
                         <span>
-                          <span className="text-slate-400">জিম্মাদার: </span>
+                          <span className="text-[#7B9591]">জিম্মাদার: </span>
                           <button
                             type="button"
                             onClick={() =>
@@ -442,7 +442,7 @@ export const TakazaView: React.FC<TakazaViewProps> = ({
                                 roleOrCategory: `${item.title} · জিম্মাদার`,
                               })
                             }
-                            className="cursor-pointer font-medium text-slate-800 underline-offset-2 transition-colors hover:text-[#0066E6] hover:underline"
+                            className="cursor-pointer font-medium text-[#102A27] underline-offset-2 transition-colors hover:text-[#0E6F66] hover:underline"
                           >
                             {item.zimmadarName}
                           </button>
@@ -456,18 +456,18 @@ export const TakazaView: React.FC<TakazaViewProps> = ({
                 </div>
 
                 {item.committedSathis && item.committedSathis.length > 0 && (
-                  <div className="mt-4 overflow-hidden rounded-xl border border-[#E2ECF7] bg-[#F8FBFF]">
-                    <div className="border-b border-[#E2ECF7] bg-[#F1F6FC] px-3.5 py-2 text-xs font-semibold text-slate-700">
+                  <div className="mt-4 overflow-hidden rounded-xl border border-[#D9EAE6] bg-[#F6FBFA]">
+                    <div className="border-b border-[#D9EAE6] bg-[#EBF4F2] px-3.5 py-2 text-xs font-semibold text-[#1D3F3B]">
                       এই তাকাজায় রাজি / যুক্ত সাথীগণ ({toBn(item.committedSathis.length)} জন)
                     </div>
-                    <div className="divide-y divide-[#E2ECF7]">
+                    <div className="divide-y divide-[#E3EFECE]">
                       {item.committedSathis.map((s, idx) => (
                         <div
                           key={s.id}
                           className="flex flex-wrap items-center justify-between gap-2 px-3.5 py-2 text-xs"
                         >
                           <div className="flex items-center gap-2">
-                            <span className="font-mono text-slate-400 tabular-nums">
+                            <span className="font-mono text-[#7B9591] tabular-nums">
                               {toBn(idx + 1)}.
                             </span>
                             <button
@@ -483,7 +483,7 @@ export const TakazaView: React.FC<TakazaViewProps> = ({
                                   roleOrCategory: item.title,
                                 })
                               }
-                              className="cursor-pointer text-left font-semibold text-slate-900 underline-offset-2 transition-colors hover:text-[#0066E6] hover:underline"
+                              className="cursor-pointer text-left font-semibold text-[#102A27] underline-offset-2 transition-colors hover:text-[#0E6F66] hover:underline"
                             >
                               {s.name}
                             </button>
@@ -491,7 +491,7 @@ export const TakazaView: React.FC<TakazaViewProps> = ({
                           {s.phone ? (
                             <PhoneActions phone={s.phone} compact />
                           ) : (
-                            <span className="text-slate-400">নম্বর নেই</span>
+                            <span className="text-[#7B9591]">নম্বর নেই</span>
                           )}
                         </div>
                       ))}
@@ -503,14 +503,14 @@ export const TakazaView: React.FC<TakazaViewProps> = ({
           })}
         </div>
       ) : (
-        <section className="rounded-2xl border border-[#E2ECF7] bg-white px-6 py-12 text-center shadow-[0_2px_10px_rgba(15,23,42,0.03)]">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-[#EBF4FF] text-[#0066E6]">
+        <section className="rounded-2xl border border-[#D9EAE6] bg-white px-6 py-12 text-center shadow-[0_2px_14px_rgba(14,111,102,0.04)]">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-[#E5F3F0] text-[#0E6F66]">
             <CheckCircle2 className="h-6 w-6" />
           </div>
-          <h2 className="font-display mt-3 text-lg font-bold text-slate-900">
+          <h2 className="font-display mt-3 text-lg font-bold text-[#102A27]">
             কোনো চলমান তাকাজা পাওয়া যায়নি
           </h2>
-          <p className="mx-auto mt-1 max-w-md text-sm text-slate-500">
+          <p className="mx-auto mt-1 max-w-md text-sm text-[#58726E]">
             হালকা বা যেকোনো মসজিদের আসন্ন জামাতের তাকাজা (যেমন ৩ দিন, ১ চিল্লা,
             ৩ চিল্লা বা মাস্তুরাত জামাত) যুক্ত করতে নিচের বাটনে ক্লিক করুন।
           </p>
@@ -518,7 +518,7 @@ export const TakazaView: React.FC<TakazaViewProps> = ({
             <button
               type="button"
               onClick={openAddModal}
-              className="mt-4 inline-flex cursor-pointer items-center gap-1.5 rounded-xl bg-[#0066E6] px-4 py-2 text-sm font-medium text-white shadow-[0_2px_8px_rgba(0,102,230,0.22)] hover:bg-[#0052BD]"
+              className="mt-4 inline-flex cursor-pointer items-center gap-1.5 rounded-xl bg-[#0E6F66] px-4 py-2 text-sm font-medium text-white shadow-[0_2px_10px_rgba(14,111,102,0.24)] hover:bg-[#0B5A53]"
             >
               <Plus className="h-4 w-4" />
               <span>প্রথম তাকাজা যুক্ত করুন</span>
@@ -533,13 +533,13 @@ export const TakazaView: React.FC<TakazaViewProps> = ({
           role="dialog"
           aria-modal="true"
           aria-labelledby="takaza-modal-title"
-          className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-900/40 p-4 backdrop-blur-[2px]"
+          className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-[#09201D]/45 p-4 backdrop-blur-[2px]"
         >
-          <div className="my-auto w-full max-w-lg rounded-2xl border border-[#E2ECF7] bg-white shadow-2xl">
-            <div className="flex items-center justify-between border-b border-[#E2ECF7] bg-[#F8FBFF] px-5 py-4 rounded-t-2xl">
+          <div className="my-auto w-full max-w-lg rounded-2xl border border-[#D9EAE6] bg-white shadow-2xl">
+            <div className="flex items-center justify-between rounded-t-2xl border-b border-[#D9EAE6] bg-[#F4FAF8] px-5 py-4">
               <h2
                 id="takaza-modal-title"
-                className="font-display text-lg font-bold text-slate-900"
+                className="font-display text-lg font-bold text-[#102A27]"
               >
                 {editing ? 'তাকাজা সম্পাদনা' : 'নতুন চলমান তাকাজা যুক্ত করুন'}
               </h2>
@@ -547,7 +547,7 @@ export const TakazaView: React.FC<TakazaViewProps> = ({
                 type="button"
                 onClick={() => setModalOpen(false)}
                 aria-label="বন্ধ করুন"
-                className="cursor-pointer rounded-xl p-1.5 text-slate-400 hover:bg-[#EBF4FF] hover:text-slate-700"
+                className="cursor-pointer rounded-xl p-1.5 text-[#7B9591] hover:bg-[#E5F3F0] hover:text-[#102A27]"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -555,7 +555,7 @@ export const TakazaView: React.FC<TakazaViewProps> = ({
 
             <form onSubmit={handleSubmit} className="space-y-4 p-5">
               <div>
-                <label className="block text-xs font-semibold text-slate-700">
+                <label className="block text-xs font-semibold text-[#1D3F3B]">
                   তাকাজার শিরোনাম <span className="text-rose-600">*</span>
                 </label>
                 <input
@@ -566,7 +566,7 @@ export const TakazaView: React.FC<TakazaViewProps> = ({
                     if (formError) setFormError('');
                   }}
                   placeholder="যেমন: আগামী শুক্রবার ৩ দিনের জামাত রওয়ানা"
-                  className="mt-1.5 w-full rounded-xl border border-[#DCE8F7] bg-[#F8FBFF] px-3 py-2 text-sm text-slate-900 focus:border-[#0066E6] focus:bg-white focus:outline-none"
+                  className="mt-1.5 w-full rounded-xl border border-[#D5E7E2] bg-[#F4FAF8] px-3 py-2 text-sm text-[#102A27] focus:border-[#0E6F66] focus:bg-white focus:outline-none"
                 />
                 {formError && (
                   <p className="mt-1 text-xs text-rose-600">{formError}</p>
@@ -575,7 +575,7 @@ export const TakazaView: React.FC<TakazaViewProps> = ({
 
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700">
+                  <label className="block text-xs font-semibold text-[#1D3F3B]">
                     মসজিদ / হালকা
                   </label>
                   <select
@@ -584,7 +584,7 @@ export const TakazaView: React.FC<TakazaViewProps> = ({
                       const v = e.target.value;
                       setMosqueId(v === 'halqa' ? 'halqa' : Number(v));
                     }}
-                    className="mt-1.5 w-full rounded-xl border border-[#DCE8F7] bg-[#F8FBFF] px-3 py-2 text-sm text-slate-900 focus:border-[#0066E6] focus:bg-white focus:outline-none"
+                    className="mt-1.5 w-full rounded-xl border border-[#D5E7E2] bg-[#F4FAF8] px-3 py-2 text-sm text-[#102A27] focus:border-[#0E6F66] focus:bg-white focus:outline-none"
                   >
                     <option value="halqa">সম্পূর্ণ ৪০১ নং হালকা</option>
                     {mosques.map((m) => (
@@ -596,13 +596,13 @@ export const TakazaView: React.FC<TakazaViewProps> = ({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700">
+                  <label className="block text-xs font-semibold text-[#1D3F3B]">
                     তাকাজার ধরন
                   </label>
                   <select
                     value={type}
                     onChange={(e) => setType(e.target.value as TakazaType)}
-                    className="mt-1.5 w-full rounded-xl border border-[#DCE8F7] bg-[#F8FBFF] px-3 py-2 text-sm text-slate-900 focus:border-[#0066E6] focus:bg-white focus:outline-none"
+                    className="mt-1.5 w-full rounded-xl border border-[#D5E7E2] bg-[#F4FAF8] px-3 py-2 text-sm text-[#102A27] focus:border-[#0E6F66] focus:bg-white focus:outline-none"
                   >
                     {Object.entries(TAKAZA_TYPE_LABELS).map(([k, label]) => (
                       <option key={k} value={k}>
@@ -615,7 +615,7 @@ export const TakazaView: React.FC<TakazaViewProps> = ({
 
               <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700">
+                  <label className="block text-xs font-semibold text-[#1D3F3B]">
                     লক্ষ্যমাত্রা (জন)
                   </label>
                   <input
@@ -623,11 +623,11 @@ export const TakazaView: React.FC<TakazaViewProps> = ({
                     min={1}
                     value={targetCount}
                     onChange={(e) => setTargetCount(e.target.value)}
-                    className="mt-1.5 w-full rounded-xl border border-[#DCE8F7] bg-[#F8FBFF] px-3 py-2 font-mono text-sm text-slate-900 focus:border-[#0066E6] focus:bg-white focus:outline-none"
+                    className="mt-1.5 w-full rounded-xl border border-[#D5E7E2] bg-[#F4FAF8] px-3 py-2 font-mono text-sm text-[#102A27] focus:border-[#0E6F66] focus:bg-white focus:outline-none"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700">
+                  <label className="block text-xs font-semibold text-[#1D3F3B]">
                     প্রস্তুত (জন)
                   </label>
                   <input
@@ -635,17 +635,17 @@ export const TakazaView: React.FC<TakazaViewProps> = ({
                     min={0}
                     value={completedCount}
                     onChange={(e) => setCompletedCount(e.target.value)}
-                    className="mt-1.5 w-full rounded-xl border border-[#DCE8F7] bg-[#F8FBFF] px-3 py-2 font-mono text-sm text-slate-900 focus:border-[#0066E6] focus:bg-white focus:outline-none"
+                    className="mt-1.5 w-full rounded-xl border border-[#D5E7E2] bg-[#F4FAF8] px-3 py-2 font-mono text-sm text-[#102A27] focus:border-[#0E6F66] focus:bg-white focus:outline-none"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700">
+                  <label className="block text-xs font-semibold text-[#1D3F3B]">
                     অবস্থা
                   </label>
                   <select
                     value={status}
                     onChange={(e) => setStatus(e.target.value as TakazaStatus)}
-                    className="mt-1.5 w-full rounded-xl border border-[#DCE8F7] bg-[#F8FBFF] px-2.5 py-2 text-sm text-slate-900 focus:border-[#0066E6] focus:bg-white focus:outline-none"
+                    className="mt-1.5 w-full rounded-xl border border-[#D5E7E2] bg-[#F4FAF8] px-2.5 py-2 text-sm text-[#102A27] focus:border-[#0E6F66] focus:bg-white focus:outline-none"
                   >
                     <option value="ongoing">চলমান</option>
                     <option value="urgent">জরুরি</option>
@@ -656,18 +656,18 @@ export const TakazaView: React.FC<TakazaViewProps> = ({
 
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700">
+                  <label className="block text-xs font-semibold text-[#1D3F3B]">
                     সম্ভাব্য তারিখ
                   </label>
                   <input
                     type="date"
                     value={dueDate}
                     onChange={(e) => setDueDate(e.target.value)}
-                    className="mt-1.5 w-full rounded-xl border border-[#DCE8F7] bg-[#F8FBFF] px-2.5 py-2 font-mono text-xs text-slate-900 focus:border-[#0066E6] focus:bg-white focus:outline-none"
+                    className="mt-1.5 w-full rounded-xl border border-[#D5E7E2] bg-[#F4FAF8] px-2.5 py-2 font-mono text-xs text-[#102A27] focus:border-[#0E6F66] focus:bg-white focus:outline-none"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700">
+                  <label className="block text-xs font-semibold text-[#1D3F3B]">
                     জিম্মাদার সাথী
                   </label>
                   <input
@@ -675,11 +675,11 @@ export const TakazaView: React.FC<TakazaViewProps> = ({
                     value={zimmadarName}
                     onChange={(e) => setZimmadarName(e.target.value)}
                     placeholder="নাম (ঐচ্ছিক)"
-                    className="mt-1.5 w-full rounded-xl border border-[#DCE8F7] bg-[#F8FBFF] px-3 py-2 text-sm text-slate-900 focus:border-[#0066E6] focus:bg-white focus:outline-none"
+                    className="mt-1.5 w-full rounded-xl border border-[#D5E7E2] bg-[#F4FAF8] px-3 py-2 text-sm text-[#102A27] focus:border-[#0E6F66] focus:bg-white focus:outline-none"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700">
+                  <label className="block text-xs font-semibold text-[#1D3F3B]">
                     জিম্মাদার মোবাইল
                   </label>
                   <input
@@ -688,13 +688,13 @@ export const TakazaView: React.FC<TakazaViewProps> = ({
                     onChange={(e) => setZimmadarPhone(e.target.value)}
                     onBlur={() => setZimmadarPhone((prev) => formatBdPhone(prev))}
                     placeholder="+880 1711-000 000"
-                    className="mt-1.5 w-full rounded-xl border border-[#DCE8F7] bg-[#F8FBFF] px-3 py-2 font-mono text-sm text-slate-900 focus:border-[#0066E6] focus:bg-white focus:outline-none"
+                    className="mt-1.5 w-full rounded-xl border border-[#D5E7E2] bg-[#F4FAF8] px-3 py-2 font-mono text-sm text-[#102A27] focus:border-[#0E6F66] focus:bg-white focus:outline-none"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700">
+                <label className="block text-xs font-semibold text-[#1D3F3B]">
                   বিস্তারিত নোট / রোখ
                 </label>
                 <textarea
@@ -702,21 +702,21 @@ export const TakazaView: React.FC<TakazaViewProps> = ({
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder="জামাতের রোখ, প্রয়োজনীয় নির্দেশনা বা মন্তব্য..."
-                  className="mt-1.5 w-full rounded-xl border border-[#DCE8F7] bg-[#F8FBFF] px-3 py-2 text-sm text-slate-900 focus:border-[#0066E6] focus:bg-white focus:outline-none"
+                  className="mt-1.5 w-full rounded-xl border border-[#D5E7E2] bg-[#F4FAF8] px-3 py-2 text-sm text-[#102A27] focus:border-[#0E6F66] focus:bg-white focus:outline-none"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-3 border-t border-[#E2ECF7] pt-4">
+              <div className="flex items-center justify-end gap-3 border-t border-[#D9EAE6] pt-4">
                 <button
                   type="button"
                   onClick={() => setModalOpen(false)}
-                  className="cursor-pointer rounded-xl border border-[#DCE8F7] bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-[#F1F6FC]"
+                  className="cursor-pointer rounded-xl border border-[#D5E7E2] bg-white px-4 py-2 text-sm font-medium text-[#1D3F3B] hover:bg-[#EBF4F2]"
                 >
                   বাতিল
                 </button>
                 <button
                   type="submit"
-                  className="cursor-pointer rounded-xl bg-[#0066E6] px-4 py-2 text-sm font-medium text-white shadow-[0_2px_8px_rgba(0,102,230,0.22)] hover:bg-[#0052BD]"
+                  className="cursor-pointer rounded-xl bg-[#0E6F66] px-4 py-2 text-sm font-medium text-white shadow-[0_2px_10px_rgba(14,111,102,0.24)] hover:bg-[#0B5A53]"
                 >
                   {editing ? 'সংরক্ষণ করুন' : 'তাকাজা যুক্ত করুন'}
                 </button>

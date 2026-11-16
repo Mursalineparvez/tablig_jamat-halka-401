@@ -473,16 +473,16 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
   return (
     <div className="space-y-8">
       {/* Masthead */}
-      <section className="no-print rounded-2xl border border-[#DCE8F7] bg-gradient-to-r from-[#EBF4FF] via-[#F3F8FF] to-white p-6 shadow-[0_2px_10px_rgba(15,23,42,0.03)] sm:p-8">
+      <section className="no-print rounded-2xl border border-[#CFE4DF] bg-gradient-to-r from-[#E4F2EF] via-[#F2F8F7] to-white p-6 shadow-[0_2px_12px_rgba(16,42,39,0.03)] sm:p-8">
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
           <div>
-            <p className="text-xs font-semibold tracking-wide text-[#0066E6]">
+            <p className="text-xs font-semibold tracking-wide text-[#0E6F66]">
               যাত্রাবাড়ী মারকাজ · ৪০১ নং হালকা
             </p>
-            <h1 className="font-display mt-1 text-2xl font-bold text-slate-900 sm:text-3xl">
+            <h1 className="font-display mt-1 text-2xl font-bold text-[#102A27] sm:text-3xl">
               দৈনিক কারগুজারি
             </h1>
-            <p className="mt-1.5 max-w-2xl text-sm text-slate-600">
+            <p className="mt-1.5 max-w-2xl text-sm text-[#4F6B67]">
               প্রতিদিনের গাস্ত, তালিম, মাশওয়ারা ও তাশকিলকৃত সাথীদের নাম মসজিদ
               ফরম্যাটে সংরক্ষণ করুন এবং সরাসরি যেকোনো মসজিদের যেকোনো বিভাগ বা
               চলমান তাকাজায় যুক্ত করুন।
@@ -493,16 +493,16 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
             <button
               type="button"
               onClick={() => window.print()}
-              className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-[#DCE8F7] bg-white px-3.5 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-[#F1F6FC]"
+              className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-[#D5E7E2] bg-white px-3.5 py-2.5 text-sm font-medium text-[#1D3F3B] transition-colors hover:bg-[#EBF4F2]"
             >
-              <Printer className="h-4 w-4 text-[#0066E6]" />
+              <Printer className="h-4 w-4 text-[#0E6F66]" />
               <span>রিপোর্ট প্রিন্ট</span>
             </button>
             {canEdit && (
               <button
                 type="button"
                 onClick={() => setFormExpanded((prev) => !prev)}
-                className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl bg-[#0066E6] px-4 py-2.5 text-sm font-medium text-white shadow-[0_2px_8px_rgba(0,102,230,0.22)] transition-colors hover:bg-[#0052BD]"
+                className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl bg-[#0E6F66] px-4 py-2.5 text-sm font-medium text-white shadow-[0_2px_10px_rgba(14,111,102,0.24)] transition-colors hover:bg-[#0B5A53]"
               >
                 <Plus className="h-4 w-4" />
                 <span>
@@ -517,31 +517,31 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
       </section>
 
       {/* Daily Summary Metrics */}
-      <section className="no-print grid grid-cols-2 divide-x divide-y divide-[#E2ECF7] overflow-hidden rounded-2xl border border-[#E2ECF7] bg-white shadow-[0_2px_10px_rgba(15,23,42,0.03)] sm:grid-cols-4 sm:divide-y-0">
+      <section className="no-print grid grid-cols-2 divide-x divide-y divide-[#D9EAE6] overflow-hidden rounded-2xl border border-[#D9EAE6] bg-white shadow-[0_2px_12px_rgba(16,42,39,0.03)] sm:grid-cols-4 sm:divide-y-0">
         <div className="p-5">
-          <p className="text-xs font-medium text-slate-500">আজকের কারগুজারি</p>
-          <p className="mt-1.5 font-mono text-3xl font-semibold text-[#0066E6] tabular-nums">
+          <p className="text-xs font-medium text-[#58726E]">আজকের কারগুজারি</p>
+          <p className="mt-1.5 font-mono text-3xl font-semibold text-[#0E6F66] tabular-nums">
             {toBn(stats.todayCount)}
           </p>
-          <p className="mt-1 text-xs text-slate-400">
+          <p className="mt-1 text-xs text-[#7B9591]">
             {formatLongDateBn(todayISO)}
           </p>
         </div>
         <div className="p-5">
-          <p className="text-xs font-medium text-slate-500">আজ উপস্থিত সাথী</p>
-          <p className="mt-1.5 font-mono text-3xl font-semibold text-slate-900 tabular-nums">
+          <p className="text-xs font-medium text-[#58726E]">আজ উপস্থিত সাথী</p>
+          <p className="mt-1.5 font-mono text-3xl font-semibold text-[#102A27] tabular-nums">
             {toBn(stats.totalAttendedToday)}
           </p>
         </div>
         <div className="p-5">
-          <p className="text-xs font-medium text-slate-500">আজ নগদ তশকিল</p>
-          <p className="mt-1.5 font-mono text-3xl font-semibold text-emerald-600 tabular-nums">
+          <p className="text-xs font-medium text-[#58726E]">আজ নগদ তশকিল</p>
+          <p className="mt-1.5 font-mono text-3xl font-semibold text-emerald-700 tabular-nums">
             {toBn(stats.totalTashkeelToday)}
           </p>
         </div>
         <div className="p-5">
-          <p className="text-xs font-medium text-slate-500">মোট সংরক্ষিত দিন</p>
-          <p className="mt-1.5 font-mono text-3xl font-semibold text-slate-900 tabular-nums">
+          <p className="text-xs font-medium text-[#58726E]">মোট সংরক্ষিত দিন</p>
+          <p className="mt-1.5 font-mono text-3xl font-semibold text-[#102A27] tabular-nums">
             {toBn(stats.uniqueDays)}
           </p>
         </div>
@@ -549,9 +549,9 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
 
       {/* Daily Add / Edit Form */}
       {canEdit && formExpanded && (
-        <section className="no-print rounded-2xl border border-[#E2ECF7] bg-white p-5 shadow-[0_2px_10px_rgba(15,23,42,0.03)] sm:p-6">
-          <div className="flex items-center justify-between border-b border-[#EEF4FB] pb-3.5">
-            <h2 className="font-display text-lg font-bold text-slate-900">
+        <section className="no-print rounded-2xl border border-[#D9EAE6] bg-white p-5 shadow-[0_2px_12px_rgba(16,42,39,0.03)] sm:p-6">
+          <div className="flex items-center justify-between border-b border-[#EDF5F3] pb-3.5">
+            <h2 className="font-display text-lg font-bold text-[#102A27]">
               {editingId
                 ? 'কারগুজারি সম্পাদনা করুন'
                 : 'আজকের / দৈনিক কারগুজারি লিপিবদ্ধ করুন'}
@@ -560,7 +560,7 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
               <button
                 type="button"
                 onClick={resetForm}
-                className="cursor-pointer text-xs font-semibold text-[#0066E6] hover:underline"
+                className="cursor-pointer text-xs font-semibold text-[#0E6F66] hover:underline"
               >
                 নতুন এন্ট্রিতে ফিরে যান
               </button>
@@ -570,19 +570,19 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
           <form onSubmit={handleSubmit} className="mt-4 space-y-4">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
               <div>
-                <label className="block text-xs font-semibold text-slate-700">
+                <label className="block text-xs font-semibold text-[#1D3F3B]">
                   তারিখ <span className="text-rose-600">*</span>
                 </label>
                 <input
                   type="date"
                   value={date}
                   onChange={(e) => setDate(e.target.value)}
-                  className="mt-1.5 w-full rounded-xl border border-[#DCE8F7] bg-[#F8FBFF] px-3 py-2 font-mono text-sm text-slate-900 focus:border-[#0066E6] focus:bg-white focus:outline-none"
+                  className="mt-1.5 w-full rounded-xl border border-[#D5E7E2] bg-[#F4FAF8] px-3 py-2 font-mono text-sm text-[#102A27] focus:border-[#0E6F66] focus:bg-white focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700">
+                <label className="block text-xs font-semibold text-[#1D3F3B]">
                   মসজিদ / হালকা
                 </label>
                 <select
@@ -591,7 +591,7 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
                     const v = e.target.value;
                     setMosqueId(v === 'halqa' ? 'halqa' : Number(v));
                   }}
-                  className="mt-1.5 w-full rounded-xl border border-[#DCE8F7] bg-[#F8FBFF] px-3 py-2 text-sm text-slate-900 focus:border-[#0066E6] focus:bg-white focus:outline-none"
+                  className="mt-1.5 w-full rounded-xl border border-[#D5E7E2] bg-[#F4FAF8] px-3 py-2 text-sm text-[#102A27] focus:border-[#0E6F66] focus:bg-white focus:outline-none"
                 >
                   <option value="halqa">সম্পূর্ণ ৪০১ নং হালকা</option>
                   {mosques.map((m) => (
@@ -603,7 +603,7 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700">
+                <label className="block text-xs font-semibold text-[#1D3F3B]">
                   রিপোর্টকারী সাথী
                 </label>
                 <input
@@ -611,40 +611,40 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
                   value={reporterName}
                   onChange={(e) => setReporterName(e.target.value)}
                   placeholder="নাম লিখুন (ঐচ্ছিক)"
-                  className="mt-1.5 w-full rounded-xl border border-[#DCE8F7] bg-[#F8FBFF] px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-[#0066E6] focus:bg-white focus:outline-none"
+                  className="mt-1.5 w-full rounded-xl border border-[#D5E7E2] bg-[#F4FAF8] px-3 py-2 text-sm text-[#102A27] placeholder:text-[#7B9591] focus:border-[#0E6F66] focus:bg-white focus:outline-none"
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-              <div className="flex flex-wrap items-center gap-4 rounded-xl border border-[#DCE8F7] bg-[#F8FBFF] px-3.5 py-2.5 sm:col-span-2">
-                <span className="text-xs font-semibold text-slate-600">
+              <div className="flex flex-wrap items-center gap-4 rounded-xl border border-[#D5E7E2] bg-[#F4FAF8] px-3.5 py-2.5 sm:col-span-2">
+                <span className="text-xs font-semibold text-[#4F6B67]">
                   দৈনিক আমল:
                 </span>
-                <label className="inline-flex cursor-pointer items-center gap-2 text-sm text-slate-800 select-none">
+                <label className="inline-flex cursor-pointer items-center gap-2 text-sm text-[#1D3F3B] select-none">
                   <input
                     type="checkbox"
                     checked={gastDone}
                     onChange={(e) => setGastDone(e.target.checked)}
-                    className="h-4 w-4 rounded border-[#BFD9FA] accent-[#0066E6]"
+                    className="h-4 w-4 rounded border-[#B7DBD3] accent-[#0E6F66]"
                   />
                   <span>গাস্ত হয়েছে</span>
                 </label>
-                <label className="inline-flex cursor-pointer items-center gap-2 text-sm text-slate-800 select-none">
+                <label className="inline-flex cursor-pointer items-center gap-2 text-sm text-[#1D3F3B] select-none">
                   <input
                     type="checkbox"
                     checked={talimDone}
                     onChange={(e) => setTalimDone(e.target.checked)}
-                    className="h-4 w-4 rounded border-[#BFD9FA] accent-[#0066E6]"
+                    className="h-4 w-4 rounded border-[#B7DBD3] accent-[#0E6F66]"
                   />
                   <span>তালিম হয়েছে</span>
                 </label>
-                <label className="inline-flex cursor-pointer items-center gap-2 text-sm text-slate-800 select-none">
+                <label className="inline-flex cursor-pointer items-center gap-2 text-sm text-[#1D3F3B] select-none">
                   <input
                     type="checkbox"
                     checked={mashwaraDone}
                     onChange={(e) => setMashwaraDone(e.target.checked)}
-                    className="h-4 w-4 rounded border-[#BFD9FA] accent-[#0066E6]"
+                    className="h-4 w-4 rounded border-[#B7DBD3] accent-[#0E6F66]"
                   />
                   <span>মাশওয়ারা হয়েছে</span>
                 </label>
@@ -652,7 +652,7 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700">
+                  <label className="block text-xs font-semibold text-[#1D3F3B]">
                     উপস্থিত সাথী
                   </label>
                   <input
@@ -661,11 +661,11 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
                     value={sathiAttended}
                     onChange={(e) => setSathiAttended(e.target.value)}
                     placeholder="০"
-                    className="mt-1 w-full rounded-xl border border-[#DCE8F7] bg-[#F8FBFF] px-3 py-1.5 font-mono text-sm text-slate-900 focus:border-[#0066E6] focus:bg-white focus:outline-none"
+                    className="mt-1 w-full rounded-xl border border-[#D5E7E2] bg-[#F4FAF8] px-3 py-1.5 font-mono text-sm text-[#102A27] focus:border-[#0E6F66] focus:bg-white focus:outline-none"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700">
+                  <label className="block text-xs font-semibold text-[#1D3F3B]">
                     নগদ তশকিল
                   </label>
                   <input
@@ -674,22 +674,22 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
                     value={tashkeelCount}
                     onChange={(e) => setTashkeelCount(e.target.value)}
                     placeholder="০"
-                    className="mt-1 w-full rounded-xl border border-[#DCE8F7] bg-[#F8FBFF] px-3 py-1.5 font-mono text-sm text-slate-900 focus:border-[#0066E6] focus:bg-white focus:outline-none"
+                    className="mt-1 w-full rounded-xl border border-[#D5E7E2] bg-[#F4FAF8] px-3 py-1.5 font-mono text-sm text-[#102A27] focus:border-[#0E6F66] focus:bg-white focus:outline-none"
                   />
                 </div>
               </div>
             </div>
 
             {/* Structured Sathis List inside Form (Mosque Table Format) */}
-            <div className="overflow-hidden rounded-2xl border border-[#DCE8F7] bg-[#F8FBFF]">
-              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#E2ECF7] bg-[#F1F6FC] px-4 py-2.5">
+            <div className="overflow-hidden rounded-2xl border border-[#D5E7E2] bg-[#F4FAF8]">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#D9EAE6] bg-[#EBF4F2] px-4 py-2.5">
                 <div className="flex items-center gap-2">
-                  <UserPlus className="h-4 w-4 text-[#0066E6]" />
-                  <span className="text-xs font-bold text-slate-800">
+                  <UserPlus className="h-4 w-4 text-[#0E6F66]" />
+                  <span className="text-xs font-bold text-[#102A27]">
                     তাশকিল ও দাওয়াতকৃত সাথীদের তালিকা (আগে থেকে থাকা সাথী বাদে)
                   </span>
                 </div>
-                <span className="font-mono text-xs text-slate-500 tabular-nums">
+                <span className="font-mono text-xs text-[#58726E] tabular-nums">
                   {toBn(formSathis.length)} জন যুক্ত
                 </span>
               </div>
@@ -698,7 +698,7 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
                 <div className="overflow-x-auto bg-white">
                   <table className="w-full border-collapse text-left text-xs">
                     <thead>
-                      <tr className="border-b border-[#E2ECF7] text-slate-500">
+                      <tr className="border-b border-[#D9EAE6] text-[#58726E]">
                         <th className="w-10 px-3 py-2 text-center">ক্র</th>
                         <th className="px-3 py-2">নাম</th>
                         <th className="px-3 py-2">মোবাইল নম্বর</th>
@@ -706,13 +706,13 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
                         <th className="w-14 px-3 py-2 text-right">মুছুন</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100">
+                    <tbody className="divide-y divide-[#EDF5F3]">
                       {formSathis.map((s, idx) => (
                         <tr key={s.id}>
-                          <td className="px-3 py-2 text-center font-mono text-slate-400 tabular-nums">
+                          <td className="px-3 py-2 text-center font-mono text-[#7B9591] tabular-nums">
                             {toBn(idx + 1)}
                           </td>
-                          <td className="px-3 py-2 font-semibold text-slate-900">
+                          <td className="px-3 py-2 font-semibold text-[#102A27]">
                             <p>{s.name}</p>
                             <p
                               className={`text-[11px] font-medium ${
@@ -726,10 +726,10 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
                                 : 'তাশকিল হয়েছেন'}
                             </p>
                           </td>
-                          <td className="px-3 py-2 font-mono text-slate-700 tabular-nums whitespace-nowrap">
+                          <td className="px-3 py-2 font-mono text-[#1D3F3B] tabular-nums whitespace-nowrap">
                             {formatBdPhone(s.phone) || '—'}
                           </td>
-                          <td className="px-3 py-2 text-slate-600">
+                          <td className="px-3 py-2 text-[#4F6B67]">
                             {s.notes || '—'}
                           </td>
                           <td className="px-3 py-2 text-right">
@@ -741,7 +741,7 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
                                 )
                               }
                               title="সরিয়ে দিন"
-                              className="cursor-pointer rounded-lg p-1 text-slate-400 hover:bg-rose-50 hover:text-rose-600"
+                              className="cursor-pointer rounded-lg p-1 text-[#7B9591] hover:bg-rose-50 hover:text-rose-600"
                             >
                               <Trash2 className="h-3.5 w-3.5" />
                             </button>
@@ -769,7 +769,7 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
                       }
                     }}
                     placeholder="সাথীর নাম (যেমন: ভাই মোঃ নাঈম)"
-                    className="rounded-xl border border-[#DCE8F7] bg-white px-3 py-2 text-xs text-slate-900 placeholder:text-slate-400 focus:border-[#0066E6] focus:outline-none sm:col-span-3"
+                    className="rounded-xl border border-[#D5E7E2] bg-white px-3 py-2 text-xs text-[#102A27] placeholder:text-[#7B9591] focus:border-[#0E6F66] focus:outline-none sm:col-span-3"
                   />
                   <input
                     type="text"
@@ -783,7 +783,7 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
                       }
                     }}
                     placeholder="+880 1711-000 000"
-                    className="rounded-xl border border-[#DCE8F7] bg-white px-3 py-2 font-mono text-xs text-slate-900 placeholder:text-slate-400 focus:border-[#0066E6] focus:outline-none sm:col-span-2"
+                    className="rounded-xl border border-[#D5E7E2] bg-white px-3 py-2 font-mono text-xs text-[#102A27] placeholder:text-[#7B9591] focus:border-[#0E6F66] focus:outline-none sm:col-span-2"
                   />
                   <select
                     aria-label="তাশকিলের অবস্থা"
@@ -793,7 +793,7 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
                         e.target.value as 'tashkeel' | 'not_tashkeel'
                       )
                     }
-                    className="rounded-xl border border-[#DCE8F7] bg-white px-2.5 py-2 text-xs text-slate-900 focus:border-[#0066E6] focus:outline-none sm:col-span-2"
+                    className="rounded-xl border border-[#D5E7E2] bg-white px-2.5 py-2 text-xs text-[#102A27] focus:border-[#0E6F66] focus:outline-none sm:col-span-2"
                   >
                     <option value="tashkeel">তাশকিল হয়েছেন</option>
                     <option value="not_tashkeel">তাশকিল হয়নি</option>
@@ -809,12 +809,12 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
                       }
                     }}
                     placeholder="মন্তব্য / যে তাকাজায় রাজি বা দাওয়াত"
-                    className="rounded-xl border border-[#DCE8F7] bg-white px-3 py-2 text-xs text-slate-900 placeholder:text-slate-400 focus:border-[#0066E6] focus:outline-none sm:col-span-3"
+                    className="rounded-xl border border-[#D5E7E2] bg-white px-3 py-2 text-xs text-[#102A27] placeholder:text-[#7B9591] focus:border-[#0E6F66] focus:outline-none sm:col-span-3"
                   />
                   <button
                     type="button"
                     onClick={handleAddDraftSathi}
-                    className="inline-flex cursor-pointer items-center justify-center gap-1 rounded-xl border border-[#BFD9FA] bg-[#EBF4FF] px-3 py-2 text-xs font-semibold text-[#0066E6] transition-colors hover:bg-[#DCEBFF] sm:col-span-2"
+                    className="inline-flex cursor-pointer items-center justify-center gap-1 rounded-xl border border-[#B7DBD3] bg-[#E5F3F0] px-3 py-2 text-xs font-semibold text-[#0E6F66] transition-colors hover:bg-[#D5ECE6] sm:col-span-2"
                   >
                     <Plus className="h-3.5 w-3.5" />
                     <span>যোগ করুন</span>
@@ -829,7 +829,7 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700">
+              <label className="block text-xs font-semibold text-[#1D3F3B]">
                 দৈনিক কারগুজারির বিবরণ <span className="text-rose-600">*</span>
               </label>
               <textarea
@@ -840,7 +840,7 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
                   if (formError) setFormError('');
                 }}
                 placeholder="আজকের গাস্ত, তাশকিল, জামাত রওয়ানা বা আগমন, হালকার মাশওয়ারার গুরুত্বপূর্ণ সিদ্ধান্তসমূহ লিখুন..."
-                className="mt-1.5 w-full rounded-xl border border-[#DCE8F7] bg-[#F8FBFF] px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-[#0066E6] focus:bg-white focus:outline-none"
+                className="mt-1.5 w-full rounded-xl border border-[#D5E7E2] bg-[#F4FAF8] px-3 py-2 text-sm text-[#102A27] placeholder:text-[#7B9591] focus:border-[#0E6F66] focus:bg-white focus:outline-none"
               />
               {formError && (
                 <p className="mt-1 text-xs text-rose-600">{formError}</p>
@@ -852,14 +852,14 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
                 <button
                   type="button"
                   onClick={resetForm}
-                  className="cursor-pointer rounded-xl border border-[#DCE8F7] bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-[#F1F6FC]"
+                  className="cursor-pointer rounded-xl border border-[#D5E7E2] bg-white px-4 py-2 text-sm font-medium text-[#1D3F3B] hover:bg-[#EBF4F2]"
                 >
                   বাতিল
                 </button>
               )}
               <button
                 type="submit"
-                className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl bg-[#0066E6] px-5 py-2.5 text-sm font-medium text-white shadow-[0_2px_8px_rgba(0,102,230,0.22)] transition-colors hover:bg-[#0052BD]"
+                className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl bg-[#0E6F66] px-5 py-2.5 text-sm font-medium text-white shadow-[0_2px_10px_rgba(14,111,102,0.24)] transition-colors hover:bg-[#0B5A53]"
               >
                 <Check className="h-4 w-4" />
                 <span>
@@ -874,8 +874,8 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
       )}
 
       {/* Filter Bar */}
-      <section className="no-print flex flex-col justify-between gap-3 rounded-2xl border border-[#E2ECF7] bg-white p-4 shadow-[0_2px_10px_rgba(15,23,42,0.03)] lg:flex-row lg:items-center">
-        <div className="flex flex-wrap items-center gap-1.5">
+      <section className="no-print flex flex-col justify-between gap-3 rounded-2xl border border-[#D9EAE6] bg-white p-4 shadow-[0_2px_12px_rgba(16,42,39,0.03)] lg:flex-row lg:items-center">
+        <div className="flex flex-wrap items-center gap-1.5 rounded-xl bg-[#EBF4F2] p-1">
           {(
             [
               ['all', 'সকল তারিখ'],
@@ -888,10 +888,10 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
               key={key}
               type="button"
               onClick={() => setDateScope(key)}
-              className={`cursor-pointer whitespace-nowrap rounded-xl px-3.5 py-2 text-xs font-medium transition-colors ${
+              className={`cursor-pointer whitespace-nowrap rounded-lg px-3.5 py-2 text-xs font-medium transition-colors ${
                 dateScope === key
-                  ? 'bg-[#0066E6] text-white shadow-[0_2px_8px_rgba(0,102,230,0.2)]'
-                  : 'bg-[#F1F6FC] text-slate-700 hover:bg-[#E2EEFC]'
+                  ? 'bg-[#0E6F66] text-white shadow-[0_2px_8px_rgba(14,111,102,0.2)]'
+                  : 'text-[#4F6B67] hover:bg-white hover:text-[#102A27]'
               }`}
             >
               {label}
@@ -906,7 +906,7 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
               aria-label="তারিখ নির্বাচন"
               value={customDate}
               onChange={(e) => setCustomDate(e.target.value)}
-              className="rounded-xl border border-[#DCE8F7] bg-[#F8FBFF] px-3 py-1.5 font-mono text-xs text-slate-800 focus:border-[#0066E6] focus:bg-white focus:outline-none"
+              className="rounded-xl border border-[#D5E7E2] bg-[#F4FAF8] px-3 py-1.5 font-mono text-xs text-[#102A27] focus:border-[#0E6F66] focus:bg-white focus:outline-none"
             />
           )}
 
@@ -919,7 +919,7 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
                 v === 'all' ? 'all' : v === 'halqa' ? 'halqa' : Number(v)
               );
             }}
-            className="rounded-xl border border-[#DCE8F7] bg-[#F8FBFF] px-3 py-2 text-sm text-slate-800 focus:border-[#0066E6] focus:bg-white focus:outline-none"
+            className="rounded-xl border border-[#D5E7E2] bg-[#F4FAF8] px-3 py-2 text-sm text-[#102A27] focus:border-[#0E6F66] focus:bg-white focus:outline-none"
           >
             <option value="all">সকল মসজিদ ও হালকা</option>
             <option value="halqa">শুধু সম্পূর্ণ ৪০১ নং হালকা</option>
@@ -944,17 +944,17 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
                 : null;
             return (
               <section key={dateKey} className="space-y-3">
-                <div className="flex items-center gap-2 border-b border-[#E2ECF7] pb-2">
-                  <Calendar className="h-4 w-4 text-[#0066E6]" />
-                  <h3 className="font-display text-lg font-bold text-slate-900">
+                <div className="flex items-center gap-2 border-b border-[#D9EAE6] pb-2">
+                  <Calendar className="h-4 w-4 text-[#0E6F66]" />
+                  <h3 className="font-display text-lg font-bold text-[#102A27]">
                     {formatLongDateBn(dateKey)}
                   </h3>
                   {dateBadge && (
-                    <span className="text-xs font-semibold text-[#0066E6]">
+                    <span className="text-xs font-semibold text-[#0E6F66]">
                       · {dateBadge}
                     </span>
                   )}
-                  <span className="ml-auto font-mono text-xs text-slate-500 tabular-nums">
+                  <span className="ml-auto font-mono text-xs text-[#58726E] tabular-nums">
                     {toBn(dayEntries.length)}টি রিপোর্ট
                   </span>
                 </div>
@@ -975,12 +975,12 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
                     return (
                       <article
                         key={item.id}
-                        className="rounded-2xl border border-[#E2ECF7] bg-white p-5 shadow-[0_2px_10px_rgba(15,23,42,0.03)] transition-colors hover:border-[#BFD9FA] print:border-stone-400 print:shadow-none"
+                        className="rounded-2xl border border-[#D9EAE6] bg-white p-5 shadow-[0_2px_12px_rgba(16,42,39,0.03)] transition-colors hover:border-[#B7DBD3] print:border-stone-400 print:shadow-none"
                       >
                         <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
                           <div className="space-y-1.5">
-                            <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
-                              <span className="font-semibold text-slate-800">
+                            <div className="flex flex-wrap items-center gap-2 text-xs text-[#58726E]">
+                              <span className="font-semibold text-[#102A27]">
                                 {getMosqueLabel(item.mosqueId)}
                               </span>
                               {item.reporterName && (
@@ -1000,7 +1000,7 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
                                           roleOrCategory: 'কারগুজারি রিপোর্টকারী',
                                         })
                                       }
-                                      className="cursor-pointer font-medium text-slate-700 underline-offset-2 transition-colors hover:text-[#0066E6] hover:underline"
+                                      className="cursor-pointer font-medium text-[#1D3F3B] underline-offset-2 transition-colors hover:text-[#0E6F66] hover:underline"
                                     >
                                       {item.reporterName}
                                     </button>
@@ -1009,7 +1009,7 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
                               )}
                             </div>
 
-                            <div className="flex flex-wrap items-center gap-3 text-xs text-slate-600">
+                            <div className="flex flex-wrap items-center gap-3 text-xs text-[#4F6B67]">
                               <span>
                                 গাস্ত:{' '}
                                 <strong>
@@ -1033,14 +1033,14 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
                               <span aria-hidden="true">·</span>
                               <span>
                                 উপস্থিত:{' '}
-                                <strong className="font-mono text-slate-900 tabular-nums">
+                                <strong className="font-mono text-[#102A27] tabular-nums">
                                   {toBn(item.sathiAttended)} জন
                                 </strong>
                               </span>
                               <span aria-hidden="true">·</span>
                               <span>
                                 নগদ তশকিল:{' '}
-                                <strong className="font-mono text-[#0066E6] tabular-nums">
+                                <strong className="font-mono text-[#0E6F66] tabular-nums">
                                   {toBn(item.tashkeelCount)} জন
                                 </strong>
                               </span>
@@ -1052,7 +1052,7 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
                               <button
                                 type="button"
                                 onClick={() => openAddSathiModal(item.id, null)}
-                                className="inline-flex cursor-pointer items-center gap-1 rounded-xl border border-[#BFD9FA] bg-[#EBF4FF] px-2.5 py-1.5 text-xs font-semibold text-[#0066E6] transition-colors hover:bg-[#DCEBFF]"
+                                className="inline-flex cursor-pointer items-center gap-1 rounded-xl border border-[#B7DBD3] bg-[#E5F3F0] px-2.5 py-1.5 text-xs font-semibold text-[#0E6F66] transition-colors hover:bg-[#D5ECE6]"
                               >
                                 <UserPlus className="h-3.5 w-3.5" />
                                 <span>সাথী যোগ</span>
@@ -1061,7 +1061,7 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
                                 type="button"
                                 onClick={() => handleEdit(item)}
                                 title="কারগুজারি সম্পাদনা"
-                                className="cursor-pointer rounded-xl border border-[#E2ECF7] p-1.5 text-slate-500 transition-colors hover:bg-[#EBF4FF] hover:text-[#0066E6]"
+                                className="cursor-pointer rounded-xl border border-[#D9EAE6] p-1.5 text-[#58726E] transition-colors hover:bg-[#E5F3F0] hover:text-[#0E6F66]"
                               >
                                 <Edit3 className="h-3.5 w-3.5" />
                               </button>
@@ -1069,7 +1069,7 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
                                 type="button"
                                 onClick={() => onDeleteEntry(item.id)}
                                 title="মুছে ফেলুন"
-                                className="cursor-pointer rounded-xl border border-[#E2ECF7] p-1.5 text-slate-500 transition-colors hover:bg-rose-50 hover:text-rose-600"
+                                className="cursor-pointer rounded-xl border border-[#D9EAE6] p-1.5 text-[#58726E] transition-colors hover:bg-rose-50 hover:text-rose-600"
                               >
                                 <Trash2 className="h-3.5 w-3.5" />
                               </button>
@@ -1078,21 +1078,21 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
                         </div>
 
                         {item.summary && (
-                          <p className="mt-3 whitespace-pre-line border-t border-[#EEF4FB] pt-3 text-sm leading-relaxed text-slate-700">
+                          <p className="mt-3 whitespace-pre-line border-t border-[#EDF5F3] pt-3 text-sm leading-relaxed text-[#1D3F3B]">
                             {item.summary}
                           </p>
                         )}
 
                         {/* Structured Sathi Table in exact Mosque Directory Format */}
-                        <div className="mt-4 overflow-hidden rounded-2xl border border-[#E2ECF7] bg-white">
-                          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#E2ECF7] bg-[#F1F6FC]/90 px-4 py-2.5">
+                        <div className="mt-4 overflow-hidden rounded-2xl border border-[#D9EAE6] bg-white">
+                          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#D9EAE6] bg-[#EBF4F2]/90 px-4 py-2.5">
                             <div className="flex flex-wrap items-center gap-2">
-                              <span className="text-xs font-bold text-slate-800">
+                              <span className="text-xs font-bold text-[#102A27]">
                                 দাওয়াত ও তাশকিলকৃত সাথী তালিকা (
                                 {toBn(cardSathis.length)} জন)
                               </span>
                               {cardSathis.length > 0 && (
-                                <span className="text-[11px] font-medium text-slate-500">
+                                <span className="text-[11px] font-medium text-[#58726E]">
                                   · তাশকিল {toBn(tashkeelListCount)} জন
                                   {nonTashkeelListCount > 0 &&
                                     ` · তাশকিল হয়নি ${toBn(
@@ -1105,7 +1105,7 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
                               <button
                                 type="button"
                                 onClick={() => openAddSathiModal(item.id, null)}
-                                className="no-print inline-flex cursor-pointer items-center gap-1 rounded-lg bg-[#EBF4FF] px-2.5 py-1 text-xs font-semibold text-[#0066E6] hover:bg-[#DCEBFF]"
+                                className="no-print inline-flex cursor-pointer items-center gap-1 rounded-lg bg-[#E5F3F0] px-2.5 py-1 text-xs font-semibold text-[#0E6F66] hover:bg-[#D5ECE6]"
                               >
                                 <Plus className="h-3.5 w-3.5" />
                                 <span>নতুন সাথী যুক্ত করুন</span>
@@ -1116,7 +1116,7 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
                           <div className="overflow-x-auto">
                             <table className="w-full min-w-[680px] border-collapse text-left text-sm">
                               <thead>
-                                <tr className="border-b border-[#E2ECF7] text-xs font-semibold text-slate-500">
+                                <tr className="border-b border-[#D9EAE6] text-xs font-semibold text-[#58726E]">
                                   <th className="w-12 px-4 py-2.5 text-center">
                                     ক্র
                                   </th>
@@ -1132,7 +1132,7 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
                                   )}
                                 </tr>
                               </thead>
-                              <tbody className="divide-y divide-slate-100">
+                              <tbody className="divide-y divide-[#EDF5F3]">
                                 {cardSathis.map((s, idx) => {
                                   const copyId = `karg-${item.id}-${s.id}`;
                                   const assignedMosqueText =
@@ -1143,9 +1143,9 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
                                   return (
                                     <tr
                                       key={s.id}
-                                      className="transition-colors hover:bg-[#F4F9FF]"
+                                      className="transition-colors hover:bg-[#F4FAF8]"
                                     >
-                                      <td className="px-4 py-2.5 text-center font-mono text-xs text-slate-400 tabular-nums">
+                                      <td className="px-4 py-2.5 text-center font-mono text-xs text-[#7B9591] tabular-nums">
                                         {toBn(idx + 1)}
                                       </td>
                                       <td className="px-4 py-2.5">
@@ -1166,7 +1166,7 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
                                               notes: s.notes,
                                             })
                                           }
-                                          className="cursor-pointer text-left font-medium text-slate-900 underline-offset-2 transition-colors hover:text-[#0066E6] hover:underline"
+                                          className="cursor-pointer text-left font-medium text-[#102A27] underline-offset-2 transition-colors hover:text-[#0E6F66] hover:underline"
                                         >
                                           {s.name}
                                         </button>
@@ -1184,7 +1184,7 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
                                               : 'তাশকিল হয়েছেন'}
                                           </span>
                                           {assignedMosqueText && (
-                                            <span className="font-medium text-[#0066E6]">
+                                            <span className="font-medium text-[#0E6F66]">
                                               মসজিদে যুক্ত: {assignedMosqueText}
                                             </span>
                                           )}
@@ -1211,17 +1211,17 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
                                               onClick={() =>
                                                 openAddSathiModal(item.id, s)
                                               }
-                                              className="no-print cursor-pointer text-xs text-slate-400 hover:text-[#0066E6] hover:underline"
+                                              className="no-print cursor-pointer text-xs text-[#7B9591] hover:text-[#0E6F66] hover:underline"
                                             >
                                               + নম্বর যোগ করুন
                                             </button>
                                           ) : (
-                                            <span className="text-xs text-slate-400">
+                                            <span className="text-xs text-[#7B9591]">
                                               নম্বর নেই
                                             </span>
                                           )}
                                         </td>
-                                        <td className="px-4 py-2.5 text-xs text-slate-600">
+                                        <td className="px-4 py-2.5 text-xs text-[#4F6B67]">
                                           {s.notes.trim() || '—'}
                                         </td>
                                         {canEdit && (
@@ -1237,7 +1237,7 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
                                                   )
                                                 }
                                                 title="যেকোনো মসজিদের যেকোনো বিভাগে যুক্ত করুন"
-                                                className="inline-flex cursor-pointer items-center gap-1 rounded-lg border border-[#BFD9FA] bg-[#EBF4FF] px-2 py-1 text-[11px] font-semibold text-[#0066E6] transition-colors hover:bg-[#0066E6] hover:text-white whitespace-nowrap"
+                                                className="inline-flex cursor-pointer items-center gap-1 rounded-lg border border-[#B7DBD3] bg-[#E5F3F0] px-2 py-1 text-[11px] font-semibold text-[#0E6F66] transition-colors hover:bg-[#0E6F66] hover:text-white whitespace-nowrap"
                                               >
                                                 <Building2 className="h-3 w-3" />
                                                 <span>মসজিদে যুক্ত</span>
@@ -1253,7 +1253,7 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
                                                   )
                                                 }
                                                 title="যে তাকাজায় রাজি হয়েছেন তাতে যুক্ত করুন"
-                                                className="inline-flex cursor-pointer items-center gap-1 rounded-lg border border-emerald-200 bg-emerald-50 px-2 py-1 text-[11px] font-semibold text-emerald-700 transition-colors hover:bg-emerald-600 hover:text-white whitespace-nowrap"
+                                                className="inline-flex cursor-pointer items-center gap-1 rounded-lg border border-emerald-200 bg-[#E7F7F0] px-2 py-1 text-[11px] font-semibold text-emerald-800 transition-colors hover:bg-emerald-600 hover:text-white whitespace-nowrap"
                                               >
                                                 <Flag className="h-3 w-3" />
                                                 <span>তাকাজায় যুক্ত</span>
@@ -1265,7 +1265,7 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
                                                   openAddSathiModal(item.id, s)
                                                 }
                                                 title="তথ্য সম্পাদনা"
-                                                className="cursor-pointer rounded-lg p-1 text-slate-400 hover:bg-[#EBF4FF] hover:text-[#0066E6]"
+                                                className="cursor-pointer rounded-lg p-1 text-[#7B9591] hover:bg-[#E5F3F0] hover:text-[#0E6F66]"
                                               >
                                                 <Edit3 className="h-3.5 w-3.5" />
                                               </button>
@@ -1278,7 +1278,7 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
                                                   )
                                                 }
                                                 title="তালিকা থেকে সরান"
-                                                className="cursor-pointer rounded-lg p-1 text-slate-400 hover:bg-rose-50 hover:text-rose-600"
+                                                className="cursor-pointer rounded-lg p-1 text-[#7B9591] hover:bg-rose-50 hover:text-rose-600"
                                               >
                                                 <Trash2 className="h-3.5 w-3.5" />
                                               </button>
@@ -1295,20 +1295,20 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
                                       onClick={() =>
                                         openAddSathiModal(item.id, null)
                                       }
-                                      className="no-print group cursor-pointer bg-[#F8FBFF]/60 transition-colors hover:bg-[#EBF4FF]/70"
+                                      className="no-print group cursor-pointer bg-[#F4FAF8]/60 transition-colors hover:bg-[#E5F3F0]/70"
                                     >
-                                      <td className="px-4 py-2.5 text-center font-mono text-xs text-slate-400 tabular-nums">
+                                      <td className="px-4 py-2.5 text-center font-mono text-xs text-[#7B9591] tabular-nums">
                                         {toBn(cardSathis.length + 1)}
                                       </td>
-                                      <td className="px-4 py-2.5 text-xs text-slate-400 group-hover:text-[#0066E6]">
+                                      <td className="px-4 py-2.5 text-xs text-[#7B9591] group-hover:text-[#0E6F66]">
                                         <span className="inline-flex items-center gap-1 font-medium">
                                           <Plus className="h-3 w-3 opacity-70 group-hover:opacity-100" />
                                           <span>নতুন সাথী যুক্ত করতে ক্লিক করুন</span>
                                         </span>
                                       </td>
-                                      <td className="px-4 py-2.5 text-xs text-slate-300" />
-                                      <td className="px-4 py-2.5 text-xs text-slate-300" />
-                                      <td className="px-4 py-2.5 text-xs text-slate-300" />
+                                      <td className="px-4 py-2.5 text-xs text-[#A3BDB9]" />
+                                      <td className="px-4 py-2.5 text-xs text-[#A3BDB9]" />
+                                      <td className="px-4 py-2.5 text-xs text-[#A3BDB9]" />
                                     </tr>
                                   )}
                                 </tbody>
@@ -1324,14 +1324,14 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
           })}
         </div>
       ) : (
-        <section className="rounded-2xl border border-[#E2ECF7] bg-white px-6 py-12 text-center shadow-[0_2px_10px_rgba(15,23,42,0.03)]">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-[#EBF4FF] text-[#0066E6]">
+        <section className="rounded-2xl border border-[#D9EAE6] bg-white px-6 py-12 text-center shadow-[0_2px_12px_rgba(16,42,39,0.03)]">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-[#E5F3F0] text-[#0E6F66]">
             <Calendar className="h-6 w-6" />
           </div>
-          <h2 className="font-display mt-3 text-lg font-bold text-slate-900">
+          <h2 className="font-display mt-3 text-lg font-bold text-[#102A27]">
             এই সময়ে কোনো কারগুজারি পাওয়া যায়নি
           </h2>
-          <p className="mx-auto mt-1 max-w-md text-sm text-slate-500">
+          <p className="mx-auto mt-1 max-w-md text-sm text-[#58726E]">
             উপরের ফরম থেকে আজকের তারিখ নির্বাচন করে গাস্ত, তালিম, মাশওয়ারা ও
             তশকিলের দৈনিক কারগুজারি সংরক্ষণ করুন।
           </p>
@@ -1344,13 +1344,13 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
           role="dialog"
           aria-modal="true"
           aria-labelledby="karg-sathi-modal-title"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4 backdrop-blur-[2px]"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[#09201D]/45 p-4 backdrop-blur-[2px]"
         >
-          <div className="w-full max-w-md rounded-2xl border border-[#E2ECF7] bg-white shadow-xl">
-            <div className="flex items-center justify-between border-b border-[#E2ECF7] bg-[#F8FBFF] px-5 py-4 rounded-t-2xl">
+          <div className="w-full max-w-md rounded-2xl border border-[#D9EAE6] bg-white shadow-xl">
+            <div className="flex items-center justify-between rounded-t-2xl border-b border-[#D9EAE6] bg-gradient-to-r from-[#E4F2EF] via-[#F2F8F7] to-white px-5 py-4">
               <h2
                 id="karg-sathi-modal-title"
-                className="font-display text-lg font-bold text-slate-900"
+                className="font-display text-lg font-bold text-[#102A27]"
               >
                 {sathiModal.editingSathi
                   ? 'সাথীর তথ্য সম্পাদনা'
@@ -1360,7 +1360,7 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
                 type="button"
                 onClick={() => setSathiModal(null)}
                 aria-label="বন্ধ করুন"
-                className="cursor-pointer rounded-xl p-1.5 text-slate-400 hover:bg-[#EBF4FF] hover:text-slate-700"
+                className="cursor-pointer rounded-xl p-1.5 text-[#7B9591] hover:bg-[#E5F3F0] hover:text-[#102A27]"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -1403,7 +1403,7 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
               className="space-y-4 p-5"
             >
               <div>
-                <label className="block text-xs font-semibold text-slate-700">
+                <label className="block text-xs font-semibold text-[#1D3F3B]">
                   নাম <span className="text-rose-600">*</span>
                 </label>
                 <input
@@ -1414,7 +1414,7 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
                     if (modalSathiError) setModalSathiError('');
                   }}
                   placeholder="যেমন: ভাই মোঃ নাঈম"
-                  className="mt-1.5 w-full rounded-xl border border-[#DCE8F7] bg-[#F8FBFF] px-3 py-2 text-sm text-slate-900 focus:border-[#0066E6] focus:bg-white focus:outline-none"
+                  className="mt-1.5 w-full rounded-xl border border-[#D5E7E2] bg-[#F4FAF8] px-3 py-2 text-sm text-[#102A27] focus:border-[#0E6F66] focus:bg-white focus:outline-none"
                 />
                 {modalSathiError && (
                   <p className="mt-1 text-xs text-rose-600">
@@ -1425,7 +1425,7 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
 
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700">
+                  <label className="block text-xs font-semibold text-[#1D3F3B]">
                     মোবাইল নম্বর
                   </label>
                   <input
@@ -1436,12 +1436,12 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
                       setModalSathiPhone((prev) => formatBdPhone(prev))
                     }
                     placeholder="যেমন: +880 1711-000 000"
-                    className="mt-1.5 w-full rounded-xl border border-[#DCE8F7] bg-[#F8FBFF] px-3 py-2 font-mono text-sm text-slate-900 focus:border-[#0066E6] focus:bg-white focus:outline-none"
+                    className="mt-1.5 w-full rounded-xl border border-[#D5E7E2] bg-[#F4FAF8] px-3 py-2 font-mono text-sm text-[#102A27] focus:border-[#0E6F66] focus:bg-white focus:outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700">
+                  <label className="block text-xs font-semibold text-[#1D3F3B]">
                     অবস্থা
                   </label>
                   <select
@@ -1451,7 +1451,7 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
                         e.target.value as 'tashkeel' | 'not_tashkeel'
                       )
                     }
-                    className="mt-1.5 w-full rounded-xl border border-[#DCE8F7] bg-[#F8FBFF] px-3 py-2 text-sm text-slate-900 focus:border-[#0066E6] focus:bg-white focus:outline-none"
+                    className="mt-1.5 w-full rounded-xl border border-[#D5E7E2] bg-[#F4FAF8] px-3 py-2 text-sm text-[#102A27] focus:border-[#0E6F66] focus:bg-white focus:outline-none"
                   >
                     <option value="tashkeel">তাশকিল হয়েছেন</option>
                     <option value="not_tashkeel">তাশকিল হয়নি (দাওয়াত)</option>
@@ -1460,7 +1460,7 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700">
+                <label className="block text-xs font-semibold text-[#1D3F3B]">
                   মন্তব্য
                 </label>
                 <input
@@ -1468,21 +1468,21 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
                   value={modalSathiNotes}
                   onChange={(e) => setModalSathiNotes(e.target.value)}
                   placeholder="যেমন: ৩ দিনের জামাত (১৯, ২০, ২১ নভেম্বর)"
-                  className="mt-1.5 w-full rounded-xl border border-[#DCE8F7] bg-[#F8FBFF] px-3 py-2 text-sm text-slate-900 focus:border-[#0066E6] focus:bg-white focus:outline-none"
+                  className="mt-1.5 w-full rounded-xl border border-[#D5E7E2] bg-[#F4FAF8] px-3 py-2 text-sm text-[#102A27] focus:border-[#0E6F66] focus:bg-white focus:outline-none"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-3 border-t border-[#E2ECF7] pt-4">
+              <div className="flex items-center justify-end gap-3 border-t border-[#D9EAE6] pt-4">
                 <button
                   type="button"
                   onClick={() => setSathiModal(null)}
-                  className="cursor-pointer rounded-xl border border-[#DCE8F7] px-4 py-2 text-sm font-medium text-slate-700 hover:bg-[#F1F6FC]"
+                  className="cursor-pointer rounded-xl border border-[#D5E7E2] px-4 py-2 text-sm font-medium text-[#1D3F3B] hover:bg-[#EBF4F2]"
                 >
                   বাতিল
                 </button>
                 <button
                   type="submit"
-                  className="cursor-pointer rounded-xl bg-[#0066E6] px-4 py-2 text-sm font-semibold text-white shadow-[0_2px_8px_rgba(0,102,230,0.22)] hover:bg-[#0052BD]"
+                  className="cursor-pointer rounded-xl bg-[#0E6F66] px-4 py-2 text-sm font-semibold text-white shadow-[0_2px_10px_rgba(14,111,102,0.24)] hover:bg-[#0B5A53]"
                 >
                   সংরক্ষণ করুন
                 </button>
@@ -1498,13 +1498,13 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
           role="dialog"
           aria-modal="true"
           aria-labelledby="assign-mosque-modal-title"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4 backdrop-blur-[2px]"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[#09201D]/45 p-4 backdrop-blur-[2px]"
         >
-          <div className="w-full max-w-lg rounded-2xl border border-[#E2ECF7] bg-white shadow-xl">
-            <div className="flex items-center justify-between border-b border-[#E2ECF7] bg-[#F8FBFF] px-5 py-4 rounded-t-2xl">
+          <div className="w-full max-w-lg rounded-2xl border border-[#D9EAE6] bg-white shadow-xl">
+            <div className="flex items-center justify-between rounded-t-2xl border-b border-[#D9EAE6] bg-gradient-to-r from-[#E4F2EF] via-[#F2F8F7] to-white px-5 py-4">
               <h2
                 id="assign-mosque-modal-title"
-                className="font-display text-lg font-bold text-slate-900"
+                className="font-display text-lg font-bold text-[#102A27]"
               >
                 মসজিদ ও বিভাগে যুক্ত করুন
               </h2>
@@ -1512,7 +1512,7 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
                 type="button"
                 onClick={() => setMosqueAssignModal(null)}
                 aria-label="বন্ধ করুন"
-                className="cursor-pointer rounded-xl p-1.5 text-slate-400 hover:bg-[#EBF4FF] hover:text-slate-700"
+                className="cursor-pointer rounded-xl p-1.5 text-[#7B9591] hover:bg-[#E5F3F0] hover:text-[#102A27]"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -1535,20 +1535,20 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
               }}
               className="space-y-4 p-5"
             >
-              <p className="rounded-xl border border-[#DCE8F7] bg-[#F8FBFF] px-3.5 py-2.5 text-xs text-slate-600">
+              <p className="rounded-xl border border-[#D5E7E2] bg-[#F4FAF8] px-3.5 py-2.5 text-xs text-[#4F6B67]">
                 হালকার যেকোনো মসজিদের যেকোনো বিভাগে এই সাথীর নাম, মোবাইল নম্বর ও
                 মন্তব্য সরাসরি যুক্ত হয়ে যাবে।
               </p>
 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700">
+                  <label className="block text-xs font-semibold text-[#1D3F3B]">
                     মসজিদ নির্বাচন করুন
                   </label>
                   <select
                     value={assignMosqueId}
                     onChange={(e) => setAssignMosqueId(Number(e.target.value))}
-                    className="mt-1.5 w-full rounded-xl border border-[#DCE8F7] bg-white px-3 py-2 text-sm text-slate-900 focus:border-[#0066E6] focus:outline-none"
+                    className="mt-1.5 w-full rounded-xl border border-[#D5E7E2] bg-white px-3 py-2 text-sm text-[#102A27] focus:border-[#0E6F66] focus:outline-none"
                   >
                     {mosques.map((m) => (
                       <option key={m.id} value={m.id}>
@@ -1559,7 +1559,7 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700">
+                  <label className="block text-xs font-semibold text-[#1D3F3B]">
                     বিভাগ (Section) নির্বাচন করুন
                   </label>
                   <select
@@ -1567,7 +1567,7 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
                     onChange={(e) =>
                       setAssignCategory(e.target.value as SathiCategory)
                     }
-                    className="mt-1.5 w-full rounded-xl border border-[#DCE8F7] bg-white px-3 py-2 text-sm text-slate-900 focus:border-[#0066E6] focus:outline-none"
+                    className="mt-1.5 w-full rounded-xl border border-[#D5E7E2] bg-white px-3 py-2 text-sm text-[#102A27] focus:border-[#0E6F66] focus:outline-none"
                   >
                     {CATEGORY_META.map((cat) => (
                       <option key={cat.key} value={cat.key}>
@@ -1579,20 +1579,20 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700">
+                <label className="block text-xs font-semibold text-[#1D3F3B]">
                   নাম
                 </label>
                 <input
                   type="text"
                   value={assignName}
                   onChange={(e) => setAssignName(e.target.value)}
-                  className="mt-1.5 w-full rounded-xl border border-[#DCE8F7] bg-[#F8FBFF] px-3 py-2 text-sm text-slate-900 focus:border-[#0066E6] focus:bg-white focus:outline-none"
+                  className="mt-1.5 w-full rounded-xl border border-[#D5E7E2] bg-[#F4FAF8] px-3 py-2 text-sm text-[#102A27] focus:border-[#0E6F66] focus:bg-white focus:outline-none"
                 />
               </div>
 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700">
+                  <label className="block text-xs font-semibold text-[#1D3F3B]">
                     মোবাইল নম্বর
                   </label>
                   <input
@@ -1601,11 +1601,11 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
                     onChange={(e) => setAssignPhone(e.target.value)}
                     onBlur={() => setAssignPhone((prev) => formatBdPhone(prev))}
                     placeholder="+880 1711-000 000"
-                    className="mt-1.5 w-full rounded-xl border border-[#DCE8F7] bg-[#F8FBFF] px-3 py-2 font-mono text-sm text-slate-900 focus:border-[#0066E6] focus:bg-white focus:outline-none"
+                    className="mt-1.5 w-full rounded-xl border border-[#D5E7E2] bg-[#F4FAF8] px-3 py-2 font-mono text-sm text-[#102A27] focus:border-[#0E6F66] focus:bg-white focus:outline-none"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700">
+                  <label className="block text-xs font-semibold text-[#1D3F3B]">
                     মন্তব্য
                   </label>
                   <input
@@ -1613,22 +1613,22 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
                     value={assignNotes}
                     onChange={(e) => setAssignNotes(e.target.value)}
                     placeholder="মন্তব্য (ঐচ্ছিক)"
-                    className="mt-1.5 w-full rounded-xl border border-[#DCE8F7] bg-[#F8FBFF] px-3 py-2 text-sm text-slate-900 focus:border-[#0066E6] focus:bg-white focus:outline-none"
+                    className="mt-1.5 w-full rounded-xl border border-[#D5E7E2] bg-[#F4FAF8] px-3 py-2 text-sm text-[#102A27] focus:border-[#0E6F66] focus:bg-white focus:outline-none"
                   />
                 </div>
               </div>
 
-              <div className="flex items-center justify-end gap-3 border-t border-[#E2ECF7] pt-4">
+              <div className="flex items-center justify-end gap-3 border-t border-[#D9EAE6] pt-4">
                 <button
                   type="button"
                   onClick={() => setMosqueAssignModal(null)}
-                  className="cursor-pointer rounded-xl border border-[#DCE8F7] px-4 py-2 text-sm font-medium text-slate-700 hover:bg-[#F1F6FC]"
+                  className="cursor-pointer rounded-xl border border-[#D5E7E2] px-4 py-2 text-sm font-medium text-[#1D3F3B] hover:bg-[#EBF4F2]"
                 >
                   বাতিল
                 </button>
                 <button
                   type="submit"
-                  className="cursor-pointer rounded-xl bg-[#0066E6] px-4 py-2 text-sm font-semibold text-white shadow-[0_2px_8px_rgba(0,102,230,0.22)] hover:bg-[#0052BD]"
+                  className="cursor-pointer rounded-xl bg-[#0E6F66] px-4 py-2 text-sm font-semibold text-white shadow-[0_2px_10px_rgba(14,111,102,0.24)] hover:bg-[#0B5A53]"
                 >
                   মসজিদে যুক্ত করুন
                 </button>
@@ -1644,13 +1644,13 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
           role="dialog"
           aria-modal="true"
           aria-labelledby="assign-takaza-modal-title"
-          className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-950/40 p-4 backdrop-blur-[2px]"
+          className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-[#09201D]/45 p-4 backdrop-blur-[2px]"
         >
-          <div className="my-auto w-full max-w-lg rounded-2xl border border-[#E2ECF7] bg-white shadow-xl">
-            <div className="flex items-center justify-between border-b border-[#E2ECF7] bg-[#F8FBFF] px-5 py-4 rounded-t-2xl">
+          <div className="my-auto w-full max-w-lg rounded-2xl border border-[#D9EAE6] bg-white shadow-xl">
+            <div className="flex items-center justify-between rounded-t-2xl border-b border-[#D9EAE6] bg-gradient-to-r from-[#E4F2EF] via-[#F2F8F7] to-white px-5 py-4">
               <h2
                 id="assign-takaza-modal-title"
-                className="font-display text-lg font-bold text-slate-900"
+                className="font-display text-lg font-bold text-[#102A27]"
               >
                 তাকাজায় যুক্ত করুন — {takazaAssignModal.sathi.name}
               </h2>
@@ -1658,7 +1658,7 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
                 type="button"
                 onClick={() => setTakazaAssignModal(null)}
                 aria-label="বন্ধ করুন"
-                className="cursor-pointer rounded-xl p-1.5 text-slate-400 hover:bg-[#EBF4FF] hover:text-slate-700"
+                className="cursor-pointer rounded-xl p-1.5 text-[#7B9591] hover:bg-[#E5F3F0] hover:text-[#102A27]"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -1704,7 +1704,7 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
               className="space-y-4 p-5"
             >
               {/* Mode Toggle */}
-              <div className="grid grid-cols-2 gap-2 rounded-xl bg-[#F1F6FC] p-1">
+              <div className="grid grid-cols-2 gap-2 rounded-xl bg-[#EBF4F2] p-1">
                 <button
                   type="button"
                   disabled={takazas.length === 0}
@@ -1714,8 +1714,8 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
                   }}
                   className={`cursor-pointer rounded-lg px-3 py-2 text-xs font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-45 ${
                     takazaMode === 'existing'
-                      ? 'bg-[#0066E6] text-white shadow-sm'
-                      : 'text-slate-700 hover:text-[#0066E6]'
+                      ? 'bg-[#0E6F66] text-white shadow-sm'
+                      : 'text-[#4F6B67] hover:text-[#0E6F66]'
                   }`}
                 >
                   বিদ্যমান তাকাজায় যুক্ত ({toBn(takazas.length)})
@@ -1728,8 +1728,8 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
                   }}
                   className={`cursor-pointer rounded-lg px-3 py-2 text-xs font-semibold transition-colors ${
                     takazaMode === 'new'
-                      ? 'bg-[#0066E6] text-white shadow-sm'
-                      : 'text-slate-700 hover:text-[#0066E6]'
+                      ? 'bg-[#0E6F66] text-white shadow-sm'
+                      : 'text-[#4F6B67] hover:text-[#0E6F66]'
                   }`}
                 >
                   নতুন তাকাজা তৈরি করে যুক্ত
@@ -1738,7 +1738,7 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
 
               {takazaMode === 'existing' ? (
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700">
+                  <label className="block text-xs font-semibold text-[#1D3F3B]">
                     যে তাকাজায় রাজি হয়েছেন তা নির্বাচন করুন
                   </label>
                   <select
@@ -1747,7 +1747,7 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
                       setSelectedTakazaId(e.target.value);
                       if (takazaAssignError) setTakazaAssignError('');
                     }}
-                    className="mt-1.5 w-full rounded-xl border border-[#DCE8F7] bg-[#F8FBFF] px-3 py-2.5 text-sm text-slate-900 focus:border-[#0066E6] focus:bg-white focus:outline-none"
+                    className="mt-1.5 w-full rounded-xl border border-[#D5E7E2] bg-[#F4FAF8] px-3 py-2.5 text-sm text-[#102A27] focus:border-[#0E6F66] focus:bg-white focus:outline-none"
                   >
                     {takazas.map((t) => (
                       <option key={t.id} value={t.id}>
@@ -1760,7 +1760,7 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
               ) : (
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700">
+                    <label className="block text-xs font-semibold text-[#1D3F3B]">
                       নতুন তাকাজার শিরোনাম <span className="text-rose-600">*</span>
                     </label>
                     <input
@@ -1771,13 +1771,13 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
                         if (takazaAssignError) setTakazaAssignError('');
                       }}
                       placeholder="যেমন: ১৯-২১ নভেম্বর ৩ দিনের জামাত"
-                      className="mt-1.5 w-full rounded-xl border border-[#DCE8F7] bg-[#F8FBFF] px-3 py-2 text-sm text-slate-900 focus:border-[#0066E6] focus:bg-white focus:outline-none"
+                      className="mt-1.5 w-full rounded-xl border border-[#D5E7E2] bg-[#F4FAF8] px-3 py-2 text-sm text-[#102A27] focus:border-[#0E6F66] focus:bg-white focus:outline-none"
                     />
                   </div>
 
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <div>
-                      <label className="block text-xs font-semibold text-slate-700">
+                      <label className="block text-xs font-semibold text-[#1D3F3B]">
                         তাকাজার ধরন
                       </label>
                       <select
@@ -1785,7 +1785,7 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
                         onChange={(e) =>
                           setNewTakazaType(e.target.value as TakazaType)
                         }
-                        className="mt-1.5 w-full rounded-xl border border-[#DCE8F7] bg-[#F8FBFF] px-3 py-2 text-sm text-slate-900 focus:border-[#0066E6] focus:bg-white focus:outline-none"
+                        className="mt-1.5 w-full rounded-xl border border-[#D5E7E2] bg-[#F4FAF8] px-3 py-2 text-sm text-[#102A27] focus:border-[#0E6F66] focus:bg-white focus:outline-none"
                       >
                         {Object.entries(TAKAZA_TYPE_LABELS).map(
                           ([k, label]) => (
@@ -1797,7 +1797,7 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
                       </select>
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-700">
+                      <label className="block text-xs font-semibold text-[#1D3F3B]">
                         মসজিদ / হালকা
                       </label>
                       <select
@@ -1808,7 +1808,7 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
                             v === 'halqa' ? 'halqa' : Number(v)
                           );
                         }}
-                        className="mt-1.5 w-full rounded-xl border border-[#DCE8F7] bg-[#F8FBFF] px-3 py-2 text-sm text-slate-900 focus:border-[#0066E6] focus:bg-white focus:outline-none"
+                        className="mt-1.5 w-full rounded-xl border border-[#D5E7E2] bg-[#F4FAF8] px-3 py-2 text-sm text-[#102A27] focus:border-[#0E6F66] focus:bg-white focus:outline-none"
                       >
                         <option value="halqa">সম্পূর্ণ ৪০১ নং হালকা</option>
                         {mosques.map((m) => (
@@ -1822,7 +1822,7 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
 
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-xs font-semibold text-slate-700">
+                      <label className="block text-xs font-semibold text-[#1D3F3B]">
                         লক্ষ্যমাত্রা (জন)
                       </label>
                       <input
@@ -1830,18 +1830,18 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
                         min={1}
                         value={newTakazaTarget}
                         onChange={(e) => setNewTakazaTarget(e.target.value)}
-                        className="mt-1.5 w-full rounded-xl border border-[#DCE8F7] bg-[#F8FBFF] px-3 py-2 font-mono text-sm text-slate-900 focus:border-[#0066E6] focus:bg-white focus:outline-none"
+                        className="mt-1.5 w-full rounded-xl border border-[#D5E7E2] bg-[#F4FAF8] px-3 py-2 font-mono text-sm text-[#102A27] focus:border-[#0E6F66] focus:bg-white focus:outline-none"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-700">
+                      <label className="block text-xs font-semibold text-[#1D3F3B]">
                         সম্ভাব্য তারিখ
                       </label>
                       <input
                         type="date"
                         value={newTakazaDueDate}
                         onChange={(e) => setNewTakazaDueDate(e.target.value)}
-                        className="mt-1.5 w-full rounded-xl border border-[#DCE8F7] bg-[#F8FBFF] px-3 py-2 font-mono text-xs text-slate-900 focus:border-[#0066E6] focus:bg-white focus:outline-none"
+                        className="mt-1.5 w-full rounded-xl border border-[#D5E7E2] bg-[#F4FAF8] px-3 py-2 font-mono text-xs text-[#102A27] focus:border-[#0E6F66] focus:bg-white focus:outline-none"
                       />
                     </div>
                   </div>
@@ -1852,17 +1852,17 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
                 <p className="text-xs text-rose-600">{takazaAssignError}</p>
               )}
 
-              <div className="flex items-center justify-end gap-3 border-t border-[#E2ECF7] pt-4">
+              <div className="flex items-center justify-end gap-3 border-t border-[#D9EAE6] pt-4">
                 <button
                   type="button"
                   onClick={() => setTakazaAssignModal(null)}
-                  className="cursor-pointer rounded-xl border border-[#DCE8F7] px-4 py-2 text-sm font-medium text-slate-700 hover:bg-[#F1F6FC]"
+                  className="cursor-pointer rounded-xl border border-[#D5E7E2] px-4 py-2 text-sm font-medium text-[#1D3F3B] hover:bg-[#EBF4F2]"
                 >
                   বাতিল
                 </button>
                 <button
                   type="submit"
-                  className="cursor-pointer rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700"
+                  className="cursor-pointer rounded-xl bg-[#0E6F66] px-4 py-2 text-sm font-semibold text-white shadow-[0_2px_10px_rgba(14,111,102,0.24)] hover:bg-[#0B5A53]"
                 >
                   তাকাজায় যুক্ত করুন
                 </button>

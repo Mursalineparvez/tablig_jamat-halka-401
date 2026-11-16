@@ -1280,7 +1280,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#F4F8FC] text-slate-900">
+    <div className="min-h-screen flex flex-col bg-[#F2F7F6] text-[#102A27]">
       <Header
         activeTab={activeTab}
         onSelectTab={(tab) => {
@@ -1304,10 +1304,10 @@ export default function App() {
       />
 
       {authReady && !canEdit && (
-        <div className="no-print border-b border-[#DCE8F7] bg-[#EBF4FF]/80">
-          <div className="mx-auto flex max-w-[1320px] flex-wrap items-center justify-between gap-2 px-4 py-2 text-xs text-slate-700 sm:px-6 lg:px-8">
+        <div className="no-print border-b border-[#CFE3DF] bg-[#E8F4F1]">
+          <div className="mx-auto flex max-w-[1320px] flex-wrap items-center justify-between gap-2 px-4 py-2 text-xs text-[#1D3F3B] sm:px-6 lg:px-8">
             <div className="flex items-center gap-2">
-              <Lock className="h-3.5 w-3.5 shrink-0 text-[#0066E6]" />
+              <Lock className="h-3.5 w-3.5 shrink-0 text-[#0E6F66]" />
               {user ? (
                 <span>
                   সাইন ইন:{' '}
@@ -1326,7 +1326,7 @@ export default function App() {
             <button
               type="button"
               onClick={() => setAccessModalOpen(true)}
-              className="cursor-pointer rounded-lg bg-white px-2.5 py-1 font-semibold text-[#0066E6] shadow-xs ring-1 ring-[#BFD9FA] transition-colors hover:bg-[#0066E6] hover:text-white"
+              className="cursor-pointer rounded-lg bg-white px-2.5 py-1 font-semibold text-[#0E6F66] shadow-xs ring-1 ring-[#B7DBD3] transition-colors hover:bg-[#0E6F66] hover:text-white"
             >
               {user ? 'অ্যাক্সেস অনুরোধ দেখুন' : 'এডিট সাইন ইন'}
             </button>
@@ -1344,6 +1344,11 @@ export default function App() {
             onAddMosque={() => {
               if (!requireEditAccess()) return;
               setMosqueModal({ mode: 'add' });
+            }}
+            onNavigateTab={(tab) => {
+              if (tab === 'directory') setDirectoryCategory('all');
+              setActiveTab(tab);
+              window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
           />
         )}
@@ -1438,9 +1443,9 @@ export default function App() {
         )}
       </main>
 
-      <footer className="no-print border-t border-[#E2ECF7] bg-white">
-        <div className="mx-auto flex max-w-[1320px] flex-col items-start justify-between gap-2 px-4 py-5 text-xs text-slate-500 sm:flex-row sm:items-center sm:px-6 lg:px-8">
-          <p className="font-medium text-slate-700">
+      <footer className="no-print border-t border-[#D9EAE6] bg-white">
+        <div className="mx-auto flex max-w-[1320px] flex-col items-start justify-between gap-2 px-4 py-5 text-xs text-[#58726E] sm:flex-row sm:items-center sm:px-6 lg:px-8">
+          <p className="font-medium text-[#102A27]">
             যাত্রাবাড়ী মারকাজ মসজিদ — ৪০১ নং হালকা
           </p>
           <p>
@@ -1507,7 +1512,7 @@ export default function App() {
         <div
           role="status"
           aria-live="polite"
-          className="no-print fixed right-5 bottom-5 z-50 rounded-xl border border-[#0066E6]/20 bg-slate-900 px-4 py-2.5 text-sm font-medium text-white shadow-lg"
+          className="no-print fixed right-5 bottom-5 z-50 rounded-xl border border-[#1D9488]/30 bg-[#0B5A53] px-4 py-2.5 text-sm font-medium text-white shadow-lg"
         >
           {toastMessage}
         </div>

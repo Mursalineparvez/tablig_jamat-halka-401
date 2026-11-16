@@ -56,13 +56,13 @@ export const SathiModal: React.FC<SathiModalProps> = ({
       role="dialog"
       aria-modal="true"
       aria-labelledby="sathi-modal-title"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4 backdrop-blur-[2px]"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-[#09201D]/45 p-4 backdrop-blur-[2px]"
     >
-      <div className="w-full max-w-lg rounded-2xl border border-[#E2ECF7] bg-white shadow-xl">
-        <div className="flex items-center justify-between border-b border-[#E2ECF7] px-5 py-4">
+      <div className="w-full max-w-lg rounded-2xl border border-[#D9EAE6] bg-white shadow-xl">
+        <div className="flex items-center justify-between rounded-t-2xl border-b border-[#D9EAE6] bg-[#F4FAF8] px-5 py-4">
           <h2
             id="sathi-modal-title"
-            className="font-display text-lg font-bold text-slate-900"
+            className="font-display text-lg font-bold text-[#102A27]"
           >
             {editingEntry ? 'সাথীর তথ্য সম্পাদনা' : 'নতুন সাথী যুক্ত করুন'}
           </h2>
@@ -70,7 +70,7 @@ export const SathiModal: React.FC<SathiModalProps> = ({
             type="button"
             onClick={onClose}
             aria-label="বন্ধ করুন"
-            className="cursor-pointer rounded-lg p-1.5 text-slate-400 hover:bg-[#F1F6FC] hover:text-slate-700"
+            className="cursor-pointer rounded-lg p-1.5 text-[#7B9591] hover:bg-[#E5F3F0] hover:text-[#102A27]"
           >
             <X className="h-5 w-5" />
           </button>
@@ -79,14 +79,14 @@ export const SathiModal: React.FC<SathiModalProps> = ({
         <form onSubmit={handleSubmit} className="space-y-4 p-5">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <label className="block text-xs font-semibold text-slate-700">
+              <label className="block text-xs font-semibold text-[#1D3F3B]">
                 মসজিদ
               </label>
               <select
                 value={mosqueId}
                 disabled={Boolean(editingEntry)}
                 onChange={(e) => setMosqueId(Number(e.target.value))}
-                className="mt-1.5 w-full rounded-xl border border-[#DCE8F7] bg-white px-3 py-2 text-sm text-slate-900 focus:border-[#0066E6] focus:outline-none disabled:bg-slate-100"
+                className="mt-1.5 w-full rounded-xl border border-[#D5E7E2] bg-white px-3 py-2 text-sm text-[#102A27] focus:border-[#0E6F66] focus:outline-none disabled:bg-[#EBF4F2]"
               >
                 {mosques.map((m) => (
                   <option key={m.id} value={m.id}>
@@ -97,14 +97,14 @@ export const SathiModal: React.FC<SathiModalProps> = ({
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700">
+              <label className="block text-xs font-semibold text-[#1D3F3B]">
                 বিভাগ
               </label>
               <select
                 value={category}
                 disabled={Boolean(editingEntry)}
                 onChange={(e) => setCategory(e.target.value as SathiCategory)}
-                className="mt-1.5 w-full rounded-xl border border-[#DCE8F7] bg-white px-3 py-2 text-sm text-slate-900 focus:border-[#0066E6] focus:outline-none disabled:bg-slate-100"
+                className="mt-1.5 w-full rounded-xl border border-[#D5E7E2] bg-white px-3 py-2 text-sm text-[#102A27] focus:border-[#0E6F66] focus:outline-none disabled:bg-[#EBF4F2]"
               >
                 {CATEGORY_META.map((cat) => (
                   <option key={cat.key} value={cat.key}>
@@ -116,7 +116,7 @@ export const SathiModal: React.FC<SathiModalProps> = ({
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-700">
+            <label className="block text-xs font-semibold text-[#1D3F3B]">
               নাম <span className="text-rose-600">*</span>
             </label>
             <input
@@ -127,13 +127,13 @@ export const SathiModal: React.FC<SathiModalProps> = ({
                 if (error) setError('');
               }}
               placeholder="যেমন: ভাই মোঃ আব্দুর রহমান"
-              className="mt-1.5 w-full rounded-xl border border-[#DCE8F7] bg-[#F8FBFF] px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-[#0066E6] focus:bg-white focus:outline-none"
+              className="mt-1.5 w-full rounded-xl border border-[#D5E7E2] bg-[#F4FAF8] px-3 py-2 text-sm text-[#102A27] placeholder:text-[#7D9793] focus:border-[#0E6F66] focus:bg-white focus:outline-none"
             />
             {error && <p className="mt-1 text-xs text-rose-600">{error}</p>}
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-700">
+            <label className="block text-xs font-semibold text-[#1D3F3B]">
               মোবাইল নম্বর
             </label>
             <input
@@ -142,13 +142,13 @@ export const SathiModal: React.FC<SathiModalProps> = ({
               onChange={(e) => setPhone(e.target.value)}
               onBlur={() => setPhone((prev) => formatBdPhone(prev))}
               placeholder="যেমন: +880 1711-000 000"
-              className="mt-1.5 w-full rounded-xl border border-[#DCE8F7] bg-[#F8FBFF] px-3 py-2 font-mono text-sm text-slate-900 placeholder:text-slate-400 focus:border-[#0066E6] focus:bg-white focus:outline-none"
+              className="mt-1.5 w-full rounded-xl border border-[#D5E7E2] bg-[#F4FAF8] px-3 py-2 font-mono text-sm text-[#102A27] placeholder:text-[#7D9793] focus:border-[#0E6F66] focus:bg-white focus:outline-none"
             />
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <label className="block text-xs font-semibold text-slate-700">
+              <label className="block text-xs font-semibold text-[#1D3F3B]">
                 ঠিকানা
               </label>
               <input
@@ -156,12 +156,12 @@ export const SathiModal: React.FC<SathiModalProps> = ({
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
                 placeholder="মহল্লা বা বাড়ি নং (ঐচ্ছিক)"
-                className="mt-1.5 w-full rounded-xl border border-[#DCE8F7] bg-[#F8FBFF] px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-[#0066E6] focus:bg-white focus:outline-none"
+                className="mt-1.5 w-full rounded-xl border border-[#D5E7E2] bg-[#F4FAF8] px-3 py-2 text-sm text-[#102A27] placeholder:text-[#7D9793] focus:border-[#0E6F66] focus:bg-white focus:outline-none"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700">
+              <label className="block text-xs font-semibold text-[#1D3F3B]">
                 মন্তব্য
               </label>
               <input
@@ -169,22 +169,22 @@ export const SathiModal: React.FC<SathiModalProps> = ({
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="প্রয়োজনীয় নোট (ঐচ্ছিক)"
-                className="mt-1.5 w-full rounded-xl border border-[#DCE8F7] bg-[#F8FBFF] px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-[#0066E6] focus:bg-white focus:outline-none"
+                className="mt-1.5 w-full rounded-xl border border-[#D5E7E2] bg-[#F4FAF8] px-3 py-2 text-sm text-[#102A27] placeholder:text-[#7D9793] focus:border-[#0E6F66] focus:bg-white focus:outline-none"
               />
             </div>
           </div>
 
-          <div className="flex items-center justify-end gap-3 border-t border-[#E2ECF7] pt-4">
+          <div className="flex items-center justify-end gap-3 border-t border-[#D9EAE6] pt-4">
             <button
               type="button"
               onClick={onClose}
-              className="cursor-pointer rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              className="cursor-pointer rounded-xl border border-[#D5E7E2] px-4 py-2 text-sm font-medium text-[#1D3F3B] hover:bg-[#EBF4F2]"
             >
               বাতিল
             </button>
             <button
               type="submit"
-              className="cursor-pointer rounded-xl bg-[#0066E6] px-4 py-2 text-sm font-semibold text-white shadow-[0_2px_8px_rgba(0,102,230,0.22)] hover:bg-[#0052BD]"
+              className="cursor-pointer rounded-xl bg-[#0E6F66] px-4 py-2 text-sm font-semibold text-white shadow-[0_2px_10px_rgba(14,111,102,0.24)] hover:bg-[#0B5A53]"
             >
               {editingEntry ? 'পরিবর্তন সংরক্ষণ করুন' : 'তালিকায় যুক্ত করুন'}
             </button>
@@ -259,13 +259,13 @@ export const MosqueInfoModal: React.FC<MosqueInfoModalProps> = ({
       role="dialog"
       aria-modal="true"
       aria-labelledby="mosque-modal-title"
-      className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-950/40 p-4 backdrop-blur-[2px]"
+      className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-[#09201D]/45 p-4 backdrop-blur-[2px]"
     >
-      <div className="my-auto w-full max-w-lg rounded-2xl border border-[#E2ECF7] bg-white shadow-xl">
-        <div className="flex items-center justify-between border-b border-[#E2ECF7] px-5 py-4">
+      <div className="my-auto w-full max-w-lg rounded-2xl border border-[#D9EAE6] bg-white shadow-xl">
+        <div className="flex items-center justify-between rounded-t-2xl border-b border-[#D9EAE6] bg-[#F4FAF8] px-5 py-4">
           <h2
             id="mosque-modal-title"
-            className="font-display text-lg font-bold text-slate-900"
+            className="font-display text-lg font-bold text-[#102A27]"
           >
             {isNew ? 'নতুন মসজিদ যুক্ত করুন' : `${mosque.name} — তথ্য সম্পাদনা`}
           </h2>
@@ -273,7 +273,7 @@ export const MosqueInfoModal: React.FC<MosqueInfoModalProps> = ({
             type="button"
             onClick={onClose}
             aria-label="বন্ধ করুন"
-            className="cursor-pointer rounded-lg p-1.5 text-slate-400 hover:bg-[#F1F6FC] hover:text-slate-700"
+            className="cursor-pointer rounded-lg p-1.5 text-[#7B9591] hover:bg-[#E5F3F0] hover:text-[#102A27]"
           >
             <X className="h-5 w-5" />
           </button>
@@ -281,7 +281,7 @@ export const MosqueInfoModal: React.FC<MosqueInfoModalProps> = ({
 
         <form onSubmit={handleSubmit} className="space-y-4 p-5">
           {isNew && (
-            <p className="rounded-xl border border-[#D2E3F8] bg-[#EBF4FF] px-3.5 py-2.5 text-xs leading-relaxed text-[#0052BD]">
+            <p className="rounded-xl border border-[#B7DBD3] bg-[#E5F3F0] px-3.5 py-2.5 text-xs leading-relaxed text-[#0B5A53]">
               নতুন মসজিদ যুক্ত করলে স্বয়ংক্রিয়ভাবে সালওয়ালী, ৩ চিল্লা, ১ চিল্লা,
               মাস্তুরাত ও ছাত্র নওজোয়ানসহ সকল বিভাগ ২টি করে খালি ঘরসহ তৈরি হয়ে
               যাবে।
@@ -289,7 +289,7 @@ export const MosqueInfoModal: React.FC<MosqueInfoModalProps> = ({
           )}
 
           <div>
-            <label className="block text-xs font-semibold text-slate-700">
+            <label className="block text-xs font-semibold text-[#1D3F3B]">
               মসজিদের নাম <span className="text-rose-600">*</span>
             </label>
             <input
@@ -300,13 +300,13 @@ export const MosqueInfoModal: React.FC<MosqueInfoModalProps> = ({
                 if (error) setError('');
               }}
               placeholder="যেমন: বায়তুল নূর জামে মসজিদ"
-              className="mt-1.5 w-full rounded-xl border border-[#DCE8F7] bg-[#F8FBFF] px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-[#0066E6] focus:bg-white focus:outline-none"
+              className="mt-1.5 w-full rounded-xl border border-[#D5E7E2] bg-[#F4FAF8] px-3 py-2 text-sm text-[#102A27] placeholder:text-[#7D9793] focus:border-[#0E6F66] focus:bg-white focus:outline-none"
             />
             {error && <p className="mt-1 text-xs text-rose-600">{error}</p>}
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-700">
+            <label className="block text-xs font-semibold text-[#1D3F3B]">
               মসজিদের ঠিকানা
             </label>
             <input
@@ -314,25 +314,25 @@ export const MosqueInfoModal: React.FC<MosqueInfoModalProps> = ({
               value={address}
               onChange={(e) => setAddress(e.target.value)}
               placeholder="মসজিদের পূর্ণ ঠিকানা লিখুন (ঐচ্ছিক)..."
-              className="mt-1.5 w-full rounded-xl border border-[#DCE8F7] bg-[#F8FBFF] px-3 py-2 text-sm text-slate-900 focus:border-[#0066E6] focus:bg-white focus:outline-none"
+              className="mt-1.5 w-full rounded-xl border border-[#D5E7E2] bg-[#F4FAF8] px-3 py-2 text-sm text-[#102A27] focus:border-[#0E6F66] focus:bg-white focus:outline-none"
             />
           </div>
 
-          <div className="space-y-3 border-t border-[#E2ECF7] pt-3">
+          <div className="space-y-3 border-t border-[#D9EAE6] pt-3">
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
-                <label className="block text-xs font-semibold text-slate-700">
+                <label className="block text-xs font-semibold text-[#1D3F3B]">
                   খতিব সাহেবের নাম
                 </label>
                 <input
                   type="text"
                   value={khatibName}
                   onChange={(e) => setKhatibName(e.target.value)}
-                  className="mt-1 w-full rounded-xl border border-[#DCE8F7] px-3 py-2 text-sm focus:border-[#0066E6] focus:outline-none"
+                  className="mt-1 w-full rounded-xl border border-[#D5E7E2] px-3 py-2 text-sm focus:border-[#0E6F66] focus:outline-none"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-700">
+                <label className="block text-xs font-semibold text-[#1D3F3B]">
                   খতিব মোবাইল নম্বর
                 </label>
                 <input
@@ -341,25 +341,25 @@ export const MosqueInfoModal: React.FC<MosqueInfoModalProps> = ({
                   onChange={(e) => setKhatibPhone(e.target.value)}
                   onBlur={() => setKhatibPhone((prev) => formatBdPhone(prev))}
                   placeholder="+880 1711-000 000"
-                  className="mt-1 w-full rounded-xl border border-[#DCE8F7] px-3 py-2 font-mono text-sm focus:border-[#0066E6] focus:outline-none"
+                  className="mt-1 w-full rounded-xl border border-[#D5E7E2] px-3 py-2 font-mono text-sm focus:border-[#0E6F66] focus:outline-none"
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
-                <label className="block text-xs font-semibold text-slate-700">
+                <label className="block text-xs font-semibold text-[#1D3F3B]">
                   ইমাম সাহেবের নাম
                 </label>
                 <input
                   type="text"
                   value={imamName}
                   onChange={(e) => setImamName(e.target.value)}
-                  className="mt-1 w-full rounded-xl border border-[#DCE8F7] px-3 py-2 text-sm focus:border-[#0066E6] focus:outline-none"
+                  className="mt-1 w-full rounded-xl border border-[#D5E7E2] px-3 py-2 text-sm focus:border-[#0E6F66] focus:outline-none"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-700">
+                <label className="block text-xs font-semibold text-[#1D3F3B]">
                   ইমাম মোবাইল নম্বর
                 </label>
                 <input
@@ -368,25 +368,25 @@ export const MosqueInfoModal: React.FC<MosqueInfoModalProps> = ({
                   onChange={(e) => setImamPhone(e.target.value)}
                   onBlur={() => setImamPhone((prev) => formatBdPhone(prev))}
                   placeholder="+880 1711-000 000"
-                  className="mt-1 w-full rounded-xl border border-[#DCE8F7] px-3 py-2 font-mono text-sm focus:border-[#0066E6] focus:outline-none"
+                  className="mt-1 w-full rounded-xl border border-[#D5E7E2] px-3 py-2 font-mono text-sm focus:border-[#0E6F66] focus:outline-none"
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
-                <label className="block text-xs font-semibold text-slate-700">
+                <label className="block text-xs font-semibold text-[#1D3F3B]">
                   মোয়াজ্জিন সাহেবের নাম
                 </label>
                 <input
                   type="text"
                   value={muazzinName}
                   onChange={(e) => setMuazzinName(e.target.value)}
-                  className="mt-1 w-full rounded-xl border border-[#DCE8F7] px-3 py-2 text-sm focus:border-[#0066E6] focus:outline-none"
+                  className="mt-1 w-full rounded-xl border border-[#D5E7E2] px-3 py-2 text-sm focus:border-[#0E6F66] focus:outline-none"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-700">
+                <label className="block text-xs font-semibold text-[#1D3F3B]">
                   মোয়াজ্জিন মোবাইল নম্বর
                 </label>
                 <input
@@ -395,13 +395,13 @@ export const MosqueInfoModal: React.FC<MosqueInfoModalProps> = ({
                   onChange={(e) => setMuazzinPhone(e.target.value)}
                   onBlur={() => setMuazzinPhone((prev) => formatBdPhone(prev))}
                   placeholder="+880 1711-000 000"
-                  className="mt-1 w-full rounded-xl border border-[#DCE8F7] px-3 py-2 font-mono text-sm focus:border-[#0066E6] focus:outline-none"
+                  className="mt-1 w-full rounded-xl border border-[#D5E7E2] px-3 py-2 font-mono text-sm focus:border-[#0E6F66] focus:outline-none"
                 />
               </div>
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[#E2ECF7] pt-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[#D9EAE6] pt-4">
             <div>
               {!isNew && canDelete && onDelete && (
                 !confirmDelete ? (
@@ -424,7 +424,7 @@ export const MosqueInfoModal: React.FC<MosqueInfoModalProps> = ({
                     <button
                       type="button"
                       onClick={() => setConfirmDelete(false)}
-                      className="cursor-pointer rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs text-slate-700 hover:bg-slate-50"
+                      className="cursor-pointer rounded-lg border border-[#D5E7E2] px-2.5 py-1.5 text-xs text-[#1D3F3B] hover:bg-[#EBF4F2]"
                     >
                       বাতিল
                     </button>
@@ -437,13 +437,13 @@ export const MosqueInfoModal: React.FC<MosqueInfoModalProps> = ({
               <button
                 type="button"
                 onClick={onClose}
-                className="cursor-pointer rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                className="cursor-pointer rounded-xl border border-[#D5E7E2] px-4 py-2 text-sm font-medium text-[#1D3F3B] hover:bg-[#EBF4F2]"
               >
                 বাতিল
               </button>
               <button
                 type="submit"
-                className="cursor-pointer rounded-xl bg-[#0066E6] px-4 py-2 text-sm font-semibold text-white shadow-[0_2px_8px_rgba(0,102,230,0.22)] hover:bg-[#0052BD]"
+                className="cursor-pointer rounded-xl bg-[#0E6F66] px-4 py-2 text-sm font-semibold text-white shadow-[0_2px_10px_rgba(14,111,102,0.24)] hover:bg-[#0B5A53]"
               >
                 {isNew ? 'মসজিদ যুক্ত করুন' : 'সংরক্ষণ করুন'}
               </button>

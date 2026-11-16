@@ -34,13 +34,13 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenAccessModal,
 }) => {
   return (
-    <header className="no-print sticky top-0 z-30 border-b border-[#E2ECF7] bg-white/95 backdrop-blur-md">
+    <header className="no-print sticky top-0 z-30 border-b border-[#D9EAE6] bg-white/95 backdrop-blur-md">
       <div className="mx-auto flex max-w-[1320px] items-center justify-between gap-4 px-4 py-3.5 sm:px-6 lg:px-8">
         {/* Zone 1: Single-line brand wordmark */}
         <button
           type="button"
           onClick={() => onSelectTab('overview')}
-          className="font-display shrink-0 cursor-pointer whitespace-nowrap text-left text-lg font-bold tracking-tight text-slate-900 transition-colors hover:text-[#0066E6] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#0066E6]"
+          className="font-display shrink-0 cursor-pointer whitespace-nowrap text-left text-lg font-bold tracking-tight text-[#102A27] transition-colors hover:text-[#0E6F66] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#0E6F66]"
         >
           যাত্রাবাড়ী মারকাজ · ৪০১ নং হালকা
         </button>
@@ -57,17 +57,17 @@ export const Header: React.FC<HeaderProps> = ({
                 key={item.id}
                 type="button"
                 onClick={() => onSelectTab(item.id)}
-                className={`relative shrink-0 cursor-pointer whitespace-nowrap py-1 text-[14.5px] font-medium transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#0066E6] ${
+                className={`relative shrink-0 cursor-pointer whitespace-nowrap py-1 text-[14.5px] font-medium transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#0E6F66] ${
                   isActive
-                    ? 'font-semibold text-[#0066E6]'
-                    : 'text-slate-600 hover:text-slate-900'
+                    ? 'font-semibold text-[#0E6F66]'
+                    : 'text-[#526D69] hover:text-[#102A27]'
                 }`}
               >
                 {item.label}
                 {isActive && (
                   <span
                     aria-hidden="true"
-                    className="absolute inset-x-0 -bottom-[15px] h-[2.5px] rounded-full bg-[#0066E6]"
+                    className="absolute inset-x-0 -bottom-[15px] h-[2.5px] rounded-full bg-[#0E6F66]"
                   />
                 )}
               </button>
@@ -82,12 +82,12 @@ export const Header: React.FC<HeaderProps> = ({
             onClick={onOpenAccessModal}
             className={`inline-flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-xl px-3 py-2 text-xs font-semibold transition-colors ${
               isSuperAdmin
-                ? 'border border-[#BFD9FA] bg-[#EBF4FF] text-[#0066E6] hover:bg-[#DCEBFF]'
+                ? 'border border-[#B7DBD3] bg-[#E5F3F0] text-[#0E6F66] hover:bg-[#D5ECE6]'
                 : canEdit
-                ? 'border border-[#DCE8F7] bg-[#F8FBFF] text-slate-700 hover:bg-[#EBF4FF] hover:text-[#0066E6]'
+                ? 'border border-[#D5E7E2] bg-[#F4FAF8] text-[#1D3F3B] hover:bg-[#E5F3F0] hover:text-[#0E6F66]'
                 : userEmail
-                ? 'border border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100'
-                : 'border border-[#BFD9FA] bg-[#EBF4FF] text-[#0066E6] hover:bg-[#0066E6] hover:text-white'
+                ? 'border border-amber-200 bg-[#FEF3E2] text-amber-800 hover:bg-amber-100'
+                : 'border border-[#B7DBD3] bg-[#E5F3F0] text-[#0E6F66] hover:bg-[#0E6F66] hover:text-white'
             }`}
           >
             {isSuperAdmin ? (
@@ -96,7 +96,7 @@ export const Header: React.FC<HeaderProps> = ({
                 <span className="hidden sm:inline">অ্যাক্সেস কন্ট্রোল</span>
                 <span className="sm:hidden">অ্যাক্সেস</span>
                 {pendingRequestCount > 0 && (
-                  <span className="ml-0.5 rounded-md bg-[#0066E6] px-1.5 py-0.5 font-mono text-[10px] text-white">
+                  <span className="ml-0.5 rounded-md bg-[#0E6F66] px-1.5 py-0.5 font-mono text-[10px] text-white">
                     {toBn(pendingRequestCount)}
                   </span>
                 )}
@@ -124,7 +124,7 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               type="button"
               onClick={onAddMember}
-              className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-xl bg-[#0066E6] px-3.5 py-2 text-sm font-medium text-white shadow-[0_2px_8px_rgba(0,102,230,0.22)] transition-colors duration-150 hover:bg-[#0052BD] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0066E6] sm:px-4"
+              className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-xl bg-[#0E6F66] px-3.5 py-2 text-sm font-medium text-white shadow-[0_2px_10px_rgba(14,111,102,0.24)] transition-colors duration-150 hover:bg-[#0B5A53] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0E6F66] sm:px-4"
             >
               <Plus className="h-4 w-4" aria-hidden="true" />
               <span className="hidden sm:inline">নতুন সাথী যুক্ত করুন</span>
@@ -137,7 +137,7 @@ export const Header: React.FC<HeaderProps> = ({
       {/* Tablet & Mobile navigation strip */}
       <nav
         aria-label="মোবাইল নেভিগেশন"
-        className="flex items-center gap-5 overflow-x-auto border-t border-[#E2ECF7] bg-white px-4 py-2 lg:hidden"
+        className="flex items-center gap-5 overflow-x-auto border-t border-[#D9EAE6] bg-white px-4 py-2 lg:hidden"
       >
         {NAV_ITEMS.map((item) => {
           const isActive = activeTab === item.id;
@@ -148,8 +148,8 @@ export const Header: React.FC<HeaderProps> = ({
               onClick={() => onSelectTab(item.id)}
               className={`shrink-0 whitespace-nowrap pb-0.5 text-sm font-medium transition-colors ${
                 isActive
-                  ? 'border-b-2 border-[#0066E6] font-semibold text-[#0066E6]'
-                  : 'text-slate-600'
+                  ? 'border-b-2 border-[#0E6F66] font-semibold text-[#0E6F66]'
+                  : 'text-[#526D69]'
               }`}
             >
               {item.label}
