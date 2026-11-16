@@ -169,7 +169,7 @@ export const CATEGORY_META: CategoryMeta[] = [
     key: SathiCategory.ChatraNowjowan,
     shortLabel: 'ছাত্র নওজোয়ান',
     fullLabel: 'ছাত্র নওজোয়ান',
-    countsTowardsTotal: false,
+    countsTowardsTotal: true,
     defaultBlankRows: 10,
   },
 ];
