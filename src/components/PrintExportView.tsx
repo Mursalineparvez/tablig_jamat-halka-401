@@ -485,13 +485,13 @@ export const PrintExportView: React.FC<PrintExportViewProps> = ({
                         {toBn(list.length)} জন
                       </span>
                     </div>
-                    <table className="w-full border-collapse border border-stone-800 text-xs">
+                    <table className="w-full table-fixed border-collapse border border-stone-800 text-xs">
                       <thead>
                         <tr className="bg-stone-100">
-                          <th className="w-10 border border-stone-400 px-2 py-1 text-center">
+                          <th className="w-12 border border-stone-400 px-2 py-1 text-center">
                             ক্র
                           </th>
-                          <th className="border border-stone-400 px-2.5 py-1 text-left">
+                          <th className="w-[32%] border border-stone-400 px-2.5 py-1 text-left">
                             নাম
                           </th>
                           <th className="w-44 whitespace-nowrap border border-stone-400 px-2.5 py-1 text-left">
