@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import {
+  ArrowUpRight,
   Building2,
   Calendar,
   Check,
@@ -72,6 +73,10 @@ interface KargoojariViewProps {
   onDeleteKargoojariSathi: (kargoojariId: string, sathiId: string) => void;
   onAssignToMosque: (payload: AssignKargoojariToMosquePayload) => void;
   onAssignToTakaza: (payload: AssignKargoojariToTakazaPayload) => void;
+  onOpenTashkeelInTakaza: (
+    kargoojari: KargoojariEntry,
+    sathi: KargoojariSathiItem
+  ) => void;
   onCopyPhone: (phone: string) => void;
   onSelectPerson: (person: InspectedPersonInput) => void;
 }
@@ -126,6 +131,7 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
   onDeleteKargoojariSathi,
   onAssignToMosque,
   onAssignToTakaza,
+  onOpenTashkeelInTakaza,
   onCopyPhone,
   onSelectPerson,
 }) => {
@@ -1149,27 +1155,51 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
                                         {toBn(idx + 1)}
                                       </td>
                                       <td className="px-4 py-2.5">
-                                        <button
-                                          type="button"
-                                          onClick={() =>
-                                            onSelectPerson({
-                                              name: s.name,
-                                              phone: s.phone,
-                                              mosqueId: s.assignedMosqueId,
-                                              roleOrCategory: s.assignedCategory
-                                                ? getCategoryMeta(
-                                                    s.assignedCategory
-                                                  ).shortLabel
-                                                : `কারগুজারি · ${formatLongDateBn(
-                                                    item.date
-                                                  )}`,
-                                              notes: s.notes,
-                                            })
-                                          }
-                                          className="cursor-pointer text-left font-medium text-[#102A27] underline-offset-2 transition-colors hover:text-[#0E6F66] hover:underline"
-                                        >
-                                          {s.name}
-                                        </button>
+                                        <div className="flex flex-wrap items-center gap-2">
+                                          <button
+                                            type="button"
+                                            onClick={() =>
+                                              onSelectPerson({
+                                                name: s.name,
+                                                phone: s.phone,
+                                                mosqueId: s.assignedMosqueId,
+                                                roleOrCategory:
+                                                  s.assignedCategory
+                                                    ? getCategoryMeta(
+                                                        s.assignedCategory
+                                                      ).shortLabel
+                                                    : `কারগুজারি · ${formatLongDateBn(
+                                                        item.date
+                                                      )}`,
+                                                notes: s.notes,
+                                              })
+                                            }
+                                            className="cursor-pointer text-left font-medium text-[#102A27] underline-offset-2 transition-colors hover:text-[#0E6F66] hover:underline"
+                                          >
+                                            {s.name}
+                                          </button>
+
+                                          {s.tashkeelStatus !== 'not_tashkeel' && (
+                                            <button
+                                              type="button"
+                                              onClick={() =>
+                                                onOpenTashkeelInTakaza(item, s)
+                                              }
+                                              title="চলমান তাকাজা পেজে যান"
+                                              className="no-print inline-flex cursor-pointer items-center gap-1 rounded-lg border border-[#B7DBD3] bg-[#E5F3F0] px-2 py-0.5 text-[11px] font-semibold text-[#0E6F66] transition-colors hover:bg-[#0E6F66] hover:text-white"
+                                            >
+                                              <Flag className="h-3 w-3" />
+                                              <span>
+                                                {s.assignedTakazaId
+                                                  ? 'চলমান তাকাজা'
+                                                  : canEdit
+                                                  ? 'তাকাজায় পাঠান'
+                                                  : 'চলমান তাকাজা'}
+                                              </span>
+                                              <ArrowUpRight className="h-3 w-3" />
+                                            </button>
+                                          )}
+                                        </div>
                                         <div className="mt-1 flex flex-col gap-0.5 text-[11px]">
                                           <span
                                             className={`font-medium ${
@@ -1189,10 +1219,16 @@ export const KargoojariView: React.FC<KargoojariViewProps> = ({
                                             </span>
                                           )}
                                           {s.assignedTakazaTitle && (
-                                            <span className="font-medium text-emerald-700">
+                                            <button
+                                              type="button"
+                                              onClick={() =>
+                                                onOpenTashkeelInTakaza(item, s)
+                                              }
+                                              className="w-fit cursor-pointer text-left font-medium text-emerald-700 underline-offset-2 hover:text-[#0E6F66] hover:underline"
+                                            >
                                               তাকাজায় যুক্ত:{' '}
-                                              {s.assignedTakazaTitle}
-                                            </span>
+                                              {s.assignedTakazaTitle} →
+                                            </button>
                                           )}
                                         </div>
                                       </td>

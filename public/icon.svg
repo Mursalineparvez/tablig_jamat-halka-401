@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#0B5A53" />
+      <stop offset="55%" stop-color="#0E6F66" />
+      <stop offset="100%" stop-color="#1A8C80" />
+    </linearGradient>
+    <linearGradient id="mintGlow" x1="128" y1="96" x2="384" y2="416" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="100%" stop-color="#D7EFEA" />
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bgGrad)" />
+  <rect x="20" y="20" width="472" height="472" rx="96" stroke="#FFFFFF" stroke-opacity="0.14" stroke-width="3" />
+  <!-- Crescent finial -->
+  <path d="M256 90v28" stroke="#FFFFFF" stroke-width="10" stroke-linecap="round" />
+  <circle cx="256" cy="84" r="9" fill="#E4F2EF" />
+  <!-- Main mosque dome -->
+  <path d="M148 258c0-66 48-114 108-140 60 26 108 74 108 140H148Z" fill="url(#mintGlow)" />
+  <!-- Left & right minarets -->
+  <rect x="104" y="204" width="28" height="176" rx="8" fill="#E4F2EF" />
+  <path d="M118 164l18 40h-36l18-40Z" fill="#FFFFFF" />
+  <rect x="380" y="204" width="28" height="176" rx="8" fill="#E4F2EF" />
+  <path d="M394 164l18 40h-36l18-40Z" fill="#FFFFFF" />
+  <!-- Base building -->
+  <rect x="136" y="268" width="240" height="112" rx="14" fill="#FFFFFF" />
+  <!-- Central Mihrab Arch -->
+  <path d="M214 380v-52c0-26 18-46 42-54 24 8 42 28 42 54v52h-84Z" fill="#0E6F66" />
+  <!-- Base plinth -->
+  <rect x="92" y="384" width="328" height="20" rx="10" fill="#B7DBD3" />
+</svg>

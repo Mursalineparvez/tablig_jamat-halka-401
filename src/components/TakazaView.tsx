@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   CheckCircle2,
   Edit3,
@@ -22,10 +22,13 @@ interface TakazaViewProps {
   mosques: MosqueRecord[];
   takazas: TakazaEntry[];
   canEdit: boolean;
+  focusedTakazaId?: string | null;
+  onClearFocusedTakaza?: () => void;
   onSaveTakaza: (entry: Omit<TakazaEntry, 'id' | 'createdAt'> & { id?: string }) => void;
   onUpdateProgress: (id: string, delta: number) => void;
   onToggleStatus: (id: string, status: TakazaStatus) => void;
   onDeleteTakaza: (id: string) => void;
+  onRemoveCommittedSathi?: (takazaId: string, sathiId: string) => void;
   onSelectPerson: (person: InspectedPersonInput) => void;
 }
 
@@ -46,10 +49,13 @@ export const TakazaView: React.FC<TakazaViewProps> = ({
   mosques,
   takazas,
   canEdit,
+  focusedTakazaId,
+  onClearFocusedTakaza,
   onSaveTakaza,
   onUpdateProgress,
   onToggleStatus,
   onDeleteTakaza,
+  onRemoveCommittedSathi,
   onSelectPerson,
 }) => {
   const [statusFilter, setStatusFilter] = useState<TakazaStatus | 'all'>('all');
@@ -57,6 +63,30 @@ export const TakazaView: React.FC<TakazaViewProps> = ({
   const [query, setQuery] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<TakazaEntry | null>(null);
+  const [highlightedId, setHighlightedId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!focusedTakazaId) return;
+    setStatusFilter('all');
+    setMosqueFilter('all');
+    setQuery('');
+    setHighlightedId(focusedTakazaId);
+
+    const scrollTimer = window.setTimeout(() => {
+      const el = document.getElementById(`takaza-card-${focusedTakazaId}`);
+      el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 80);
+
+    const clearTimer = window.setTimeout(() => {
+      setHighlightedId((curr) => (curr === focusedTakazaId ? null : curr));
+      onClearFocusedTakaza?.();
+    }, 3200);
+
+    return () => {
+      window.clearTimeout(scrollTimer);
+      window.clearTimeout(clearTimer);
+    };
+  }, [focusedTakazaId, onClearFocusedTakaza]);
 
   // Form state
   const [title, setTitle] = useState('');
@@ -297,8 +327,13 @@ export const TakazaView: React.FC<TakazaViewProps> = ({
             const remaining = Math.max(0, item.targetCount - item.completedCount);
             return (
               <article
+                id={`takaza-card-${item.id}`}
                 key={item.id}
-                className="rounded-2xl border border-[#D9EAE6] bg-white p-5 shadow-[0_2px_14px_rgba(14,111,102,0.04)] transition-colors hover:border-[#B7DBD3]"
+                className={`rounded-2xl border bg-white p-5 shadow-[0_2px_14px_rgba(14,111,102,0.04)] transition-all hover:border-[#B7DBD3] ${
+                  highlightedId === item.id
+                    ? 'border-[#0E6F66] ring-2 ring-[#0E6F66]/35'
+                    : 'border-[#D9EAE6]'
+                }`}
               >
                 <div className="flex flex-col justify-between gap-4 border-b border-[#EAF3F0] pb-4 sm:flex-row sm:items-start">
                   <div className="space-y-1">
@@ -460,7 +495,7 @@ export const TakazaView: React.FC<TakazaViewProps> = ({
                     <div className="border-b border-[#D9EAE6] bg-[#EBF4F2] px-3.5 py-2 text-xs font-semibold text-[#1D3F3B]">
                       এই তাকাজায় রাজি / যুক্ত সাথীগণ ({toBn(item.committedSathis.length)} জন)
                     </div>
-                    <div className="divide-y divide-[#E3EFECE]">
+                    <div className="divide-y divide-[#E3EFEC]">
                       {item.committedSathis.map((s, idx) => (
                         <div
                           key={s.id}
@@ -488,11 +523,26 @@ export const TakazaView: React.FC<TakazaViewProps> = ({
                               {s.name}
                             </button>
                           </div>
-                          {s.phone ? (
-                            <PhoneActions phone={s.phone} compact />
-                          ) : (
-                            <span className="text-[#7B9591]">নম্বর নেই</span>
-                          )}
+                          <div className="flex items-center gap-2">
+                            {s.phone ? (
+                              <PhoneActions phone={s.phone} compact />
+                            ) : (
+                              <span className="text-[#7B9591]">নম্বর নেই</span>
+                            )}
+                            {canEdit && onRemoveCommittedSathi && (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  onRemoveCommittedSathi(item.id, s.id)
+                                }
+                                title="তাকাজা তালিকা থেকে সরান"
+                                aria-label="তাকাজা তালিকা থেকে সরান"
+                                className="cursor-pointer rounded-lg p-1 text-[#7B9591] transition-colors hover:bg-rose-50 hover:text-rose-600"
+                              >
+                                <X className="h-3.5 w-3.5" />
+                              </button>
+                            )}
+                          </div>
                         </div>
                       ))}
                     </div>

@@ -3,6 +3,7 @@ import {
   MosqueRecord,
   SathiCategory,
   SathiEntry,
+  TakazaEntry,
 } from '../types/directory';
 import { formatBdPhone } from '../utils/bengali';
 
@@ -843,5 +844,25 @@ export const INITIAL_KARGOOJARIS: KargoojariEntry[] = [
       },
     ],
     createdAt: '2026-11-14T20:30:00.000Z',
+  },
+];
+
+export const INITIAL_TAKAZAS: TakazaEntry[] = [
+  {
+    id: 'takaza-2026-11-19-abubakor-3days-jor',
+    title:
+      '১৯, ২০ ও ২১ নভেম্বর ৩ দিনের জামাত (আবুবকর জামে মসজিদে পুরো হালকার সাথী জমা ও জোড় কেন্দ্রিক মেহনত)',
+    mosqueId: 10,
+    type: 'three_days',
+    targetCount: 10,
+    completedCount: 0,
+    dueDate: '2026-11-19',
+    zimmadarName: '',
+    zimmadarPhone: '',
+    status: 'ongoing',
+    notes:
+      'আগামী ১৯, ২০ ও ২১ নভেম্বর ৩ দিনের জামাতের জন্য ১০. আবুবকর জামে মসজিদে সম্পূর্ণ ৪০১ নং হালকার সাথীরা জমা হবেন এবং জোড় কেন্দ্রিক মেহনত অনুষ্ঠিত হবে।',
+    committedSathis: [],
+    createdAt: '2026-11-16T09:30:00.000Z',
   },
 ];

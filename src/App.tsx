@@ -27,6 +27,7 @@ import {
 } from './components/MemberModal';
 import { MosquesView } from './components/MosquesView';
 import { OverviewView } from './components/OverviewView';
+import { OfflineIndicator } from './components/PWAControls';
 import { PrintExportView } from './components/PrintExportView';
 import { SathiDirectoryView } from './components/SathiDirectoryView';
 import {
@@ -34,7 +35,11 @@ import {
   SathiProfileModal,
 } from './components/SathiProfileModal';
 import { TakazaView } from './components/TakazaView';
-import { INITIAL_KARGOOJARIS, INITIAL_MOSQUES } from './data/halqaData';
+import {
+  INITIAL_KARGOOJARIS,
+  INITIAL_MOSQUES,
+  INITIAL_TAKAZAS,
+} from './data/halqaData';
 import {
   auth,
   emailToDocId,
@@ -95,6 +100,10 @@ const KARGOOJARI_ALL_MENTIONED_SEED_KEY =
   'jatrabari_markaz_seed_karg_20261115_all_v2';
 const KARGOOJARI_NOV15_V3_SEED_KEY =
   'jatrabari_markaz_seed_karg_20261115_v3';
+const TAKAZA_NOV19_ABUBAKOR_SEED_KEY =
+  'jatrabari_markaz_seed_takaza_20261119_abubakor_v1';
+const TAKAZA_NOV19_ABUBAKOR_FS_KEY =
+  'jatrabari_markaz_fs_takaza_20261119_abubakor_v1';
 
 interface SathiModalState {
   mosqueId: number;
@@ -300,13 +309,34 @@ function loadInitialKargoojaris(): KargoojariEntry[] {
   return base;
 }
 
+function loadInitialTakazas(): TakazaEntry[] {
+  const loaded = loadFromStorage<TakazaEntry[]>(
+    TAKAZA_STORAGE_KEY,
+    INITIAL_TAKAZAS
+  );
+  const base = normalizeTakazasPhones(
+    Array.isArray(loaded) ? loaded : INITIAL_TAKAZAS
+  );
+
+  try {
+    const alreadySeeded = localStorage.getItem(TAKAZA_NOV19_ABUBAKOR_SEED_KEY);
+    if (!alreadySeeded) {
+      const existingIds = new Set(base.map((t) => t.id));
+      const missing = INITIAL_TAKAZAS.filter((t) => !existingIds.has(t.id));
+      localStorage.setItem(TAKAZA_NOV19_ABUBAKOR_SEED_KEY, '1');
+      return [...missing, ...base];
+    }
+  } catch {
+    // Ignore storage read/write errors
+  }
+
+  return base;
+}
+
 export default function App() {
   const [mosques, setMosques] = useState<MosqueRecord[]>(loadInitialMosques);
 
-  const [takazas, setTakazas] = useState<TakazaEntry[]>(() => {
-    const loaded = loadFromStorage<TakazaEntry[]>(TAKAZA_STORAGE_KEY, []);
-    return Array.isArray(loaded) ? normalizeTakazasPhones(loaded) : [];
-  });
+  const [takazas, setTakazas] = useState<TakazaEntry[]>(loadInitialTakazas);
 
   const [kargoojaris, setKargoojaris] = useState<KargoojariEntry[]>(
     loadInitialKargoojaris
@@ -344,6 +374,7 @@ export default function App() {
   const [mosqueModal, setMosqueModal] = useState<MosqueModalState>(null);
   const [inspectedPerson, setInspectedPerson] =
     useState<InspectedPersonInput | null>(null);
+  const [focusedTakazaId, setFocusedTakazaId] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const isSuperAdmin = Boolean(
@@ -394,7 +425,29 @@ export default function App() {
       setTakazasLoaded(true);
       setTakazasEmptyInDb(isEmpty);
       if (!isEmpty) {
-        setTakazas(normalizeTakazasPhones(remoteTakazas));
+        const normalized = normalizeTakazasPhones(remoteTakazas);
+        const remoteIds = new Set(normalized.map((t) => t.id));
+        const seedItem = INITIAL_TAKAZAS[0];
+        let fsSynced = false;
+        try {
+          fsSynced =
+            localStorage.getItem(TAKAZA_NOV19_ABUBAKOR_FS_KEY) === '1';
+        } catch {
+          // Ignore storage read errors
+        }
+
+        if (seedItem && remoteIds.has(seedItem.id)) {
+          try {
+            localStorage.setItem(TAKAZA_NOV19_ABUBAKOR_FS_KEY, '1');
+          } catch {
+            // Ignore storage write errors
+          }
+          setTakazas(normalized);
+        } else if (seedItem && !fsSynced) {
+          setTakazas([seedItem, ...normalized]);
+        } else {
+          setTakazas(normalized);
+        }
       }
     });
 
@@ -482,9 +535,39 @@ export default function App() {
       !seededTakazasRef.current
     ) {
       seededTakazasRef.current = true;
-      void seedInitialTakazasToFirestore(takazas).catch(() => {
-        seededTakazasRef.current = false;
-      });
+      void seedInitialTakazasToFirestore(takazas)
+        .then(() => {
+          try {
+            localStorage.setItem(TAKAZA_NOV19_ABUBAKOR_FS_KEY, '1');
+          } catch {
+            // Ignore storage write errors
+          }
+        })
+        .catch(() => {
+          seededTakazasRef.current = false;
+        });
+    } else if (takazasLoaded && !takazasEmptyInDb && !seededTakazasRef.current) {
+      let fsSynced = false;
+      try {
+        fsSynced = localStorage.getItem(TAKAZA_NOV19_ABUBAKOR_FS_KEY) === '1';
+      } catch {
+        // Ignore storage read errors
+      }
+      const seedItem = INITIAL_TAKAZAS[0];
+      if (seedItem && !fsSynced) {
+        seededTakazasRef.current = true;
+        void saveTakazaToFirestore(seedItem)
+          .then(() => {
+            try {
+              localStorage.setItem(TAKAZA_NOV19_ABUBAKOR_FS_KEY, '1');
+            } catch {
+              // Ignore storage write errors
+            }
+          })
+          .catch(() => {
+            seededTakazasRef.current = false;
+          });
+      }
     }
   }, [
     canEdit,
@@ -926,6 +1009,13 @@ export default function App() {
 
   const handleDeleteTakaza = (id: string) => {
     if (!requireEditAccess()) return;
+    if (INITIAL_TAKAZAS.some((t) => t.id === id)) {
+      try {
+        localStorage.setItem(TAKAZA_NOV19_ABUBAKOR_FS_KEY, '1');
+      } catch {
+        // Ignore storage write errors
+      }
+    }
     setTakazas((prev) => prev.filter((t) => t.id !== id));
     showToast('তাকাজাটি সরানো হয়েছে।');
     void deleteTakazaFromFirestore(id).catch(() => {
@@ -1234,6 +1324,267 @@ export default function App() {
     }
   };
 
+  const handleOpenTashkeelInTakaza = (
+    kargoojari: KargoojariEntry,
+    sathi: KargoojariSathiItem
+  ) => {
+    const cleanName = sathi.name.trim();
+    const coreName = normalizeMemberCoreName(cleanName);
+    const contextText = `${sathi.notes} ${kargoojari.summary}`.toLowerCase();
+
+    const findMatchedTakaza = (): TakazaEntry | undefined => {
+      if (sathi.assignedTakazaId) {
+        const direct = takazas.find((t) => t.id === sathi.assignedTakazaId);
+        if (direct) return direct;
+      }
+
+      const byCommitted = takazas.find((t) =>
+        (t.committedSathis ?? []).some(
+          (cs) =>
+            cs.name.trim() === cleanName ||
+            (coreName && normalizeMemberCoreName(cs.name) === coreName)
+        )
+      );
+      if (byCommitted) return byCommitted;
+
+      const activeList = takazas.filter((t) => t.status !== 'completed');
+      const pool = activeList.length > 0 ? activeList : takazas;
+      if (pool.length === 0) return undefined;
+
+      const scored = pool
+        .map((t) => {
+          let score = 0;
+          const titleLower = `${t.title} ${t.notes}`.toLowerCase();
+          if (
+            (contextText.includes('৩ দিন') || contextText.includes('তিন দিন')) &&
+            (t.type === 'three_days' || titleLower.includes('৩ দিন'))
+          ) {
+            score += 5;
+          }
+          if (
+            (contextText.includes('১৯') ||
+              contextText.includes('২০') ||
+              contextText.includes('২১')) &&
+            (titleLower.includes('১৯') ||
+              titleLower.includes('২০') ||
+              titleLower.includes('২১'))
+          ) {
+            score += 5;
+          }
+          if (
+            typeof kargoojari.mosqueId === 'number' &&
+            t.mosqueId === kargoojari.mosqueId
+          ) {
+            score += 2;
+          }
+          if (t.status === 'urgent') score += 1;
+          return { t, score };
+        })
+        .sort((a, b) => b.score - a.score);
+
+      return scored[0]?.t;
+    };
+
+    const matchedTakaza = findMatchedTakaza();
+    let targetId = matchedTakaza?.id ?? null;
+
+    if (canEdit) {
+      const formattedPhone = formatBdPhone(sathi.phone);
+      if (matchedTakaza) {
+        const existingCommitted = matchedTakaza.committedSathis ?? [];
+        const alreadyListed = existingCommitted.some(
+          (cs) =>
+            cs.name.trim() === cleanName ||
+            (coreName && normalizeMemberCoreName(cs.name) === coreName)
+        );
+
+        let takazaToSave: TakazaEntry | null = null;
+        if (!alreadyListed) {
+          const nextCount = matchedTakaza.completedCount + 1;
+          const nextStatus: TakazaStatus =
+            nextCount >= matchedTakaza.targetCount
+              ? 'completed'
+              : matchedTakaza.status === 'completed'
+              ? 'ongoing'
+              : matchedTakaza.status;
+          takazaToSave = {
+            ...matchedTakaza,
+            completedCount: nextCount,
+            status: nextStatus,
+            committedSathis: [
+              ...existingCommitted,
+              {
+                id: `tc-${Date.now()}`,
+                name: cleanName,
+                phone: formattedPhone,
+              },
+            ],
+          };
+          setTakazas((prev) =>
+            prev.map((t) => (t.id === takazaToSave!.id ? takazaToSave! : t))
+          );
+          void saveTakazaToFirestore(takazaToSave).catch(() => {
+            showToast('তাকাজা সংরক্ষণ করতে সমস্যা হয়েছে।');
+          });
+        }
+
+        if (
+          sathi.assignedTakazaId !== matchedTakaza.id ||
+          sathi.assignedTakazaTitle !== matchedTakaza.title
+        ) {
+          const updatedKarg: KargoojariEntry = {
+            ...kargoojari,
+            sathis: (kargoojari.sathis ?? []).map((item) =>
+              item.id === sathi.id
+                ? {
+                    ...item,
+                    tashkeelStatus: 'tashkeel' as const,
+                    assignedTakazaId: matchedTakaza.id,
+                    assignedTakazaTitle: matchedTakaza.title,
+                  }
+                : item
+            ),
+          };
+          setKargoojaris((prev) =>
+            prev.map((k) => (k.id === kargoojari.id ? updatedKarg : k))
+          );
+          void saveKargoojariToFirestore(updatedKarg).catch(() => {
+            showToast('কারগুজারি সংরক্ষণ করতে সমস্যা হয়েছে।');
+          });
+        }
+
+        showToast(
+          alreadyListed
+            ? `চলমান তাকাজা: ${matchedTakaza.title}`
+            : `${cleanName}-কে চলমান তাকাজায় যুক্ত করা হয়েছে।`
+        );
+      } else {
+        const newId = `takaza-${Date.now()}`;
+        const newTitle = sathi.notes.trim() || '৩ দিনের জামাত তশকিল';
+        const newTakaza: TakazaEntry = {
+          id: newId,
+          title: newTitle,
+          mosqueId: kargoojari.mosqueId,
+          type: 'three_days',
+          targetCount: 10,
+          completedCount: 1,
+          dueDate: '',
+          zimmadarName: '',
+          zimmadarPhone: '',
+          status: 'ongoing',
+          notes: sathi.notes.trim(),
+          committedSathis: [
+            {
+              id: `tc-${Date.now()}`,
+              name: cleanName,
+              phone: formattedPhone,
+            },
+          ],
+          createdAt: new Date().toISOString(),
+        };
+        targetId = newId;
+        setTakazas((prev) => [newTakaza, ...prev]);
+        void saveTakazaToFirestore(newTakaza).catch(() => {
+          showToast('তাকাজা সংরক্ষণ করতে সমস্যা হয়েছে।');
+        });
+
+        const updatedKarg: KargoojariEntry = {
+          ...kargoojari,
+          sathis: (kargoojari.sathis ?? []).map((item) =>
+            item.id === sathi.id
+              ? {
+                  ...item,
+                  tashkeelStatus: 'tashkeel' as const,
+                  assignedTakazaId: newId,
+                  assignedTakazaTitle: newTitle,
+                }
+              : item
+          ),
+        };
+        setKargoojaris((prev) =>
+          prev.map((k) => (k.id === kargoojari.id ? updatedKarg : k))
+        );
+        void saveKargoojariToFirestore(updatedKarg).catch(() => {
+          showToast('কারগুজারি সংরক্ষণ করতে সমস্যা হয়েছে।');
+        });
+        showToast(`${cleanName}-কে নতুন চলমান তাকাজায় যুক্ত করা হয়েছে।`);
+      }
+    }
+
+    setFocusedTakazaId(targetId);
+    setActiveTab('takaja');
+    if (!targetId) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const handleRemoveCommittedSathi = (takazaId: string, sathiId: string) => {
+    if (!requireEditAccess()) return;
+    const existing = takazas.find((t) => t.id === takazaId);
+    if (!existing) return;
+
+    const removedItem = (existing.committedSathis ?? []).find(
+      (cs) => cs.id === sathiId
+    );
+    const nextCommitted = (existing.committedSathis ?? []).filter(
+      (cs) => cs.id !== sathiId
+    );
+    const nextCount = Math.max(0, existing.completedCount - 1);
+    const nextStatus: TakazaStatus =
+      existing.status === 'completed' && nextCount < existing.targetCount
+        ? 'ongoing'
+        : existing.status;
+
+    const updatedTakaza: TakazaEntry = {
+      ...existing,
+      completedCount: nextCount,
+      status: nextStatus,
+      committedSathis: nextCommitted,
+    };
+
+    setTakazas((prev) =>
+      prev.map((t) => (t.id === takazaId ? updatedTakaza : t))
+    );
+    void saveTakazaToFirestore(updatedTakaza).catch(() => {
+      showToast('তাকাজা আপডেট করতে সমস্যা হয়েছে।');
+    });
+
+    if (removedItem) {
+      const removedCore = normalizeMemberCoreName(removedItem.name);
+      setKargoojaris((prev) =>
+        prev.map((k) => {
+          const hasMatch = (k.sathis ?? []).some(
+            (s) =>
+              s.assignedTakazaId === takazaId &&
+              (s.name.trim() === removedItem.name.trim() ||
+                (removedCore &&
+                  normalizeMemberCoreName(s.name) === removedCore))
+          );
+          if (!hasMatch) return k;
+          const updatedKarg: KargoojariEntry = {
+            ...k,
+            sathis: (k.sathis ?? []).map((s) =>
+              s.assignedTakazaId === takazaId &&
+              (s.name.trim() === removedItem.name.trim() ||
+                (removedCore &&
+                  normalizeMemberCoreName(s.name) === removedCore))
+                ? {
+                    ...s,
+                    assignedTakazaId: undefined,
+                    assignedTakazaTitle: undefined,
+                  }
+                : s
+            ),
+          };
+          void saveKargoojariToFirestore(updatedKarg).catch(() => {});
+          return updatedKarg;
+        })
+      );
+    }
+
+    showToast('তাকাজার তালিকা থেকে সাথীকে সরানো হয়েছে।');
+  };
+
   const handleImportData = (payload: {
     mosques: MosqueRecord[];
     takazas?: TakazaEntry[];
@@ -1302,6 +1653,8 @@ export default function App() {
         pendingRequestCount={pendingRequestCount}
         onOpenAccessModal={() => setAccessModalOpen(true)}
       />
+
+      <OfflineIndicator />
 
       {authReady && !canEdit && (
         <div className="no-print border-b border-[#CFE3DF] bg-[#E8F4F1]">
@@ -1406,10 +1759,13 @@ export default function App() {
             mosques={mosques}
             takazas={takazas}
             canEdit={canEdit}
+            focusedTakazaId={focusedTakazaId}
+            onClearFocusedTakaza={() => setFocusedTakazaId(null)}
             onSaveTakaza={handleSaveTakaza}
             onUpdateProgress={handleUpdateTakazaProgress}
             onToggleStatus={handleToggleTakazaStatus}
             onDeleteTakaza={handleDeleteTakaza}
+            onRemoveCommittedSathi={handleRemoveCommittedSathi}
             onSelectPerson={setInspectedPerson}
           />
         )}
@@ -1426,6 +1782,7 @@ export default function App() {
             onDeleteKargoojariSathi={handleDeleteKargoojariSathi}
             onAssignToMosque={handleAssignKargoojariSathiToMosque}
             onAssignToTakaza={handleAssignKargoojariSathiToTakaza}
+            onOpenTashkeelInTakaza={handleOpenTashkeelInTakaza}
             onCopyPhone={handleCopyPhone}
             onSelectPerson={setInspectedPerson}
           />

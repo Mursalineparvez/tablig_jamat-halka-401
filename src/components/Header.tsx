@@ -2,6 +2,7 @@ import React from 'react';
 import { Lock, LogIn, Plus, ShieldCheck } from 'lucide-react';
 import { ActiveTab } from '../types/directory';
 import { toBn } from '../utils/bengali';
+import { PWAInstallButton } from './PWAControls';
 
 interface HeaderProps {
   activeTab: ActiveTab;
@@ -75,8 +76,9 @@ export const Header: React.FC<HeaderProps> = ({
           })}
         </nav>
 
-        {/* Zone 3: Auth & Primary CTA */}
+        {/* Zone 3: PWA Install, Auth & Primary CTA */}
         <div className="flex shrink-0 items-center gap-2">
+          <PWAInstallButton />
           <button
             type="button"
             onClick={onOpenAccessModal}
