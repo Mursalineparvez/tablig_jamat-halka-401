@@ -3,7 +3,6 @@ import type { User } from 'firebase/auth';
 import {
   CheckCircle2,
   Clock,
-  ExternalLink,
   Lock,
   LogIn,
   LogOut,
@@ -13,11 +12,7 @@ import {
   UserPlus,
   X,
 } from 'lucide-react';
-import {
-  emailToDocId,
-  FIREBASE_PROJECT_ID,
-  SUPER_ADMIN_EMAIL,
-} from '../firebase';
+import { emailToDocId, SUPER_ADMIN_EMAIL } from '../firebase';
 import { AccessRequestRecord, EditorRecord } from '../types/directory';
 import { toBn } from '../utils/bengali';
 
@@ -71,12 +66,6 @@ export const AccessControlModal: React.FC<AccessControlModalProps> = ({
   const [submitting, setSubmitting] = useState(false);
 
   const pendingRequests = accessRequests.filter((r) => r.status === 'pending');
-  const isUnauthorizedDomainError = Boolean(
-    authError &&
-      (authError.includes('Authorized') ||
-        authError.includes('unauthorized-domain'))
-  );
-  const authorizedDomainsConsoleUrl = `https://console.firebase.google.com/project/${FIREBASE_PROJECT_ID}/authentication/settings`;
 
   const handleGrantSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -167,17 +156,6 @@ export const AccessControlModal: React.FC<AccessControlModalProps> = ({
           {authError && (
             <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-xs leading-relaxed font-medium text-rose-700">
               <p>{authError}</p>
-              {isUnauthorizedDomainError && (
-                <a
-                  href={authorizedDomainsConsoleUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-2 inline-flex items-center gap-1 font-semibold text-[#0E6F66] underline underline-offset-2 hover:text-[#0B5A53]"
-                >
-                  <span>Firebase Settings খুলুন</span>
-                  <ExternalLink className="h-3 w-3" />
-                </a>
-              )}
             </div>
           )}
 

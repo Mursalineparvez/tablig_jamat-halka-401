@@ -650,7 +650,7 @@ export default function App() {
         const host =
           typeof window !== 'undefined' ? window.location.hostname : 'this domain';
         setAuthError(
-          `এই ডোমেইন (${host}) এখনো Firebase Authorized Domains-এ যোগ করা নেই। শুধু একবার যোগ করলেই সাথে সাথে সাইন ইন হয়ে যাবে।`
+          `এই ডোমেইনটি (${host}) Google সাইন-ইনের জন্য অনুমোদিত নয়। এই ডোমেইন থেকে সাইন-ইন করতে অনুমোদিত ডোমেইন বা নিজস্ব Firebase প্রজেক্ট কনফিগ ব্যবহার করুন।`
         );
         setAccessModalOpen(true);
       } else if (
