@@ -3,6 +3,7 @@ import {
   Edit3,
   MapPin,
   Plus,
+  Printer,
   Search,
   Trash2,
 } from 'lucide-react';
@@ -212,7 +213,24 @@ export const MosquesView: React.FC<MosquesViewProps> = ({
               </div>
             </div>
 
-            <div className="flex shrink-0 items-center gap-5 sm:flex-col sm:items-end sm:gap-2">
+            <div className="flex shrink-0 items-center gap-3 sm:flex-col sm:items-end sm:gap-2">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const activeTabBefore = document.title;
+                    document.title = `${selectedMosque.name} — হালকা ৪০১`;
+                    window.print();
+                    document.title = activeTabBefore;
+                  }}
+                  className="no-print inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-[#DCE8F7] bg-[#F8FBFF] px-3.5 py-2 text-xs font-medium text-slate-700 transition-colors hover:bg-[#EBF4FF] hover:text-[#0066E6]"
+                  title="এই মসজিদের পিডিএফ / প্রিন্ট কপি তৈরি করুন"
+                >
+                  <Printer className="h-4 w-4 text-[#0066E6]" />
+                  <span>এই মসজিদ প্রিন্ট / PDF</span>
+                </button>
+              </div>
+
               <div className="text-left sm:text-right">
                 <span className="block text-xs text-slate-500">মোট সাথী</span>
                 <span className="font-mono text-3xl font-bold text-[#0066E6] tabular-nums">
