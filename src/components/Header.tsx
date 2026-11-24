@@ -1,17 +1,19 @@
 import React from 'react';
-import { KeyRound, Plus, RefreshCw, ShieldCheck } from 'lucide-react';
+import { Lock, LogIn, Plus, ShieldCheck, UserCheck } from 'lucide-react';
 import { ActiveTab } from '../types/directory';
+import { toBn } from '../utils/bengali';
 import { PWAInstallButton } from './PWAControls';
 
 interface HeaderProps {
   activeTab: ActiveTab;
   onSelectTab: (tab: ActiveTab) => void;
   onAddMember: () => void;
+  userEmail: string | null;
   canEdit: boolean;
-  sheetConnected: boolean;
-  isSyncing: boolean;
-  onOpenAuthModal: () => void;
-  onManualSync: () => void;
+  isSuperAdmin: boolean;
+  pendingRequestCount: number;
+  onOpenAccessModal: () => void;
+  onQuickSignIn: () => void;
 }
 
 const NAV_ITEMS: Array<{ id: ActiveTab; label: string }> = [
@@ -27,11 +29,12 @@ export const Header: React.FC<HeaderProps> = ({
   activeTab,
   onSelectTab,
   onAddMember,
+  userEmail,
   canEdit,
-  sheetConnected,
-  isSyncing,
-  onOpenAuthModal,
-  onManualSync,
+  isSuperAdmin,
+  pendingRequestCount,
+  onOpenAccessModal,
+  onQuickSignIn,
 }) => {
   return (
     <header className="no-print sticky top-0 z-30 border-b border-[#D9EAE6] bg-white/95 backdrop-blur-md">
@@ -75,48 +78,48 @@ export const Header: React.FC<HeaderProps> = ({
           })}
         </nav>
 
-        {/* Zone 3: PWA Install, Live Sync, PIN Auth & Primary CTA */}
+        {/* Zone 3: PWA Install, Auth & Primary CTA */}
         <div className="flex shrink-0 items-center gap-2">
           <PWAInstallButton />
 
-          {sheetConnected && (
+          {!userEmail ? (
             <button
               type="button"
-              onClick={onManualSync}
-              disabled={isSyncing}
-              title="সর্বশেষ তথ্য সিঙ্ক করুন"
-              aria-label="সর্বশেষ তথ্য সিঙ্ক করুন"
-              className="inline-flex shrink-0 cursor-pointer items-center justify-center rounded-xl border border-[#D5E7E2] bg-[#F4FAF8] p-2 text-[#0E6F66] transition-colors hover:bg-[#E5F3F0] disabled:opacity-60"
+              onClick={onQuickSignIn}
+              className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-xl border border-[#B7DBD3] bg-[#E5F3F0] px-3 py-2 text-xs font-semibold text-[#0E6F66] transition-colors hover:bg-[#0E6F66] hover:text-white"
             >
-              <RefreshCw
-                className={`h-3.5 w-3.5 ${isSyncing ? 'animate-spin' : ''}`}
-                aria-hidden="true"
-              />
+              <LogIn className="h-3.5 w-3.5" aria-hidden="true" />
+              <span>অ্যাডমিন / এডিটর লগইন</span>
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={onOpenAccessModal}
+              className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-xl border border-[#B7DBD3] bg-[#E5F3F0] px-3 py-2 text-xs font-semibold text-[#0E6F66] transition-colors hover:bg-[#D5ECE6]"
+            >
+              {isSuperAdmin ? (
+                <>
+                  <ShieldCheck className="h-3.5 w-3.5 text-[#0E6F66]" />
+                  <span>অ্যাডমিন</span>
+                  {pendingRequestCount > 0 && (
+                    <span className="ml-0.5 rounded-full bg-[#0E6F66] px-1.5 py-0.5 text-[10px] font-bold text-white">
+                      {toBn(pendingRequestCount)}
+                    </span>
+                  )}
+                </>
+              ) : canEdit ? (
+                <>
+                  <UserCheck className="h-3.5 w-3.5 text-emerald-700" />
+                  <span>এডিটর</span>
+                </>
+              ) : (
+                <>
+                  <Lock className="h-3.5 w-3.5 text-amber-700" />
+                  <span>অ্যাক্সেস</span>
+                </>
+              )}
             </button>
           )}
-
-          <button
-            type="button"
-            onClick={onOpenAuthModal}
-            className={`inline-flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-xl px-3 py-2 text-xs font-semibold transition-colors ${
-              canEdit
-                ? 'border border-[#B7DBD3] bg-[#E5F3F0] text-[#0E6F66] hover:bg-[#D5ECE6]'
-                : 'border border-[#B7DBD3] bg-[#E5F3F0] text-[#0E6F66] hover:bg-[#0E6F66] hover:text-white'
-            }`}
-          >
-            {canEdit ? (
-              <>
-                <ShieldCheck className="h-3.5 w-3.5 text-emerald-700" />
-                <span className="hidden sm:inline">এডিটর সক্রিয়</span>
-                <span className="sm:hidden">এডিটর</span>
-              </>
-            ) : (
-              <>
-                <KeyRound className="h-3.5 w-3.5" />
-                <span>এডিট লগইন</span>
-              </>
-            )}
-          </button>
 
           {canEdit && (
             <button

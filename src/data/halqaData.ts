@@ -308,7 +308,7 @@ const RAW_INITIAL_MOSQUES: MosqueRecord[] = [
   },
   {
     id: 5,
-    name: 'আশ্রাফিয়া মাদ্রাসা মসজিদ (আল আকসা)',
+    name: 'আল-আকছা জামে মসজিদ (আশ্রাফিয়া)',
     address: '',
     khatib: { name: '', phone: '' },
     imam: { name: '', phone: '' },
@@ -734,6 +734,34 @@ const RAW_INITIAL_MOSQUES: MosqueRecord[] = [
       ]),
     },
   },
+  ...[
+    [16, 'মসজিদে কোবা'],
+    [17, 'বাইতুল জান্নাত জামে মসজিদ'],
+    [18, 'আশ্রাফিয়া মাদ্রাসা মসজিদ'],
+    [19, 'গিরিধারা মাদ্রাসা মসজিদ'],
+    [20, 'বাইতুর রহমান জামে মসজিদ'],
+    [21, 'মোস্তফা জামে মসজিদ (স’মিল)'],
+    [22, 'আল-হাসিব জামে মসজিদ'],
+  ].map(([id, name]): MosqueRecord => ({
+    id: id as number,
+    name: name as string,
+    address: '',
+    khatib: { name: '', phone: '' },
+    imam: { name: '', phone: '' },
+    muazzin: { name: '', phone: '' },
+    categories: {
+      [SathiCategory.SalwaliUlama]: [],
+      [SathiCategory.ThreeChillaUlama]: [],
+      [SathiCategory.OneChillaUlama]: [],
+      [SathiCategory.Bidesh]: [],
+      [SathiCategory.ThreeChillaSathi]: [],
+      [SathiCategory.OneChillaSathi]: [],
+      [SathiCategory.MasturatChilla]: [],
+      [SathiCategory.MasturatTenFifteenDays]: [],
+      [SathiCategory.MasturatThreeDays]: [],
+      [SathiCategory.ChatraNowjowan]: [],
+    },
+  })),
 ];
 
 export const INITIAL_MOSQUES: MosqueRecord[] = RAW_INITIAL_MOSQUES.map((m) => ({
