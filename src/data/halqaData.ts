@@ -101,7 +101,11 @@ const RAW_INITIAL_MOSQUES: MosqueRecord[] = [
           ['ভাই মোঃ শাইজ উদ্দিন খন্দকার'],
         ]
       ),
-      [SathiCategory.ChatraNowjowan]: [],
+      [SathiCategory.ChatraNowjowan]: entries(1, SathiCategory.ChatraNowjowan, [
+        ['ভাই মো আশিক'],
+        ['ভাই মো সাহাবুদ্দিন', '01794-507196'],
+        ['ভাই মো শাখাওয়াত', '01336514706'],
+      ]),
     },
   },
   {
@@ -227,11 +231,21 @@ const RAW_INITIAL_MOSQUES: MosqueRecord[] = [
       [SathiCategory.MasturatTenFifteenDays]: [],
       [SathiCategory.MasturatThreeDays]: [],
       [SathiCategory.ChatraNowjowan]: entries(3, SathiCategory.ChatraNowjowan, [
-        ['মোবারক হোসেন', '+880 1918-229603'],
-        ['মোরসালিন পারভেজ', '+880 1567-963741'],
-        ['ইয়াসিন আরাফাত রাফি', '+880 1575-663352'],
-        ['আহমেদ ফয়সাল', '+880 1576-478264'],
-        ['হাসানুর রহমান', '+880 1772-726045'],
+        ['মোবারক হোসেন', '01918-229603'],
+        ['ইঞ্জিনিয়ার মোঃ মোরসালিন পারভেজ', '01567-963471'],
+        ['ইয়াসিন আরাফাত রাফি', '01575-663352'],
+        ['হাসানুর রহমান', '01772726042'],
+        ['আহমেদ ফয়সাল', '01576478264'],
+        ['মৃদুল'],
+        ['অনিক'],
+        ['শামীম', '01950554212'],
+        ['জোবায়ের', '01567943305'],
+        ['কামরুল ইসলাম', '01789402561'],
+        ['নাঈম ইসলাম', '01806642019'],
+        ['আব্দুল্লাহ আল ইয়ামু', '01778364036'],
+        ['হুমায়ন কবির', '+880 1861-547116'],
+        ['পিয়াস খান', '01726-253988'],
+        ['জহিরুল ইসলাম', '01858-259287'],
       ]),
     },
   },
@@ -286,7 +300,10 @@ const RAW_INITIAL_MOSQUES: MosqueRecord[] = [
         ]
       ),
       [SathiCategory.MasturatThreeDays]: [],
-      [SathiCategory.ChatraNowjowan]: [],
+      [SathiCategory.ChatraNowjowan]: entries(4, SathiCategory.ChatraNowjowan, [
+        ['ভাই মো মোহাম্মদুল্লাহ সাব্বির', '01985048166'],
+        ['লাভলু'],
+      ]),
     },
   },
   {
@@ -404,7 +421,12 @@ const RAW_INITIAL_MOSQUES: MosqueRecord[] = [
         SathiCategory.MasturatThreeDays,
         [['ভাই মোঃ নুরুন নবী', '01819-055834']]
       ),
-      [SathiCategory.ChatraNowjowan]: [],
+      [SathiCategory.ChatraNowjowan]: entries(7, SathiCategory.ChatraNowjowan, [
+        ['জিয়াদ হোসেন', '01401271710'],
+        ['আশিক', '01961826963'],
+        ['ফেরদৌস রহমান মুন্না', '01572923334'],
+        ['আতিকুল ইসলাম'],
+      ]),
     },
   },
   {
@@ -448,7 +470,9 @@ const RAW_INITIAL_MOSQUES: MosqueRecord[] = [
           ['ভাই মোঃ নাজমুল', '01670-802545'],
         ]
       ),
-      [SathiCategory.ChatraNowjowan]: [],
+      [SathiCategory.ChatraNowjowan]: entries(8, SathiCategory.ChatraNowjowan, [
+        ['ভাই মো কাউসার', '01878-246112'],
+      ]),
     },
   },
   {
@@ -479,7 +503,12 @@ const RAW_INITIAL_MOSQUES: MosqueRecord[] = [
       [SathiCategory.MasturatChilla]: [],
       [SathiCategory.MasturatTenFifteenDays]: [],
       [SathiCategory.MasturatThreeDays]: [],
-      [SathiCategory.ChatraNowjowan]: [],
+      [SathiCategory.ChatraNowjowan]: entries(9, SathiCategory.ChatraNowjowan, [
+        ['আবুবক্কর সিদ্দিক'],
+        ['সজীব হাওলাদার', '01893-786802'],
+        ['হিরো'],
+        ['নাহিদ ইসলাম'],
+      ]),
     },
   },
   {
@@ -509,7 +538,10 @@ const RAW_INITIAL_MOSQUES: MosqueRecord[] = [
       [SathiCategory.MasturatChilla]: [],
       [SathiCategory.MasturatTenFifteenDays]: [],
       [SathiCategory.MasturatThreeDays]: [],
-      [SathiCategory.ChatraNowjowan]: [],
+      [SathiCategory.ChatraNowjowan]: entries(10, SathiCategory.ChatraNowjowan, [
+        ['ভাই মো মোরশেদ'],
+        ['ভাই মো মারুফ', '01951-537593'],
+      ]),
     },
   },
   {
@@ -675,7 +707,31 @@ const RAW_INITIAL_MOSQUES: MosqueRecord[] = [
           ['ভাই মোঃ মাহদী', '01571-174175'],
         ]
       ),
-      [SathiCategory.ChatraNowjowan]: [],
+      [SathiCategory.ChatraNowjowan]: entries(14, SathiCategory.ChatraNowjowan, [
+        ['ভাই মো মাহাদি'],
+      ]),
+    },
+  },
+  {
+    id: 15,
+    name: 'হাসেম ভুঁইয়া জামে মসজিদ',
+    address: '',
+    khatib: { name: '', phone: '' },
+    imam: { name: '', phone: '' },
+    muazzin: { name: '', phone: '' },
+    categories: {
+      [SathiCategory.SalwaliUlama]: [],
+      [SathiCategory.ThreeChillaUlama]: [],
+      [SathiCategory.OneChillaUlama]: [],
+      [SathiCategory.Bidesh]: [],
+      [SathiCategory.ThreeChillaSathi]: [],
+      [SathiCategory.OneChillaSathi]: [],
+      [SathiCategory.MasturatChilla]: [],
+      [SathiCategory.MasturatTenFifteenDays]: [],
+      [SathiCategory.MasturatThreeDays]: [],
+      [SathiCategory.ChatraNowjowan]: entries(15, SathiCategory.ChatraNowjowan, [
+        ['আব্দুল্লাহ', '01648-816022'],
+      ]),
     },
   },
 ];

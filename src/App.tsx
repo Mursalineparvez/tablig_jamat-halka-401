@@ -74,6 +74,10 @@ import {
 
 const STORAGE_KEY = 'jatrabari_markaz_halqa_401_v1';
 const GIRIDHARA_CHATRA_SEED_KEY = 'jatrabari_markaz_seed_m3_chatra_v1';
+const HALQA_CHATRA_ALL_20261123_SEED_KEY =
+  'jatrabari_markaz_seed_chatra_all_20261123_v1';
+const HALQA_CHATRA_ALL_20261123_SHEET_SYNCED_KEY =
+  'jatrabari_markaz_sheet_chatra_all_20261123_v1';
 const TAKAZA_STORAGE_KEY = 'jatrabari_markaz_halqa_401_takaza_v1';
 const KARGOOJARI_STORAGE_KEY = 'jatrabari_markaz_halqa_401_kargoojari_v1';
 const KARGOOJARI_SEED_KEY = 'jatrabari_markaz_seed_karg_20261115_sathis_v1';
@@ -175,6 +179,70 @@ function normalizeKargoojarisPhones(list: KargoojariEntry[]): KargoojariEntry[] 
   }));
 }
 
+function mergeChatraSeedIntoMosques(list: MosqueRecord[]): MosqueRecord[] {
+  const normalized = normalizeMosquesPhones(list);
+  const seedById = new Map(INITIAL_MOSQUES.map((m) => [m.id, m]));
+
+  const updated = normalized.map((mosque) => {
+    const seedMosque = seedById.get(mosque.id);
+    const seedChatra = seedMosque?.categories[SathiCategory.ChatraNowjowan] ?? [];
+    if (seedChatra.length === 0) return mosque;
+
+    let currentChatra = [...(mosque.categories?.[SathiCategory.ChatraNowjowan] ?? [])];
+
+    if (mosque.id === 3) {
+      currentChatra = currentChatra.map((entry) => {
+        const core = normalizeMemberCoreName(entry.name);
+        if (
+          entry.id === 'm3-chatra_nowjowan-2' ||
+          core.includes('মোরসালিন পারভেজ')
+        ) {
+          return {
+            ...entry,
+            name: 'ইঞ্জিনিয়ার মোঃ মোরসালিন পারভেজ',
+            phone: formatBdPhone('01567-963471'),
+          };
+        }
+        if (entry.id === 'm3-chatra_nowjowan-5' || core === 'হাসানুর রহমান') {
+          return {
+            ...entry,
+            phone: formatBdPhone('01772726042'),
+          };
+        }
+        return entry;
+      });
+    }
+
+    const existingCores = new Set(
+      currentChatra.map((e) => normalizeMemberCoreName(e.name))
+    );
+    const missing = seedChatra.filter(
+      (seedItem) => !existingCores.has(normalizeMemberCoreName(seedItem.name))
+    );
+
+    if (missing.length === 0 && mosque.id !== 3) {
+      return mosque;
+    }
+
+    return {
+      ...mosque,
+      categories: {
+        ...mosque.categories,
+        [SathiCategory.ChatraNowjowan]: [...currentChatra, ...missing],
+      },
+    };
+  });
+
+  const existingIds = new Set(updated.map((m) => m.id));
+  const missingMosques = INITIAL_MOSQUES.filter(
+    (seedMosque) =>
+      !existingIds.has(seedMosque.id) &&
+      (seedMosque.categories[SathiCategory.ChatraNowjowan]?.length ?? 0) > 0
+  );
+
+  return [...updated, ...missingMosques];
+}
+
 function loadInitialMosques(): MosqueRecord[] {
   const loaded = loadFromStorage<MosqueRecord[]>(STORAGE_KEY, INITIAL_MOSQUES);
   const base = normalizeMosquesPhones(
@@ -182,32 +250,13 @@ function loadInitialMosques(): MosqueRecord[] {
   );
 
   try {
-    const alreadySeeded = localStorage.getItem(GIRIDHARA_CHATRA_SEED_KEY);
-    if (!alreadySeeded) {
-      const baselineGiridhara = INITIAL_MOSQUES.find((m) => m.id === 3);
-      const seedEntries =
-        baselineGiridhara?.categories[SathiCategory.ChatraNowjowan] ?? [];
-
-      const merged = base.map((m) => {
-        if (m.id !== 3) return m;
-        const existing = m.categories?.[SathiCategory.ChatraNowjowan] ?? [];
-        const existingKeys = new Set(
-          existing.map((e) => `${e.name.trim()}|${formatBdPhone(e.phone)}`)
-        );
-        const missing = seedEntries.filter(
-          (e) => !existingKeys.has(`${e.name.trim()}|${formatBdPhone(e.phone)}`)
-        );
-        if (missing.length === 0) return m;
-        return {
-          ...m,
-          categories: {
-            ...m.categories,
-            [SathiCategory.ChatraNowjowan]: [...existing, ...missing],
-          },
-        };
-      });
-
+    const alreadySeededAll = localStorage.getItem(
+      HALQA_CHATRA_ALL_20261123_SEED_KEY
+    );
+    if (!alreadySeededAll) {
+      const merged = mergeChatraSeedIntoMosques(base);
       localStorage.setItem(GIRIDHARA_CHATRA_SEED_KEY, '1');
+      localStorage.setItem(HALQA_CHATRA_ALL_20261123_SEED_KEY, '1');
       return merged;
     }
   } catch {
@@ -480,14 +529,62 @@ export default function App() {
         return;
       }
 
-      if (snap.mosques.length > 0) {
-        setMosques(normalizeMosquesPhones(snap.mosques));
+      let nextMosques =
+        snap.mosques.length > 0 ? normalizeMosquesPhones(snap.mosques) : null;
+      const nextTakazas =
+        snap.takazas.length > 0 ? normalizeTakazasPhones(snap.takazas) : null;
+      const nextKargs =
+        snap.kargoojaris.length > 0
+          ? normalizeKargoojarisPhones(snap.kargoojaris)
+          : null;
+
+      if (nextMosques) {
+        let alreadySyncedChatra = false;
+        try {
+          alreadySyncedChatra =
+            localStorage.getItem(HALQA_CHATRA_ALL_20261123_SHEET_SYNCED_KEY) ===
+            '1';
+        } catch {
+          // Ignore storage read errors
+        }
+
+        if (!nextMosques.some((m) => m.id === 15) && !alreadySyncedChatra) {
+          nextMosques = mergeChatraSeedIntoMosques(nextMosques);
+          if (activeCanEdit && activePin) {
+            void pushAllToSheet(targetUrl, activePin, {
+              mosques: nextMosques,
+              takazas: nextTakazas ?? latestDataRef.current.takazas,
+              kargoojaris: nextKargs ?? latestDataRef.current.kargoojaris,
+            }).then((res) => {
+              if (res.ok) {
+                try {
+                  localStorage.setItem(
+                    HALQA_CHATRA_ALL_20261123_SHEET_SYNCED_KEY,
+                    '1'
+                  );
+                } catch {
+                  // Ignore storage write errors
+                }
+              }
+            });
+          }
+        } else if (nextMosques.some((m) => m.id === 15)) {
+          try {
+            localStorage.setItem(
+              HALQA_CHATRA_ALL_20261123_SHEET_SYNCED_KEY,
+              '1'
+            );
+          } catch {
+            // Ignore storage write errors
+          }
+        }
+        setMosques(nextMosques);
       }
-      if (snap.takazas.length > 0) {
-        setTakazas(normalizeTakazasPhones(snap.takazas));
+      if (nextTakazas) {
+        setTakazas(nextTakazas);
       }
-      if (snap.kargoojaris.length > 0) {
-        setKargoojaris(normalizeKargoojarisPhones(snap.kargoojaris));
+      if (nextKargs) {
+        setKargoojaris(nextKargs);
       }
       setLastSyncedAt(snap.serverTime || new Date().toISOString());
       if (showFeedback) {
@@ -540,7 +637,12 @@ export default function App() {
 
     const unsubMosques = subscribeMosques((remoteMosques, isEmpty) => {
       if (!isEmpty) {
-        setMosques(normalizeMosquesPhones(remoteMosques));
+        const normalized = normalizeMosquesPhones(remoteMosques);
+        setMosques(
+          normalized.some((m) => m.id === 15)
+            ? normalized
+            : mergeChatraSeedIntoMosques(normalized)
+        );
       }
     });
 
@@ -1709,7 +1811,9 @@ export default function App() {
     } catch {
       // Ignore
     }
-    showToast('মূল পিডিএফের ১৪টি মসজিদ ও ২৫৬ জন সাথীর তথ্যে রিসেট করা হয়েছে।');
+    showToast(
+      `মূল তালিকা (${toBn(INITIAL_MOSQUES.length)}টি মসজিদ ও সকল সাথীর তথ্য)-এ রিসেট করা হয়েছে।`
+    );
     persistAllToSheet({
       mosques: INITIAL_MOSQUES,
       takazas,
